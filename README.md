@@ -24,4 +24,4 @@ URL
 	md.h1.color = UIColor.redColor()
 	md.h1.fontName = "AvenirNextCondensed-Bold"
 
-![Screenshot](http://cl.ly/19292H3L2b34)
+![Screenshot](https://s3.amazonaws.com/f.cl.ly/items/1Z1v301p3R393R3z1S2g/Simulator%20Screen%20Shot%205%20Mar%202016,%2018.53.44.png?v=8a43c204)
