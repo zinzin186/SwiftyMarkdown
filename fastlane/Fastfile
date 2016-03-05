@@ -1,0 +1,88 @@
+# Customise this file, documentation can be found here:
+# https://github.com/KrauseFx/fastlane/tree/master/docs
+# All available actions: https://github.com/KrauseFx/fastlane/blob/master/docs/Actions.md
+# can also be listed using the `fastlane actions` command
+
+# Change the syntax highlighting to Ruby
+# All lines starting with a # are ignored when running `fastlane`
+
+# By default, fastlane will send which actions are used
+# No personal data is shared, more information on https://github.com/fastlane/enhancer
+# Uncomment the following line to opt out
+# opt_out_usage
+
+# If you want to automatically update fastlane if a new version is available:
+# update_fastlane
+
+# This is the minimum version number required.
+# Update this, if you use features of a newer version
+fastlane_version "1.36.1"
+
+default_platform :ios
+
+
+
+platform :ios do
+
+  spec = "SwiftyMarkdown.podspec"
+
+  before_all do
+    ensure_git_branch    
+    ensure_git_status_clean
+    increment_build_number
+    commit_version_bump(xcodeproj: './SwiftyMarkdown.xcodeproj')
+  end
+
+  desc "Bumps the patch version, increments it, and pushes it to both the remote and spec repos"
+  lane :patch do
+    # snapshot
+    update(type: "patch")
+  end
+  
+  desc "Bumps the minor version, increments it, and pushes it to both the remote and spec repos"  
+  lane :minor do
+    # snapshot
+    update(type: "minor")
+
+  end  
+
+  lane :initial do 
+    version = version_get_podspec
+    bump(version)
+  end
+  
+  private_lane :update do |options|
+
+    type = options[:type]
+    version = version_bump_podspec(path: spec, bump_type: type)
+    increment_version_number( bump_type: type, version_number: version )
+    git_commit(path: spec, message: "Updating podspec")
+
+    bump(version: version)
+
+  end
+
+  private_lane :bump do |options|
+    version = options[:version]
+    add_git_tag( tag: version)  
+    push_to_git_remote
+    pod_push(path: spec)
+
+  end
+
+  # You can define as many lanes as you want
+
+  after_all do |lane|
+    # This block is called, only if the executed lane was successful
+    notification(subtitle: "SwiftyMarkdown fastlane finished", message: "Completed '#{lane}' successfully")
+  end
+
+  error do |lane, exception|
+    notification(subtitle: "Error: SwiftyMarkdown fastlane", message: "'#{exception.message}'")
+  end
+end
+
+
+
+# More information about multiple platforms in fastlane: https://github.com/KrauseFx/fastlane/blob/master/docs/Platforms.md
+# All available actions: https://github.com/KrauseFx/fastlane/blob/master/docs/Actions.md

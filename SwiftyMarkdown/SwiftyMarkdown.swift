@@ -54,9 +54,7 @@ class SwiftyMarkdown {
 			self.string = ""
 			return nil
 		}
-		
 	}
-	
 	
 	func attributedString() -> NSAttributedString {
 		let attributedString = NSMutableAttributedString(string: "")
