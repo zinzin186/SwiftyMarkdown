@@ -18,11 +18,12 @@ URL
 
 ## Customisation 
 
-	// Setting the body name will use this font for all the heading styles as well, unless explicitly overridden
 	md.body.fontName = "AvenirNextCondensed-Medium"
 
 	md.h1.color = UIColor.redColor()
 	md.h1.fontName = "AvenirNextCondensed-Bold"
+
+	md.italic.color = UIColor.blueColor()
 
 ## Screenshot
 
