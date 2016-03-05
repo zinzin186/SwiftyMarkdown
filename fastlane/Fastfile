@@ -48,7 +48,7 @@ platform :ios do
 
   lane :initial do 
     version = version_get_podspec
-    bump(version)
+    bump(version: version)
   end
   
   private_lane :update do |options|
