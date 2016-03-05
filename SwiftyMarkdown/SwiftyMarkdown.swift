@@ -40,6 +40,8 @@ public class SwiftyMarkdown {
 	public var code = BasicStyles()
 	public var bold = BasicStyles()
 	
+	var previousStyle : String = UIFontTextStyleBody
+	
 	let string : String
 	let instructionSet = NSCharacterSet(charactersInString: "\\*_`")
 	
@@ -171,7 +173,7 @@ public class SwiftyMarkdown {
 			} else if matchedCharacters == "**" || matchedCharacters == "__" {
 				attString = attributedStringFromString(hasString, withType: .Bold)
 			} else if matchedCharacters == "`" {
-				attString = attributedStringFromString(hasString, withType: .Code)
+				attString = attributedStringFromString("\t" + hasString, withType: .Code)
 			} else {
 				attString = attributedStringFromString(hasString, withType: .Italic)
 			}
@@ -239,18 +241,18 @@ public class SwiftyMarkdown {
 		case .Italic:
 			fontName = italic.fontName
 			attributes = [NSForegroundColorAttributeName : italic.color]
-			textStyle = UIFontTextStyleBody
+			textStyle = previousStyle
 			appendNewLine = false
 		case .Bold:
 			fontName = bold.fontName
 			attributes = [NSForegroundColorAttributeName : bold.color]
 			appendNewLine = false
-			textStyle = UIFontTextStyleBody
+			textStyle = previousStyle
 		case .Code:
 			fontName = code.fontName
 			attributes = [NSForegroundColorAttributeName : code.color]
 			appendNewLine = false
-			textStyle = UIFontTextStyleBody
+			textStyle = previousStyle
 			
 		default:
 			appendNewLine = false
@@ -259,6 +261,7 @@ public class SwiftyMarkdown {
 			attributes = [NSForegroundColorAttributeName:body.color]
 			break
 		}
+		previousStyle = textStyle
 		
 		let font = UIFont.preferredFontForTextStyle(textStyle)
 		let styleDescriptor = font.fontDescriptor()

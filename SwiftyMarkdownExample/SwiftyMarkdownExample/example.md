@@ -6,8 +6,12 @@ SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files
 
 Customise fonts and colours easily in a Swift like way: 
 
-`md.h1.fontName = "AvenirNextCondensed-Medium"`
+`md.code.fontName = "CourierNewPSMT"`
+
+`md.h2.fontName = "AvenirNextCondensed-Medium"`
+`md.h2.color = UIColor.redColor()`
 
 *An italic line*
 
-It ignores random * and correctly handles \*escaped\* asterisks.
+It ignores random * and correctly handles \*escaped\* asterisks and \_underlines\_.
+
