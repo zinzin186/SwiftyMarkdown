@@ -11,6 +11,9 @@
 		F4CE988C1C8A921300D735C1 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4CE98811C8A921300D735C1 /* SwiftyMarkdown.framework */; };
 		F4CE98911C8A921300D735C1 /* SwiftyMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98901C8A921300D735C1 /* SwiftyMarkdownTests.swift */; };
 		F4CE989C1C8A922E00D735C1 /* SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE989B1C8A922E00D735C1 /* SwiftyMarkdown.swift */; };
+		F4CE98E91C8AF01300D735C1 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = F4CE98E61C8AF01300D735C1 /* LICENSE */; };
+		F4CE98EA1C8AF01300D735C1 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98E71C8AF01300D735C1 /* README.md */; };
+		F4CE98EB1C8AF01300D735C1 /* SwiftyMarkdown.podspec in Resources */ = {isa = PBXBuildFile; fileRef = F4CE98E81C8AF01300D735C1 /* SwiftyMarkdown.podspec */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +34,9 @@
 		F4CE98901C8A921300D735C1 /* SwiftyMarkdownTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownTests.swift; sourceTree = "<group>"; };
 		F4CE98921C8A921300D735C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4CE989B1C8A922E00D735C1 /* SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdown.swift; sourceTree = "<group>"; };
+		F4CE98E61C8AF01300D735C1 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		F4CE98E71C8AF01300D735C1 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F4CE98E81C8AF01300D735C1 /* SwiftyMarkdown.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SwiftyMarkdown.podspec; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +64,9 @@
 				F4CE98831C8A921300D735C1 /* SwiftyMarkdown */,
 				F4CE988F1C8A921300D735C1 /* SwiftyMarkdownTests */,
 				F4CE98821C8A921300D735C1 /* Products */,
+				F4CE98E61C8AF01300D735C1 /* LICENSE */,
+				F4CE98E71C8AF01300D735C1 /* README.md */,
+				F4CE98E81C8AF01300D735C1 /* SwiftyMarkdown.podspec */,
 			);
 			sourceTree = "<group>";
 		};
@@ -180,6 +189,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4CE98E91C8AF01300D735C1 /* LICENSE in Resources */,
+				F4CE98EB1C8AF01300D735C1 /* SwiftyMarkdown.podspec in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,6 +208,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4CE98EA1C8AF01300D735C1 /* README.md in Sources */,
 				F4CE989C1C8A922E00D735C1 /* SwiftyMarkdown.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -385,6 +397,7 @@
 				F4CE98971C8A921300D735C1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		F4CE98981C8A921300D735C1 /* Build configuration list for PBXNativeTarget "SwiftyMarkdownTests" */ = {
 			isa = XCConfigurationList;
@@ -393,6 +406,7 @@
 				F4CE989A1C8A921300D735C1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

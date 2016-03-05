@@ -1,12 +1,13 @@
-//
-//  SwiftyMarkdown.swift
-//  SwiftyMarkdown
-//
-//  Created by Simon Fairbairn on 05/03/2016.
-//  Copyright © 2016 Voyage Travel Apps. All rights reserved.
-//
+//: Playground - noun: a place where people can play
 
 import UIKit
+import XCPlayground
+
+let containerView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 400.0, height: 600))
+
+XCPlaygroundPage.currentPage.liveView = containerView
+let label = UITextView(frame: containerView.frame)
+containerView.addSubview(label)
 
 
 public protocol FontProperties {
@@ -125,66 +126,82 @@ public class SwiftyMarkdown {
 				
 				
 				scanner.charactersToBeSkipped = nil
-				
+
 				while !scanner.atEnd {
+					
+					var followingString : NSString?
 					var string : NSString?
 					// Get all the characters up to the ones we are interested in
 					if scanner.scanUpToCharactersFromSet(instructionSet, intoString: &string) {
 						if let hasString = string as? String {
 							let bodyString = attributedStringFromString(hasString, withType: .Body)
 							attributedString.appendAttributedString(bodyString)
+
+							var matchedCharacters = self.tagFromScanner(scanner)
+							
 							
 							let location = scanner.scanLocation
-							
-							let matchedCharacters = tagFromScanner(scanner)
 							// If the next string after the characters is a space, then add it to the final string and continue
 							if !scanner.scanUpToString(" ", intoString: nil) {
+								
 								let charAtts = attributedStringFromString(matchedCharacters, withType: .Body)
+								
 								attributedString.appendAttributedString(charAtts)
 							} else {
 								scanner.scanLocation = location
+								scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
+								if let hasString = followingString as? String {
+									let attString : NSAttributedString
+									
+									if matchedCharacters.containsString("\\") {
+										attString = attributedStringFromString(matchedCharacters + hasString, withType: .Body)
+									} else if matchedCharacters == "**" || matchedCharacters == "__" {
+										attString = attributedStringFromString(hasString, withType: .Bold)
+									} else {
+										attString = attributedStringFromString(hasString, withType: .Italic)
+									}
+									attributedString.appendAttributedString(attString)
+								}
+								matchedCharacters = self.tagFromScanner(scanner)
 								
-								attributedString.appendAttributedString(self.attributedStringFromScanner(scanner))
+								if matchedCharacters.containsString("\\") {
+									let attString = attributedStringFromString(matchedCharacters, withType: .Body)
+									
+									attributedString.appendAttributedString(attString)
+								}
+								
 							}
 						}
 					} else {
-						attributedString.appendAttributedString(self.attributedStringFromScanner(scanner))
+						var matchedCharacters = self.tagFromScanner(scanner)
+
+						scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
+						if let hasString = followingString as? String {
+							let attString : NSAttributedString
+							
+							if matchedCharacters.containsString("\\") {
+								attString = attributedStringFromString(matchedCharacters + hasString, withType: .Body)
+							} else if matchedCharacters == "**" || matchedCharacters == "__" {
+								attString = attributedStringFromString(hasString, withType: .Bold)
+							} else {
+								attString = attributedStringFromString(hasString, withType: .Italic)
+							}
+							attributedString.appendAttributedString(attString)
+						}
+						matchedCharacters = self.tagFromScanner(scanner)
+						
+						if matchedCharacters.containsString("\\") {
+							let attString = attributedStringFromString(matchedCharacters, withType: .Body)
+							
+							attributedString.appendAttributedString(attString)
+						}
+						
 					}
 				}
 			}
 			attributedString.appendAttributedString(NSAttributedString(string: "\n"))
 		}
 		
-		return attributedString
-	}
-	
-	func attributedStringFromScanner( scanner : NSScanner) -> NSAttributedString {
-		var followingString : NSString?
-		var matchedCharacters = self.tagFromScanner(scanner)
-		let attributedString = NSMutableAttributedString(string: "")
-		scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
-		if let hasString = followingString as? String {
-			let attString : NSAttributedString
-			
-			if matchedCharacters.containsString("\\") {
-				attString = attributedStringFromString(matchedCharacters.stringByReplacingOccurrencesOfString("\\", withString: "") + hasString, withType: .Body)
-			} else if matchedCharacters == "**" || matchedCharacters == "__" {
-				attString = attributedStringFromString(hasString, withType: .Bold)
-			} else if matchedCharacters == "`" {
-				attString = attributedStringFromString(hasString, withType: .Code)
-			} else {
-				attString = attributedStringFromString(hasString, withType: .Italic)
-			}
-			attributedString.appendAttributedString(attString)
-		}
-		matchedCharacters = self.tagFromScanner(scanner)
-		
-		if matchedCharacters.containsString("\\") {
-			
-			let attString = attributedStringFromString(matchedCharacters.stringByReplacingOccurrencesOfString("\\", withString: ""), withType: .Body)
-			
-			attributedString.appendAttributedString(attString)
-		}
 		return attributedString
 	}
 	
@@ -246,12 +263,6 @@ public class SwiftyMarkdown {
 			attributes = [NSForegroundColorAttributeName : bold.color]
 			appendNewLine = false
 			textStyle = UIFontTextStyleBody
-		case .Code:
-			fontName = code.fontName
-			attributes = [NSForegroundColorAttributeName : code.color]
-			appendNewLine = false
-			textStyle = UIFontTextStyleBody
-			
 		default:
 			appendNewLine = false
 			fontName = body.fontName
@@ -291,3 +302,9 @@ public class SwiftyMarkdown {
 		}
 	}
 }
+
+if let url = NSBundle.mainBundle().URLForResource("test", withExtension: "md"), md = SwiftyMarkdown(url: url) {
+	
+	label.attributedText = md.attributedString()
+}
+
