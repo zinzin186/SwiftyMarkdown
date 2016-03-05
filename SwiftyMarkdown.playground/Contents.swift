@@ -231,7 +231,10 @@ public class SwiftyMarkdown {
 		switch type {
 		case .H1:
 			fontName = h1.fontName
-			textStyle = UIFontTextStyleTitle1
+			
+			if #available(iOS 9, *) {
+				textStyle = UIFontTextStyleTitle1
+			}
 			attributes = [NSForegroundColorAttributeName : h1.color]
 		case .H2:
 			fontName = h2.fontName

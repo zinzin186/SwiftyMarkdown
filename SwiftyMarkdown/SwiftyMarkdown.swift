@@ -216,15 +216,27 @@ public class SwiftyMarkdown {
 		switch type {
 		case .H1:
 			fontName = h1.fontName
-			textStyle = UIFontTextStyleTitle1
+			if #available(iOS 9, *) {
+				textStyle = UIFontTextStyleTitle1
+			} else {
+				textStyle = UIFontTextStyleHeadline
+			}
 			attributes = [NSForegroundColorAttributeName : h1.color]
 		case .H2:
 			fontName = h2.fontName
-			textStyle = UIFontTextStyleTitle2
+			if #available(iOS 9, *) {
+				textStyle = UIFontTextStyleTitle2
+			} else {
+				textStyle = UIFontTextStyleHeadline
+			}
 			attributes = [NSForegroundColorAttributeName : h2.color]
 		case .H3:
 			fontName = h3.fontName
-			textStyle = UIFontTextStyleTitle3
+			if #available(iOS 9, *) {
+				textStyle = UIFontTextStyleTitle2
+			} else {
+				textStyle = UIFontTextStyleSubheadline
+			}
 			attributes = [NSForegroundColorAttributeName : h3.color]
 		case .H4:
 			fontName = h4.fontName
