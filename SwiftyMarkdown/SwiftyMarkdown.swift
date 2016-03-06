@@ -260,13 +260,11 @@ public class SwiftyMarkdown {
 				style = .None
 			}
 		} else {
-			let location = scanner.scanLocation
-			scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
-		
+			scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)		
 		}
 		
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
-		if var hasString = followingString as? String {
+		if let hasString = followingString as? String {
 
 
 			
