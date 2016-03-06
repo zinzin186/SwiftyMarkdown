@@ -34,6 +34,7 @@ enum LineStyle : Int {
 	case Italic
 	case Bold
 	case Code
+	case Link
 	
 	static func styleFromString(string : String ) -> LineStyle {
 		if string == "**" || string == "__" {
@@ -42,6 +43,8 @@ enum LineStyle : Int {
 			return .Italic
 		} else if string == "`" {
 			return .Code
+		} else if string == "["  {
+			return .Link
 		} else {
 			return .None
 		}
@@ -89,7 +92,7 @@ public class SwiftyMarkdown {
 
 	
 	let string : String
-	let instructionSet = NSCharacterSet(charactersInString: "\\*_`")
+	let instructionSet = NSCharacterSet(charactersInString: "\\*_`[")
 	
 	/**
 	
@@ -232,13 +235,37 @@ public class SwiftyMarkdown {
 
 		let results = self.tagFromScanner(scanner)
 
-		let style = LineStyle.styleFromString(results.foundCharacters)
+		var style = LineStyle.styleFromString(results.foundCharacters)
 		
+		let location = scanner.scanLocation
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
 		scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
-		if let hasString = followingString as? String {
+		
+		if var hasString = followingString as? String {
+			
+			var attributes = [String : AnyObject]()
+			if style == .Link {
+				scanner.scanLocation = location
+				
+				var linkText : NSString?
+				var linkURL : NSString?
+				let linkCharacters = NSCharacterSet(charactersInString: "]()")
+				
+				scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkText)
+				scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
+				scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkURL)
+				scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
+				
+				if let hasLink = linkText, hasURL = linkURL {
+					hasString = hasLink as String
+					attributes[NSLinkAttributeName] = hasURL as String
+				} else {
+					style = .None
+				}
+			}
+			
 			let prefix = ( style == .Code && start ) ? "\t" : ""
-			let attString = attributedStringFromString(prefix + hasString, withStyle: style)
+			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
 			attributedString.appendAttributedString(attString)
 		}
 		let suffix = self.tagFromScanner(scanner)
@@ -277,8 +304,7 @@ public class SwiftyMarkdown {
 	
 	// Make H1
 	
-	func attributedStringFromString(string : String, withStyle style : LineStyle ) -> NSAttributedString {
-		var attributes : [String : AnyObject]
+	func attributedStringFromString(string : String, withStyle style : LineStyle, var attributes : [String : AnyObject] = [:] ) -> NSAttributedString {
 		let textStyle : String
 		var fontName : String?
 
@@ -293,7 +319,7 @@ public class SwiftyMarkdown {
 			} else {
 				textStyle = UIFontTextStyleHeadline
 			}
-			attributes = [NSForegroundColorAttributeName : h1.color]
+			attributes[NSForegroundColorAttributeName] = h1.color
 		case .H2:
 			fontName = h2.fontName
 			if #available(iOS 9, *) {
@@ -301,7 +327,7 @@ public class SwiftyMarkdown {
 			} else {
 				textStyle = UIFontTextStyleHeadline
 			}
-			attributes = [NSForegroundColorAttributeName : h2.color]
+			attributes[NSForegroundColorAttributeName] = h2.color
 		case .H3:
 			fontName = h3.fontName
 			if #available(iOS 9, *) {
@@ -309,23 +335,23 @@ public class SwiftyMarkdown {
 			} else {
 				textStyle = UIFontTextStyleSubheadline
 			}
-			attributes = [NSForegroundColorAttributeName : h3.color]
+			attributes[NSForegroundColorAttributeName] = h3.color
 		case .H4:
 			fontName = h4.fontName
 			textStyle = UIFontTextStyleHeadline
-			attributes = [NSForegroundColorAttributeName : h4.color]
+			attributes[NSForegroundColorAttributeName] = h4.color
 		case .H5:
 			fontName = h5.fontName
 			textStyle = UIFontTextStyleSubheadline
-			attributes = [NSForegroundColorAttributeName : h5.color]
+			attributes[NSForegroundColorAttributeName] = h5.color
 		case .H6:
 			fontName = h6.fontName
 			textStyle = UIFontTextStyleFootnote
-			attributes = [NSForegroundColorAttributeName : h6.color]
+			attributes[NSForegroundColorAttributeName] = h6.color
 		default:
 			fontName = body.fontName
 			textStyle = UIFontTextStyleBody
-			attributes = [NSForegroundColorAttributeName:body.color]
+			attributes[NSForegroundColorAttributeName] = body.color
 			break
 		}
 		
@@ -333,6 +359,12 @@ public class SwiftyMarkdown {
 		
 		if style == .Code {
 			fontName = code.fontName
+			attributes[NSForegroundColorAttributeName] = code.color
+		}
+		
+		if style == .Link {
+			fontName = link.fontName
+			attributes[NSForegroundColorAttributeName] = link.color
 		}
 		
 		// Fallback to body

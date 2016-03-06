@@ -224,6 +224,48 @@ class SwiftyMarkdownTests: XCTestCase {
 		
 	}
 	
+	
+	func testForLinks() {
+		
+		let linkAtStart = "[Link at start](http://voyagetravelapps.com/)"
+		let linkWithin = "A [Link](http://voyagetravelapps.com/)"
+		let headerLink = "## [Header link](http://voyagetravelapps.com/)"
+		
+		let multipleLinks = "[Link 1](http://voyagetravelapps.com/), [Link 2](http://voyagetravelapps.com/)"
+
+		let syntaxErrorSquareBracketAtStart = "[Link with missing square(http://voyagetravelapps.com/)"
+		let syntaxErrorSquareBracketWithin = "A [Link(http://voyagetravelapps.com/)"
+		
+		let syntaxErrorParenthesisAtStart = "[Link with missing parenthesis](http://voyagetravelapps.com/"
+		let syntaxErrorParenthesisWithin = "A [Link](http://voyagetravelapps.com/"
+		
+		var md = SwiftyMarkdown(string: linkAtStart)
+		XCTAssertEqual(md.attributedString().string, "Link at start\n")
+		
+		md = SwiftyMarkdown(string: linkWithin)
+		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		
+		md = SwiftyMarkdown(string: headerLink)
+		XCTAssertEqual(md.attributedString().string, "Header link\n")
+		
+		md = SwiftyMarkdown(string: multipleLinks)
+		XCTAssertEqual(md.attributedString().string, "Link 1, Link 2\n")
+		
+		md = SwiftyMarkdown(string: syntaxErrorSquareBracketAtStart)
+		XCTAssertEqual(md.attributedString().string, "Link with missing square\n")
+		
+		md = SwiftyMarkdown(string: syntaxErrorSquareBracketWithin)
+		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		
+		md = SwiftyMarkdown(string: syntaxErrorParenthesisAtStart)
+		XCTAssertEqual(md.attributedString().string, "Link with missing parenthesis\n")
+		
+		md = SwiftyMarkdown(string: syntaxErrorParenthesisWithin)
+		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		
+		
+	}
+	
 
 	
 }

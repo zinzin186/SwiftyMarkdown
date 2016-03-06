@@ -4,7 +4,7 @@ SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files
 
 ## Features
 
-Customise fonts and colours easily in a Swift like way: 
+Customise fonts and colours easily in a Swift-like way: 
 
 `md.code.fontName = "CourierNewPSMT"`
 
@@ -13,5 +13,5 @@ Customise fonts and colours easily in a Swift like way:
 
 *An italic line*
 
-It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_.
+It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_ and has error handling for mismatched tags (\*\*bold\* == **bold*). It also supports inline Markdown [Links](http://voyagetravelapps.com/)
 

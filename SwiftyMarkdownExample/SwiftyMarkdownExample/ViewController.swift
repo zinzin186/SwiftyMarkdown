@@ -17,6 +17,7 @@ class ViewController: UIViewController {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 		
+		self.textView.dataDetectorTypes = UIDataDetectorTypes.All
 		if let url = NSBundle.mainBundle().URLForResource("example", withExtension: "md"), md = SwiftyMarkdown(url: url) {
 			md.h2.fontName = "AvenirNextCondensed-Bold"
 			md.h2.color = UIColor.redColor()
