@@ -233,6 +233,8 @@ class SwiftyMarkdownTests: XCTestCase {
 		
 		let multipleLinks = "[Link 1](http://voyagetravelapps.com/), [Link 2](http://voyagetravelapps.com/)"
 
+		let mailtoAndTwitterLinks = "Email us at [simon@voyagetravelapps.com](mailto:simon@voyagetravelapps.com) Twitter [@VoyageTravelApp](twitter://user?screen_name=VoyageTravelApp)"
+		
 		let syntaxErrorSquareBracketAtStart = "[Link with missing square(http://voyagetravelapps.com/)"
 		let syntaxErrorSquareBracketWithin = "A [Link(http://voyagetravelapps.com/)"
 		
@@ -263,7 +265,14 @@ class SwiftyMarkdownTests: XCTestCase {
 		md = SwiftyMarkdown(string: syntaxErrorParenthesisWithin)
 		XCTAssertEqual(md.attributedString().string, "A Link\n")
 		
+		md = SwiftyMarkdown(string: mailtoAndTwitterLinks)
+		XCTAssertEqual(md.attributedString().string, "Email us at simon@voyagetravelapps.com Twitter @VoyageTravelApp\n")
 		
+	
+		
+//		let mailtoAndTwitterLinks = "Twitter [@VoyageTravelApp](twitter://user?screen_name=VoyageTravelApp)"
+//		let md = SwiftyMarkdown(string: mailtoAndTwitterLinks)
+//		XCTAssertEqual(md.attributedString().string, "Twitter @VoyageTravelApp\n")
 	}
 	
 

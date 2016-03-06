@@ -92,7 +92,7 @@ public class SwiftyMarkdown {
 
 	
 	let string : String
-	let instructionSet = NSCharacterSet(charactersInString: "\\*_`[")
+	let instructionSet = NSCharacterSet(charactersInString: "[\\*_`")
 	
 	/**
 	
@@ -207,13 +207,16 @@ public class SwiftyMarkdown {
 							
 							let set = NSMutableCharacterSet.whitespaceCharacterSet()
 							set.formUnionWithCharacterSet(NSCharacterSet.punctuationCharacterSet())
-							if !scanner.scanUpToCharactersFromSet(set, intoString: nil) {
+							if scanner.scanUpToCharactersFromSet(set, intoString: nil) {
+								scanner.scanLocation = location
+								attributedString.appendAttributedString(self.attributedStringFromScanner(scanner))
+
+							} else if matchedCharacters == "[" {
+								scanner.scanLocation = location
+								attributedString.appendAttributedString(self.attributedStringFromScanner(scanner))								
+							} else {
 								let charAtts = attributedStringFromString(matchedCharacters, withStyle: .None)
 								attributedString.appendAttributedString(charAtts)
-							} else {
-								scanner.scanLocation = location
-								
-								attributedString.appendAttributedString(self.attributedStringFromScanner(scanner))
 							}
 						}
 					} else {
@@ -237,32 +240,35 @@ public class SwiftyMarkdown {
 
 		var style = LineStyle.styleFromString(results.foundCharacters)
 		
-		let location = scanner.scanLocation
-		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
-		scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
-		
-		if var hasString = followingString as? String {
+		var attributes = [String : AnyObject]()
+		if style == .Link {
 			
-			var attributes = [String : AnyObject]()
-			if style == .Link {
-				scanner.scanLocation = location
-				
-				var linkText : NSString?
-				var linkURL : NSString?
-				let linkCharacters = NSCharacterSet(charactersInString: "]()")
-				
-				scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkText)
-				scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
-				scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkURL)
-				scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
-				
-				if let hasLink = linkText, hasURL = linkURL {
-					hasString = hasLink as String
-					attributes[NSLinkAttributeName] = hasURL as String
-				} else {
-					style = .None
-				}
+			var linkText : NSString?
+			var linkURL : NSString?
+			let linkCharacters = NSCharacterSet(charactersInString: "]()")
+			
+			scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkText)
+			scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
+			scanner.scanUpToCharactersFromSet(linkCharacters, intoString: &linkURL)
+			scanner.scanCharactersFromSet(linkCharacters, intoString: nil)
+			
+			
+			if let hasLink = linkText, hasURL = linkURL {
+				followingString = hasLink as String
+				attributes[NSLinkAttributeName] = hasURL as String
+			} else {
+				style = .None
 			}
+		} else {
+			let location = scanner.scanLocation
+			scanner.scanUpToCharactersFromSet(instructionSet, intoString: &followingString)
+		
+		}
+		
+		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
+		if var hasString = followingString as? String {
+
+
 			
 			let prefix = ( style == .Code && start ) ? "\t" : ""
 			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
