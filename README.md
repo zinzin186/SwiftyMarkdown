@@ -11,7 +11,6 @@ Text string
 
 URL 
 
-
 	if let url = NSBundle.mainBundle().URLForResource("file", withExtension: "md"), md = SwiftyMarkdown(url: url ) {
 		md.attributedString()
 	}
@@ -27,4 +26,4 @@ URL
 
 ## Screenshot
 
-![Screenshot](https://s3.amazonaws.com/f.cl.ly/items/2m3d2M0m2v050b2q3X00/Simulator%20Screen%20Shot%205%20Mar%202016,%2019.15.20.png?v=8ee97ee3)
+![Screenshot](http://f.cl.ly/items/12332k3f2s0s0C281h2u/swiftymarkdown.png)
