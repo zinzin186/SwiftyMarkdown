@@ -24,10 +24,17 @@ class SwiftyMarkdownTests: XCTestCase {
 	func testThatOctothorpeHeadersAreHandledCorrectly() {
 		
 		let headerString = "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6"
-		let md = SwiftyMarkdown(string: headerString)
-		let attString = md.attributedString()
+		let headerStringWithBold = "# **Bold Header 1**"
+		let headerStringWithItalic = "## Header 2 _With Italics_"
 		
-		XCTAssertEqual("Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6\n", attString.string)
+		var md = SwiftyMarkdown(string: headerString)
+		XCTAssertEqual(md.attributedString().string, "Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6\n")
+		
+		 md = SwiftyMarkdown(string: headerStringWithBold)
+		XCTAssertEqual(md.attributedString().string, "Bold Header 1\n")
+		
+		md = SwiftyMarkdown(string: headerStringWithItalic)
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Italics\n")
 		
 	}
 	
@@ -35,11 +42,24 @@ class SwiftyMarkdownTests: XCTestCase {
 		let h1String = "Header 1\n===\nSome following text"
 		let h2String = "Header 2\n---\nSome following text"
 		
+		let h1StringWithBold = "Header 1 **With Bold**\n===\nSome following text"
+		let h2StringWithItalic = "Header 2 _With Italic_\n---\nSome following text"
+		let h2StringWithCode = "Header 2 `With Code`\n---\nSome following text"
+		
 		var md = SwiftyMarkdown(string: h1String)
 		XCTAssertEqual(md.attributedString().string, "Header 1\nSome following text\n")
 		
 		md = SwiftyMarkdown(string: h2String)
 		XCTAssertEqual(md.attributedString().string, "Header 2\nSome following text\n")
+		
+		md = SwiftyMarkdown(string: h1StringWithBold)
+		XCTAssertEqual(md.attributedString().string, "Header 1 With Bold\nSome following text\n")
+		
+		md = SwiftyMarkdown(string: h2StringWithItalic)
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Italic\nSome following text\n")
+		
+		md = SwiftyMarkdown(string: h2StringWithCode)
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Code\nSome following text\n")
 	}
 	
 	func testThatRegularTraitsAreParsedCorrectly() {
@@ -79,7 +99,7 @@ class SwiftyMarkdownTests: XCTestCase {
 		XCTAssertEqual(md.attributedString().string, "A bold string with a mix of bold styles\n")
 		
 		md = SwiftyMarkdown(string: multipleCodeWords)
-		XCTAssertEqual(md.attributedString().string, "A code string with multiple code instances\n")
+		XCTAssertEqual(md.attributedString().string, "\tA code string with multiple code instances\n")
 		
 		md = SwiftyMarkdown(string: multipleItalicWords)
 		XCTAssertEqual(md.attributedString().string, "An italic string with a mix of italic styles\n")
@@ -90,14 +110,14 @@ class SwiftyMarkdownTests: XCTestCase {
 	}
 	
 	func testThatMarkdownMistakesAreHandledAppropriately() {
-		let mismatchedBoldCharactersAtStart = "**This should be italic*"
+		let mismatchedBoldCharactersAtStart = "**This should be bold*"
 		let mismatchedBoldCharactersWithin = "A string *that should be italic**"
 		
 		var md = SwiftyMarkdown(string: mismatchedBoldCharactersAtStart)
-		XCTAssertEqual(md.attributedString().string, "*This should be italic\n")
+		XCTAssertEqual(md.attributedString().string, "This should be bold\n")
 		
 		md = SwiftyMarkdown(string: mismatchedBoldCharactersWithin)
-		XCTAssertEqual(md.attributedString().string, "A string that should be italic*\n")
+		XCTAssertEqual(md.attributedString().string, "A string that should be italic\n")
 		
 	}
 	
@@ -110,6 +130,12 @@ class SwiftyMarkdownTests: XCTestCase {
 		
 		let escapedBackticksAtStart = "\\`A normal string\\`"
 		let escapedBacktickWithin = "A string with \\`escaped\\` backticks"
+		
+		let oneEscapedAsteriskOneNormalAtStart = "\\**A normal string\\**"
+		let oneEscapedAsteriskOneNormalWithin = "A string with \\**escaped\\** asterisks"
+		
+		let oneEscapedAsteriskTwoNormalAtStart = "\\***A normal string*\\**"
+		let oneEscapedAsteriskTwoNormalWithin = "A string with *\\**escaped**\\* asterisks"
 		
 		var md = SwiftyMarkdown(string: escapedBoldAtStart)
 		XCTAssertEqual(md.attributedString().string, "**A normal string**\n")
@@ -129,6 +155,17 @@ class SwiftyMarkdownTests: XCTestCase {
 		md = SwiftyMarkdown(string: escapedBacktickWithin)
 		XCTAssertEqual(md.attributedString().string, "A string with `escaped` backticks\n")
 		
+		md = SwiftyMarkdown(string: oneEscapedAsteriskOneNormalAtStart)
+		XCTAssertEqual(md.attributedString().string, "*A normal string*\n")
+		
+		md = SwiftyMarkdown(string: oneEscapedAsteriskOneNormalWithin)
+		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks\n")
+		
+		md = SwiftyMarkdown(string: oneEscapedAsteriskTwoNormalAtStart)
+		XCTAssertEqual(md.attributedString().string, "*A normal string*\n")
+		
+		md = SwiftyMarkdown(string: oneEscapedAsteriskTwoNormalWithin)
+		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks\n")
 		
 	}
 	
