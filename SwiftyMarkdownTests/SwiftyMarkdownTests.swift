@@ -21,16 +21,172 @@ class SwiftyMarkdownTests: XCTestCase {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-    
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measureBlock {
-            // Put the code you want to measure the time of here.
-        }
-    }
-    
+	func testThatOctothorpeHeadersAreHandledCorrectly() {
+		
+		let headerString = "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6"
+		let md = SwiftyMarkdown(string: headerString)
+		let attString = md.attributedString()
+		
+		XCTAssertEqual("Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6\n", attString.string)
+		
+	}
+	
+	func testThatUndelinedHeadersAreHandledCorrectly() {
+		let h1String = "Header 1\n===\nSome following text"
+		let h2String = "Header 2\n---\nSome following text"
+		
+		var md = SwiftyMarkdown(string: h1String)
+		XCTAssertEqual(md.attributedString().string, "Header 1\nSome following text\n")
+		
+		md = SwiftyMarkdown(string: h2String)
+		XCTAssertEqual(md.attributedString().string, "Header 2\nSome following text\n")
+	}
+	
+	func testThatRegularTraitsAreParsedCorrectly() {
+		let boldAtStartOfString = "**A bold string**"
+		let boldWithinString = "A string with a **bold** word"
+		let codeAtStartOfString = "`Code (should be indented)`"
+		let codeWithinString = "A string with `code` (should not be indented)"
+		let italicAtStartOfString = "*An italicised string*"
+		let italicWithinString = "A string with *italicised* text"
+		
+		let multipleBoldWords = "__A bold string__ with a **mix** **of** bold __styles__"
+		let multipleCodeWords = "`A code string` with multiple `code` `instances`"
+		let multipleItalicWords = "_An italic string_ with a *mix* _of_ italic *styles*"
+		
+		let longMixedString = "_An italic string_, **follwed by a bold one**, `with some code`, \\*\\*and some\\*\\* \\_escaped\\_ \\`characters\\`, `ending` *with* __more__ variety."
+		
+		
+		var md = SwiftyMarkdown(string: boldAtStartOfString)
+		XCTAssertEqual(md.attributedString().string, "A bold string\n")
+		
+		md = SwiftyMarkdown(string: boldWithinString)
+		XCTAssertEqual(md.attributedString().string, "A string with a bold word\n")
+		
+		md = SwiftyMarkdown(string: codeAtStartOfString)
+		XCTAssertEqual(md.attributedString().string, "\tCode (should be indented)\n")
+		
+		md = SwiftyMarkdown(string: codeWithinString)
+		XCTAssertEqual(md.attributedString().string, "A string with code (should not be indented)\n")
+		
+		md = SwiftyMarkdown(string: italicAtStartOfString)
+		XCTAssertEqual(md.attributedString().string, "An italicised string\n")
+		
+		md = SwiftyMarkdown(string: italicWithinString)
+		XCTAssertEqual(md.attributedString().string, "A string with italicised text\n")
+		
+		md = SwiftyMarkdown(string: multipleBoldWords)
+		XCTAssertEqual(md.attributedString().string, "A bold string with a mix of bold styles\n")
+		
+		md = SwiftyMarkdown(string: multipleCodeWords)
+		XCTAssertEqual(md.attributedString().string, "A code string with multiple code instances\n")
+		
+		md = SwiftyMarkdown(string: multipleItalicWords)
+		XCTAssertEqual(md.attributedString().string, "An italic string with a mix of italic styles\n")
+
+		md = SwiftyMarkdown(string: longMixedString)
+		XCTAssertEqual(md.attributedString().string, "An italic string, follwed by a bold one, with some code, **and some** _escaped_ `characters`, ending with more variety.\n")
+		
+	}
+	
+	func testThatMarkdownMistakesAreHandledAppropriately() {
+		let mismatchedBoldCharactersAtStart = "**This should be italic*"
+		let mismatchedBoldCharactersWithin = "A string *that should be italic**"
+		
+		var md = SwiftyMarkdown(string: mismatchedBoldCharactersAtStart)
+		XCTAssertEqual(md.attributedString().string, "*This should be italic\n")
+		
+		md = SwiftyMarkdown(string: mismatchedBoldCharactersWithin)
+		XCTAssertEqual(md.attributedString().string, "A string that should be italic*\n")
+		
+	}
+	
+	func testThatEscapedCharactersAreEscapedCorrectly() {
+		let escapedBoldAtStart = "\\*\\*A normal string\\*\\*"
+		let escapedBoldWithin = "A string with \\*\\*escaped\\*\\* asterisks"
+		
+		let escapedItalicAtStart = "\\_A normal string\\_"
+		let escapedItalicWithin = "A string with \\_escaped\\_ underscores"
+		
+		let escapedBackticksAtStart = "\\`A normal string\\`"
+		let escapedBacktickWithin = "A string with \\`escaped\\` backticks"
+		
+		var md = SwiftyMarkdown(string: escapedBoldAtStart)
+		XCTAssertEqual(md.attributedString().string, "**A normal string**\n")
+
+		md = SwiftyMarkdown(string: escapedBoldWithin)
+		XCTAssertEqual(md.attributedString().string, "A string with **escaped** asterisks\n")
+		
+		md = SwiftyMarkdown(string: escapedItalicAtStart)
+		XCTAssertEqual(md.attributedString().string, "_A normal string_\n")
+		
+		md = SwiftyMarkdown(string: escapedItalicWithin)
+		XCTAssertEqual(md.attributedString().string, "A string with _escaped_ underscores\n")
+		
+		md = SwiftyMarkdown(string: escapedBackticksAtStart)
+		XCTAssertEqual(md.attributedString().string, "`A normal string`\n")
+		
+		md = SwiftyMarkdown(string: escapedBacktickWithin)
+		XCTAssertEqual(md.attributedString().string, "A string with `escaped` backticks\n")
+		
+		
+	}
+	
+	func testThatAsterisksAndUnderscoresNotAttachedToWordsAreNotRemoved() {
+		let asteriskSpace = "An asterisk followed by a space: * "
+		let backtickSpace = "A backtick followed by a space: ` "
+		let underscoreSpace = "An underscore followed by a space: _ "
+
+		let asteriskFullStop = "Two asterisks followed by a full stop: **."
+		let backtickFullStop = "Two backticks followed by a full stop: ``."
+		let underscoreFullStop = "Two underscores followed by a full stop: __."
+		
+		let asteriskComma = "An asterisk followed by a full stop: *, *"
+		let backtickComma = "A backtick followed by a space: `, `"
+		let underscoreComma = "An underscore followed by a space: _, _"
+		
+		let asteriskWithBold = "A **bold** word followed by an asterisk * "
+		let backtickWithCode = "A `code` word followed by a backtick ` "
+		let underscoreWithItalic = "An _italic_ word followed by an underscore _ "
+		
+		var md = SwiftyMarkdown(string: asteriskSpace)
+		XCTAssertEqual(md.attributedString().string, asteriskSpace + "\n")
+		
+		md = SwiftyMarkdown(string: backtickSpace)
+		XCTAssertEqual(md.attributedString().string, backtickSpace + "\n")
+		
+		md = SwiftyMarkdown(string: underscoreSpace)
+		XCTAssertEqual(md.attributedString().string, underscoreSpace + "\n")
+		
+		md = SwiftyMarkdown(string: asteriskFullStop)
+		XCTAssertEqual(md.attributedString().string, asteriskFullStop + "\n")
+		
+		md = SwiftyMarkdown(string: backtickFullStop)
+		XCTAssertEqual(md.attributedString().string, backtickFullStop + "\n")
+		
+		md = SwiftyMarkdown(string: underscoreFullStop)
+		XCTAssertEqual(md.attributedString().string, underscoreFullStop + "\n")
+		
+		md = SwiftyMarkdown(string: asteriskComma)
+		XCTAssertEqual(md.attributedString().string, asteriskComma + "\n")
+		
+		md = SwiftyMarkdown(string: backtickComma)
+		XCTAssertEqual(md.attributedString().string, backtickComma + "\n")
+		
+		md = SwiftyMarkdown(string: underscoreComma)
+		XCTAssertEqual(md.attributedString().string, underscoreComma + "\n")
+		
+		md = SwiftyMarkdown(string: asteriskWithBold)
+		XCTAssertEqual(md.attributedString().string, "A bold word followed by an asterisk * \n")
+		
+		md = SwiftyMarkdown(string: backtickWithCode)
+		XCTAssertEqual(md.attributedString().string, "A code word followed by a backtick ` \n")
+		
+		md = SwiftyMarkdown(string: underscoreWithItalic)
+		XCTAssertEqual(md.attributedString().string, "An italic word followed by an underscore _ \n")
+		
+	}
+	
+
+	
 }

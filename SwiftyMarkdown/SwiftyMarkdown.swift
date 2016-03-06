@@ -40,6 +40,8 @@ public class SwiftyMarkdown {
 	public var code = BasicStyles()
 	public var bold = BasicStyles()
 	
+	var currentType : LineType = .Body
+	
 	var previousStyle : String = UIFontTextStyleBody
 	
 	let string : String
@@ -84,9 +86,12 @@ public class SwiftyMarkdown {
 				if let range =  line.rangeOfString(heading) where range.startIndex == line.startIndex {
 					
 					let startHeadingString = line.stringByReplacingCharactersInRange(range, withString: "")
-					let endHeadingHash = " " + heading.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+
+					// Remove ending
+					let endHeadingString = heading.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+					let finalHeadingString = startHeadingString.stringByReplacingOccurrencesOfString(endHeadingString, withString: "").stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
 					
-					let finalHeadingString = startHeadingString.stringByReplacingOccurrencesOfString(endHeadingHash, withString: "")
+					currentType = LineType(rawValue: headings.indexOf(heading)!)!
 					
 					// Make Hx where x == current index
 					let string = attributedStringFromString(finalHeadingString, withType: LineType(rawValue: headings.indexOf(heading)!)!)
