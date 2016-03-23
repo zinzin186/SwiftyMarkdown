@@ -266,8 +266,6 @@ public class SwiftyMarkdown {
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
 		if let hasString = followingString as? String {
 
-
-			
 			let prefix = ( style == .Code && start ) ? "\t" : ""
 			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
 			attributedString.appendAttributedString(attString)
