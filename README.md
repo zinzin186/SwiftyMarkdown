@@ -5,23 +5,24 @@ SwiftyMarkdown converts Markdown files and strings into NSAttributedString using
 ## Usage
 
 Text string
-
-	let md = SwiftyMarkdown(string: "# Heading\nMy *Markdown* string")
-	md.attributedString()
+```swift
+let md = SwiftyMarkdown(string: "# Heading\nMy *Markdown* string")
+md.attributedString()
+```
 
 URL 
-
-	if let url = NSBundle.mainBundle().URLForResource("file", withExtension: "md"), md = SwiftyMarkdown(url: url ) {
-		md.attributedString()
-	}
-
+```swift
+if let url = NSBundle.mainBundle().URLForResource("file", withExtension: "md"), md = SwiftyMarkdown(url: url ) {
+	md.attributedString()
+}
+```
 ## Customisation 
+```swift
+md.body.fontName = "AvenirNextCondensed-Medium"
 
-	md.body.fontName = "AvenirNextCondensed-Medium"
-
-	md.h1.color = UIColor.redColor()
-	md.h1.fontName = "AvenirNextCondensed-Bold"
-
+md.h1.color = UIColor.redColor()
+md.h1.fontName = "AvenirNextCondensed-Bold"
+```
 	md.italic.color = UIColor.blueColor()
 
 ## Screenshot
