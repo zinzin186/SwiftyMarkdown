@@ -139,7 +139,7 @@ public class SwiftyMarkdown {
 		
 		var skipLine = false
 		for theLine in lines {
-			lineCount++
+			lineCount += 1
 			if skipLine {
 				skipLine = false
 				continue
@@ -291,7 +291,7 @@ public class SwiftyMarkdown {
 		while matchedCharacters.containsString("\\") {
 			if let hasRange = matchedCharacters.rangeOfString("\\") {
 				
-				let newRange  = Range(start: hasRange.startIndex, end: hasRange.endIndex.advancedBy(1))
+				let newRange  = hasRange.startIndex...hasRange.endIndex
 				foundCharacters = foundCharacters + matchedCharacters.substringWithRange(newRange)
 
 				matchedCharacters.removeRange(newRange)
@@ -306,9 +306,10 @@ public class SwiftyMarkdown {
 	
 	// Make H1
 	
-	func attributedStringFromString(string : String, withStyle style : LineStyle, var attributes : [String : AnyObject] = [:] ) -> NSAttributedString {
+	func attributedStringFromString(string : String, withStyle style : LineStyle, attributes : [String : AnyObject] = [:] ) -> NSAttributedString {
 		let textStyle : String
 		var fontName : String?
+        var attributes = attributes
 
 		// What type are we and is there a font name set?
 		
