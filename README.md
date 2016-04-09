@@ -16,6 +16,22 @@ if let url = NSBundle.mainBundle().URLForResource("file", withExtension: "md"), 
 	md.attributedString()
 }
 ```
+
+## Supported Features
+
+    *italics* or _italics_
+    **bold** or __bold__
+
+    # Header 1
+    ## Header 2
+    ### Header 3
+    #### Header 4
+    ##### Header 5
+    ###### Header 6
+    
+    `code`
+    [Links](http://voyagetravelapps.com/)
+
 ## Customisation 
 ```swift
 md.body.fontName = "AvenirNextCondensed-Medium"
