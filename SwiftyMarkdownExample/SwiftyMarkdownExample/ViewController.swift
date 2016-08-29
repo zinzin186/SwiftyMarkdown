@@ -17,10 +17,10 @@ class ViewController: UIViewController {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 		
-		self.textView.dataDetectorTypes = UIDataDetectorTypes.All
-		if let url = NSBundle.mainBundle().URLForResource("example", withExtension: "md"), md = SwiftyMarkdown(url: url) {
+		self.textView.dataDetectorTypes = UIDataDetectorTypes.all
+		if let url = Bundle.main.url(forResource: "example", withExtension: "md"), let md = SwiftyMarkdown(url: url) {
 			md.h2.fontName = "AvenirNextCondensed-Bold"
-			md.h2.color = UIColor.redColor()
+			md.h2.color = UIColor.red
 			md.code.fontName = "CourierNewPSMT"
 			
 			self.textView.attributedText = md.attributedString()
@@ -35,7 +35,5 @@ class ViewController: UIViewController {
 		super.didReceiveMemoryWarning()
 		// Dispose of any resources that can be recreated.
 	}
-
-
 }
 
