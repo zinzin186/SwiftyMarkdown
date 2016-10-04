@@ -20,17 +20,19 @@ fastlane_version "1.36.1"
 
 default_platform :ios
 
-
-
 platform :ios do
 
   spec = "SwiftyMarkdown.podspec"
+  project = "'./SwiftyMarkdown.xcodeproj'"
 
   before_all do
-    ensure_git_branch    
-    ensure_git_status_clean
-    increment_build_number
-    commit_version_bump(xcodeproj: './SwiftyMarkdown.xcodeproj')
+    ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+    if options[:skip_checks]
+        UI.message "Skipping checks"
+    else
+      ensure_git_branch
+        ensure_git_status_clean
+    end    
   end
 
   desc "Bumps the patch version, increments it, and pushes it to both the remote and spec repos"
@@ -50,17 +52,52 @@ platform :ios do
     version = version_get_podspec
     bump(version: version)
   end
+
+    private_lane :update do |options|
+        increment_build_number
+      pod_lib_lint(
+        allow_warnings: true
+        )
+
+      type = options[:type]
+
+      if type == "none" 
+        UI.message("No type found")
+      else
+        version = version_bump_podspec(path: spec, bump_type: type)
+        increment_version_number( bump_type: type, version_number: version )
+
+        git_commit(path: spec, message: "Updating podspec")
+        commit_version_bump(xcodeproj: project) 
+        add_git_tag( tag: version)  
+        push_to_git_remote
+        pod_push(path: spec)
+        post_to_slack(scheme:"SwiftyMarkdown", version: version)
+
+      end
+
+    end  
   
-  private_lane :update do |options|
+  # private_lane :update do |options|
 
-    type = options[:type]
-    version = version_bump_podspec(path: spec, bump_type: type)
-    increment_version_number( bump_type: type, version_number: version )
-    git_commit(path: spec, message: "Updating podspec")
+  #   type = options[:type]
+  #   version = version_bump_podspec(path: spec, bump_type: type)
+  #   increment_version_number( bump_type: type, version_number: version )
+  #   git_commit(path: spec, message: "Updating podspec")
 
-    bump(version: version)
+  #   bump(version: version)
 
-  end
+  # end
+
+    private_lane :post_to_slack do |options|
+      scheme      = options[:scheme]
+      version     = options[:version]
+      environment = scheme.upcase
+
+      slack(
+        message: "New `#{environment}` version: *#{version}* released :rocket:",
+        ) 
+    end  
 
   private_lane :bump do |options|
     version = options[:version]
@@ -79,6 +116,8 @@ platform :ios do
 
   error do |lane, exception|
     notification(subtitle: "Error: SwiftyMarkdown fastlane", message: "'#{exception.message}'")
+    version = get_version_number(xcodeproj: project, target: "SwiftyMarkdown")    
+    post_to_slack(scheme:"SwiftyMarkdown", version: version)
   end
 end
 
