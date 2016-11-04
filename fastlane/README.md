@@ -10,17 +10,36 @@ sudo gem install fastlane
 ```
 fastlane ios patch
 ```
-Bumps the patch version, increments it, and pushes it to both the remote and spec repos
+This does the following: 
+
+
+
+- Runs the unit tests
+
+- Ensures Cocoapods compatibility
+
+- Bumps the patch version
+
+- Pushes it to the remote repository
+
+- Updates the spec repository
 ### ios minor
 ```
 fastlane ios minor
 ```
-Bumps the minor version, increments it, and pushes it to both the remote and spec repos
-### ios initial
-```
-fastlane ios initial
-```
+This does the following: 
 
+
+
+- Runs the unit tests
+
+- Ensures Cocoapods compatibility
+
+- Bumps the minor version
+
+- Pushes it to the remote repository
+
+- Updates the spec repository
 
 ----
 
