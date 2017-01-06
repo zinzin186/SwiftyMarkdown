@@ -226,7 +226,9 @@ open class SwiftyMarkdown {
 			}
 			
 			// Append a new line character to the end of the processed line
-			attributedString.append(NSAttributedString(string: "\n"))
+			if lineCount < lines.count {
+				attributedString.append(NSAttributedString(string: "\n"))
+			}
 			currentType = .body
 		}
 		
