@@ -144,7 +144,7 @@ open class SwiftyMarkdown {
 				skipLine = false
 				continue
 			}
-			var line = theLine
+			var line = theLine == "" ? " " : theLine
 			for heading in headings {
 				
 				if let range =  line.range(of: heading) , range.lowerBound == line.startIndex {
