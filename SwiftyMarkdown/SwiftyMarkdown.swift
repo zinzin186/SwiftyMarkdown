@@ -293,15 +293,17 @@ open class SwiftyMarkdown {
 		while matchedCharacters.contains("\\") {
 			if let hasRange = matchedCharacters.range(of: "\\") {
 				
-				// FIXME: Possible error in range
-				let newRange  = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
-				foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
-				
-				matchedCharacters.removeSubrange(newRange)
+				if matchedCharacters.characters.count > 1 {
+					let newRange = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
+					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
+					
+					matchedCharacters.removeSubrange(newRange)
+				} else {
+					break
+				}
 			}
 			
 		}
-		
 		
 		return (matchedCharacters, foundCharacters.replacingOccurrences(of: "\\", with: ""))
 	}
