@@ -118,7 +118,6 @@ open class SwiftyMarkdown {
 			
 		} catch {
 			self.string = ""
-			fatalError("Couldn't read string")
 			return nil
 		}
 	}
