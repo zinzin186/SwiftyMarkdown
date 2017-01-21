@@ -143,7 +143,7 @@ open class SwiftyMarkdown {
 				skipLine = false
 				continue
 			}
-			var line = theLine
+			var line = theLine == "" ? " " : theLine
 			for heading in headings {
 				
 				if let range =  line.range(of: heading) , range.lowerBound == line.startIndex {
@@ -225,7 +225,9 @@ open class SwiftyMarkdown {
 			}
 			
 			// Append a new line character to the end of the processed line
-			attributedString.append(NSAttributedString(string: "\n"))
+			if lineCount < lines.count {
+				attributedString.append(NSAttributedString(string: "\n"))
+			}
 			currentType = .body
 		}
 		
@@ -290,15 +292,17 @@ open class SwiftyMarkdown {
 		while matchedCharacters.contains("\\") {
 			if let hasRange = matchedCharacters.range(of: "\\") {
 				
-				// FIXME: Possible error in range
-				let newRange  = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
-				foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
-				
-				matchedCharacters.removeSubrange(newRange)
+				if matchedCharacters.characters.count > 1 {
+					let newRange = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
+					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
+					
+					matchedCharacters.removeSubrange(newRange)
+				} else {
+					break
+				}
 			}
 			
 		}
-		
 		
 		return (matchedCharacters, foundCharacters.replacingOccurrences(of: "\\", with: ""))
 	}
