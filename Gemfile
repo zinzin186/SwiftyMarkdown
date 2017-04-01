@@ -3,5 +3,5 @@
 source "https://rubygems.org"
 
 # gem "rails"
-gem "cocoapods", ">= 1.1.0.beta.2"
+gem "cocoapods"
 gem 'fastlane'
