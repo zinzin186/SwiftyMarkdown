@@ -195,7 +195,7 @@ open class SwiftyMarkdown {
 					// Get all the characters up to the ones we are interested in
 					if scanner.scanUpToCharacters(from: instructionSet, into: &string) {
 						
-						if let hasString = string as? String {
+						if let hasString = string as String? {
 							let bodyString = attributedStringFromString(hasString, withStyle: .none)
 							attributedString.append(bodyString)
 							
@@ -265,7 +265,7 @@ open class SwiftyMarkdown {
 		}
 		
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
-		if let hasString = followingString as? String {
+		if let hasString = followingString as String? {
 
 			let prefix = ( style == .code && start ) ? "\t" : ""
 			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
@@ -283,7 +283,7 @@ open class SwiftyMarkdown {
 		
 		// Scan the ones we are interested in
 		while scanner.scanCharacters(from: instructionSet, into: &tempCharacters) {
-			if let chars = tempCharacters as? String {
+			if let chars = tempCharacters as String? {
 				matchedCharacters = matchedCharacters + chars
 			}
 		}
