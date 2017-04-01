@@ -214,8 +214,10 @@ open class SwiftyMarkdown {
 								scanner.scanLocation = location
 								attributedString.append(self.attributedStringFromScanner(scanner))								
 							} else {
+								
 								let charAtts = attributedStringFromString(matchedCharacters, withStyle: .none)
 								attributedString.append(charAtts)
+								
 							}
 						}
 					} else {
@@ -294,17 +296,19 @@ open class SwiftyMarkdown {
 				
 				if matchedCharacters.characters.count > 1 {
 					let newRange = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
-					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
+					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange).replacingOccurrences(of: "\\", with: "")
 					
 					matchedCharacters.removeSubrange(newRange)
 				} else {
+					foundCharacters = matchedCharacters
 					break
 				}
 			}
 			
 		}
 		
-		return (matchedCharacters, foundCharacters.replacingOccurrences(of: "\\", with: ""))
+		
+		return (matchedCharacters, foundCharacters)
 	}
 	
 	

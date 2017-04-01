@@ -15,7 +15,12 @@ class ViewController: UIViewController {
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		// Do any additional setup after loading the view, typically from a nib.
+	
+		// This is to help debugging.
+		reloadText(nil)
+	}
+	
+	@IBAction func reloadText( _ sender : UIButton? ) {
 		
 		self.textView.dataDetectorTypes = UIDataDetectorTypes.all
 		if let url = Bundle.main.url(forResource: "example", withExtension: "md"), let md = SwiftyMarkdown(url: url) {
@@ -24,11 +29,10 @@ class ViewController: UIViewController {
 			md.code.fontName = "CourierNewPSMT"
 			
 			self.textView.attributedText = md.attributedString()
-
+			
 		} else {
 			fatalError("Error loading file")
 		}
-		
 	}
 
 	override func didReceiveMemoryWarning() {

@@ -223,7 +223,7 @@ class SwiftyMarkdownTests: XCTestCase {
 		XCTAssertEqual(md.attributedString().string, "An italic word followed by an underscore _ \n")
 		
 	}
-	
+		
 	
 	func testForLinks() {
 		
