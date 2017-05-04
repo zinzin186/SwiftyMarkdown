@@ -18,7 +18,7 @@ md.attributedString()
 
 URL 
 ```swift
-if let url = NSBundle.mainBundle().URLForResource("file", withExtension: "md"), md = SwiftyMarkdown(url: url ) {
+if let url = Bundle.main.url(forResource: "file", withExtension: "md"), md = SwiftyMarkdown(url: url ) {
 	md.attributedString()
 }
 ```
