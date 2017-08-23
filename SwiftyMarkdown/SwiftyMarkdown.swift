@@ -54,7 +54,7 @@ enum LineStyle : Int {
 }
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
-open class SwiftyMarkdown {
+@objc open class SwiftyMarkdown: NSObject {
 	
 	/// The styles to apply to any H1 headers found in the Markdown
 	open var h1 = BasicStyles()
