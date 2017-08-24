@@ -143,6 +143,32 @@ enum LineStyle : Int {
 		link.fontSize = size
 	}
 	
+	open func setFontColorForAllStyles(with color: UIColor) {
+		h1.color = color
+		h2.color = color
+		h3.color = color
+		h4.color = color
+		h5.color = color
+		h6.color = color
+		body.color = color
+		italic.color = color
+		code.color = color
+		link.color = color
+	}
+	
+	open func setFontNameForAllStyles(with name: String) {
+		h1.fontName = name
+		h2.fontName = name
+		h3.fontName = name
+		h4.fontName = name
+		h5.fontName = name
+		h6.fontName = name
+		body.fontName = name
+		italic.fontName = name
+		code.fontName = name
+		link.fontName = name
+	}
+	
 	/**
 	Generates an NSAttributedString from the string or URL passed at initialisation. Custom fonts or styles are applied to the appropriate elements when this method is called.
 	
