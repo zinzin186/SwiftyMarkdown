@@ -57,37 +57,37 @@ enum LineStyle : Int {
 @objc open class SwiftyMarkdown: NSObject {
 	
 	/// The styles to apply to any H1 headers found in the Markdown
-	open var h1 = BasicStyles()
+	public var h1 = BasicStyles()
 
 	/// The styles to apply to any H2 headers found in the Markdown
-	open var h2 = BasicStyles()
+	public var h2 = BasicStyles()
 	
 	/// The styles to apply to any H3 headers found in the Markdown
-	open var h3 = BasicStyles()
+	public var h3 = BasicStyles()
 	
 	/// The styles to apply to any H4 headers found in the Markdown
-	open var h4 = BasicStyles()
+	public var h4 = BasicStyles()
 	
 	/// The styles to apply to any H5 headers found in the Markdown
-	open var h5 = BasicStyles()
+	public var h5 = BasicStyles()
 	
 	/// The styles to apply to any H6 headers found in the Markdown
-	open var h6 = BasicStyles()
+	public var h6 = BasicStyles()
 	
 	/// The default body styles. These are the base styles and will be used for e.g. headers if no other styles override them.
-	open var body = BasicStyles()
+	public var body = BasicStyles()
 	
 	/// The styles to apply to any links found in the Markdown
-	open var link = BasicStyles()
+	public var link = BasicStyles()
 
 	/// The styles to apply to any bold text found in the Markdown
-	open var bold = BasicStyles()
+	public var bold = BasicStyles()
 	
 	/// The styles to apply to any italic text found in the Markdown
-	open var italic = BasicStyles()
+	public var italic = BasicStyles()
 	
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
-	open var code = BasicStyles()
+	public var code = BasicStyles()
 
 	
 	var currentType : LineType = .body
