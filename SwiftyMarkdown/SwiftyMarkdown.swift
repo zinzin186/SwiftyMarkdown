@@ -9,10 +9,10 @@
 import UIKit
 
 
-public protocol FontProperties {
+@objc public protocol FontProperties {
 	var fontName : String? { get set }
 	var color : UIColor { get set }
-	var fontSize : CGFloat? { get set }
+	var fontSize : CGFloat { get set }
 }
 
 
@@ -21,15 +21,16 @@ A struct defining the styles that can be applied to the parsed Markdown. The `fo
 
 If that is not set, then the system default will be used.
 */
-@objc public class BasicStyles : FontProperties {
+open class BasicStyles : FontProperties {
 	public var fontName : String? = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body).fontName
 	public var color = UIColor.black
-	public var fontSize : CGFloat?
+	public var fontSize : CGFloat = 0.0
 }
 
 enum LineType : Int {
 	case h1, h2, h3, h4, h5, h6, body
 }
+
 
 enum LineStyle : Int {
 	case none
@@ -397,6 +398,7 @@ enum LineStyle : Int {
 			fontName = body.fontName
 		}
 		
+		fontSize = fontSize == 0.0 ? nil : fontSize
 		let font = UIFont.preferredFont(forTextStyle: textStyle)
 		let styleDescriptor = font.fontDescriptor
 		let styleSize = fontSize ?? styleDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] as? CGFloat ?? CGFloat(14)
