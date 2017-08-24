@@ -21,7 +21,7 @@ A struct defining the styles that can be applied to the parsed Markdown. The `fo
 
 If that is not set, then the system default will be used.
 */
-public class BasicStyles : FontProperties {
+@objc public class BasicStyles : FontProperties {
 	public var fontName : String? = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body).fontName
 	public var color = UIColor.black
 	public var fontSize : CGFloat?
