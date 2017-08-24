@@ -21,7 +21,7 @@ A struct defining the styles that can be applied to the parsed Markdown. The `fo
 
 If that is not set, then the system default will be used.
 */
-open class BasicStyles : FontProperties {
+@objc open class BasicStyles : NSObject, FontProperties {
 	public var fontName : String? = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body).fontName
 	public var color = UIColor.black
 	public var fontSize : CGFloat = 0.0
@@ -58,41 +58,41 @@ enum LineStyle : Int {
 @objc open class SwiftyMarkdown: NSObject {
 	
 	/// The styles to apply to any H1 headers found in the Markdown
-	public var h1 = BasicStyles()
-
+	open var h1 = BasicStyles()
+	
 	/// The styles to apply to any H2 headers found in the Markdown
-	public var h2 = BasicStyles()
+	open var h2 = BasicStyles()
 	
 	/// The styles to apply to any H3 headers found in the Markdown
-	public var h3 = BasicStyles()
+	open var h3 = BasicStyles()
 	
 	/// The styles to apply to any H4 headers found in the Markdown
-	public var h4 = BasicStyles()
+	open var h4 = BasicStyles()
 	
 	/// The styles to apply to any H5 headers found in the Markdown
-	public var h5 = BasicStyles()
+	open var h5 = BasicStyles()
 	
 	/// The styles to apply to any H6 headers found in the Markdown
-	public var h6 = BasicStyles()
+	open var h6 = BasicStyles()
 	
 	/// The default body styles. These are the base styles and will be used for e.g. headers if no other styles override them.
-	public var body = BasicStyles()
+	open var body = BasicStyles()
 	
 	/// The styles to apply to any links found in the Markdown
-	public var link = BasicStyles()
-
+	open var link = BasicStyles()
+	
 	/// The styles to apply to any bold text found in the Markdown
-	public var bold = BasicStyles()
+	open var bold = BasicStyles()
 	
 	/// The styles to apply to any italic text found in the Markdown
-	public var italic = BasicStyles()
+	open var italic = BasicStyles()
 	
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
-	public var code = BasicStyles()
-
+	open var code = BasicStyles()
+	
 	
 	var currentType : LineType = .body
-
+	
 	
 	let string : String
 	let instructionSet = CharacterSet(charactersIn: "[\\*_`")
@@ -152,13 +152,13 @@ enum LineStyle : Int {
 				if let range =  line.range(of: heading) , range.lowerBound == line.startIndex {
 					
 					let startHeadingString = line.replacingCharacters(in: range, with: "")
-
+					
 					// Remove ending
 					let endHeadingString = heading.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					line = startHeadingString.replacingOccurrences(of: endHeadingString, with: "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					
 					currentType = LineType(rawValue: headings.index(of: heading)!)!
-
+					
 					// We found a heading so break out of the inner loop
 					break
 				}
@@ -194,7 +194,7 @@ enum LineStyle : Int {
 				
 				while !scanner.isAtEnd {
 					var string : NSString?
-
+					
 					// Get all the characters up to the ones we are interested in
 					if scanner.scanUpToCharacters(from: instructionSet, into: &string) {
 						
@@ -212,10 +212,10 @@ enum LineStyle : Int {
 							if scanner.scanUpToCharacters(from: set as CharacterSet, into: nil) {
 								scanner.scanLocation = location
 								attributedString.append(self.attributedStringFromScanner(scanner))
-
+								
 							} else if matchedCharacters == "[" {
 								scanner.scanLocation = location
-								attributedString.append(self.attributedStringFromScanner(scanner))								
+								attributedString.append(self.attributedStringFromScanner(scanner))
 							} else {
 								
 								let charAtts = attributedStringFromString(matchedCharacters, withStyle: .none)
@@ -230,9 +230,9 @@ enum LineStyle : Int {
 			}
 			
 			// Append a new line character to the end of the processed line
-//			if lineCount < lines.count {
-				attributedString.append(NSAttributedString(string: "\n"))
-//			}
+			//			if lineCount < lines.count {
+			attributedString.append(NSAttributedString(string: "\n"))
+			//			}
 			currentType = .body
 		}
 		
@@ -241,9 +241,9 @@ enum LineStyle : Int {
 	
 	func attributedStringFromScanner( _ scanner : Scanner, atStartOfLine start : Bool = false) -> NSAttributedString {
 		var followingString : NSString?
-
+		
 		let results = self.tagFromScanner(scanner)
-
+		
 		var style = LineStyle.styleFromString(results.foundCharacters)
 		
 		var attributes = [String : AnyObject]()
@@ -266,12 +266,12 @@ enum LineStyle : Int {
 				style = .none
 			}
 		} else {
-			scanner.scanUpToCharacters(from: instructionSet, into: &followingString)		
+			scanner.scanUpToCharacters(from: instructionSet, into: &followingString)
 		}
 		
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
 		if let hasString = followingString as String? {
-
+			
 			let prefix = ( style == .code && start ) ? "\t" : ""
 			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
 			attributedString.append(attString)
@@ -320,9 +320,9 @@ enum LineStyle : Int {
 	func attributedStringFromString(_ string : String, withStyle style : LineStyle, attributes : [String : AnyObject] = [:] ) -> NSAttributedString {
 		let textStyle : UIFontTextStyle
 		var fontName : String?
-        var attributes = attributes
+		var attributes = attributes
 		var fontSize : CGFloat?
-
+		
 		// What type are we and is there a font name set?
 		
 		
@@ -402,7 +402,7 @@ enum LineStyle : Int {
 		let font = UIFont.preferredFont(forTextStyle: textStyle)
 		let styleDescriptor = font.fontDescriptor
 		let styleSize = fontSize ?? styleDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] as? CGFloat ?? CGFloat(14)
-
+		
 		var finalFont : UIFont
 		if let finalFontName = fontName, let font = UIFont(name: finalFontName, size: styleSize) {
 			finalFont = font
