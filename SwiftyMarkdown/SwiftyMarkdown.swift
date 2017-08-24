@@ -126,6 +126,24 @@ enum LineStyle : Int {
 	}
 	
 	/**
+	Set font size for all styles
+	
+	- parameter size: size of font
+	*/
+	open func setFontSizeForAllStyles(with size: CGFloat) {
+		h1.fontSize = size
+		h2.fontSize = size
+		h3.fontSize = size
+		h4.fontSize = size
+		h5.fontSize = size
+		h6.fontSize = size
+		body.fontSize = size
+		italic.fontSize = size
+		code.fontSize = size
+		link.fontSize = size
+	}
+	
+	/**
 	Generates an NSAttributedString from the string or URL passed at initialisation. Custom fonts or styles are applied to the appropriate elements when this method is called.
 	
 	- returns: An NSAttributedString with the styles applied
