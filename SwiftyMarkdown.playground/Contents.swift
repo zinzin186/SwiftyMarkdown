@@ -1,11 +1,11 @@
 //: Playground - noun: a place where people can play
 
 import UIKit
-import XCPlayground
+import PlaygroundSupport
 
 let containerView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: 400.0, height: 600))
 
-XCPlaygroundPage.currentPage.liveView = containerView
+PlaygroundPage.current.liveView = containerView
 let label = UITextView(frame: containerView.frame)
 containerView.addSubview(label)
 
