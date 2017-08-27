@@ -15,3 +15,8 @@ Customise fonts and colours easily in a Swift-like way:
 
 It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_ and has error handling for mismatched tags (\*\*bold\* == **bold*). It also supports inline Markdown [Links](http://voyagetravelapps.com/)
 
+Supports Alternative Headings
+===
+
+
+
