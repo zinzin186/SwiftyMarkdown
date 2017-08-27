@@ -44,6 +44,7 @@ md.body.fontName = "AvenirNextCondensed-Medium"
 
 md.h1.color = UIColor.redColor()
 md.h1.fontName = "AvenirNextCondensed-Bold"
+md.h1.fontSize = 16
 ```
 	md.italic.color = UIColor.blueColor()
 

@@ -9,9 +9,10 @@
 import UIKit
 
 
-public protocol FontProperties {
+@objc public protocol FontProperties {
 	var fontName : String? { get set }
 	var color : UIColor { get set }
+	var fontSize : CGFloat { get set }
 }
 
 
@@ -20,14 +21,16 @@ A struct defining the styles that can be applied to the parsed Markdown. The `fo
 
 If that is not set, then the system default will be used.
 */
-public struct BasicStyles : FontProperties {
+@objc open class BasicStyles : NSObject, FontProperties {
 	public var fontName : String? = UIFont.preferredFont(forTextStyle: UIFontTextStyle.body).fontName
 	public var color = UIColor.black
+	public var fontSize : CGFloat = 0.0
 }
 
 enum LineType : Int {
 	case h1, h2, h3, h4, h5, h6, body
 }
+
 
 enum LineStyle : Int {
 	case none
@@ -52,11 +55,11 @@ enum LineStyle : Int {
 }
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
-open class SwiftyMarkdown {
+@objc open class SwiftyMarkdown: NSObject {
 	
 	/// The styles to apply to any H1 headers found in the Markdown
 	open var h1 = BasicStyles()
-
+	
 	/// The styles to apply to any H2 headers found in the Markdown
 	open var h2 = BasicStyles()
 	
@@ -77,7 +80,7 @@ open class SwiftyMarkdown {
 	
 	/// The styles to apply to any links found in the Markdown
 	open var link = BasicStyles()
-
+	
 	/// The styles to apply to any bold text found in the Markdown
 	open var bold = BasicStyles()
 	
@@ -86,10 +89,10 @@ open class SwiftyMarkdown {
 	
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
 	open var code = BasicStyles()
-
+	
 	
 	var currentType : LineType = .body
-
+	
 	
 	let string : String
 	let instructionSet = CharacterSet(charactersIn: "[\\*_`")
@@ -123,6 +126,50 @@ open class SwiftyMarkdown {
 	}
 	
 	/**
+	Set font size for all styles
+	
+	- parameter size: size of font
+	*/
+	open func setFontSizeForAllStyles(with size: CGFloat) {
+		h1.fontSize = size
+		h2.fontSize = size
+		h3.fontSize = size
+		h4.fontSize = size
+		h5.fontSize = size
+		h6.fontSize = size
+		body.fontSize = size
+		italic.fontSize = size
+		code.fontSize = size
+		link.fontSize = size
+	}
+	
+	open func setFontColorForAllStyles(with color: UIColor) {
+		h1.color = color
+		h2.color = color
+		h3.color = color
+		h4.color = color
+		h5.color = color
+		h6.color = color
+		body.color = color
+		italic.color = color
+		code.color = color
+		link.color = color
+	}
+	
+	open func setFontNameForAllStyles(with name: String) {
+		h1.fontName = name
+		h2.fontName = name
+		h3.fontName = name
+		h4.fontName = name
+		h5.fontName = name
+		h6.fontName = name
+		body.fontName = name
+		italic.fontName = name
+		code.fontName = name
+		link.fontName = name
+	}
+	
+	/**
 	Generates an NSAttributedString from the string or URL passed at initialisation. Custom fonts or styles are applied to the appropriate elements when this method is called.
 	
 	- returns: An NSAttributedString with the styles applied
@@ -149,13 +196,13 @@ open class SwiftyMarkdown {
 				if let range =  line.range(of: heading) , range.lowerBound == line.startIndex {
 					
 					let startHeadingString = line.replacingCharacters(in: range, with: "")
-
+					
 					// Remove ending
 					let endHeadingString = heading.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					line = startHeadingString.replacingOccurrences(of: endHeadingString, with: "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					
 					currentType = LineType(rawValue: headings.index(of: heading)!)!
-
+					
 					// We found a heading so break out of the inner loop
 					break
 				}
@@ -191,7 +238,7 @@ open class SwiftyMarkdown {
 				
 				while !scanner.isAtEnd {
 					var string : NSString?
-
+					
 					// Get all the characters up to the ones we are interested in
 					if scanner.scanUpToCharacters(from: instructionSet, into: &string) {
 						
@@ -209,10 +256,10 @@ open class SwiftyMarkdown {
 							if scanner.scanUpToCharacters(from: set as CharacterSet, into: nil) {
 								scanner.scanLocation = location
 								attributedString.append(self.attributedStringFromScanner(scanner))
-
+								
 							} else if matchedCharacters == "[" {
 								scanner.scanLocation = location
-								attributedString.append(self.attributedStringFromScanner(scanner))								
+								attributedString.append(self.attributedStringFromScanner(scanner))
 							} else {
 								
 								let charAtts = attributedStringFromString(matchedCharacters, withStyle: .none)
@@ -227,9 +274,9 @@ open class SwiftyMarkdown {
 			}
 			
 			// Append a new line character to the end of the processed line
-//			if lineCount < lines.count {
-				attributedString.append(NSAttributedString(string: "\n"))
-//			}
+			//			if lineCount < lines.count {
+			attributedString.append(NSAttributedString(string: "\n"))
+			//			}
 			currentType = .body
 		}
 		
@@ -238,9 +285,9 @@ open class SwiftyMarkdown {
 	
 	func attributedStringFromScanner( _ scanner : Scanner, atStartOfLine start : Bool = false) -> NSAttributedString {
 		var followingString : NSString?
-
+		
 		let results = self.tagFromScanner(scanner)
-
+		
 		var style = LineStyle.styleFromString(results.foundCharacters)
 		
 		var attributes = [String : AnyObject]()
@@ -263,12 +310,12 @@ open class SwiftyMarkdown {
 				style = .none
 			}
 		} else {
-			scanner.scanUpToCharacters(from: instructionSet, into: &followingString)		
+			scanner.scanUpToCharacters(from: instructionSet, into: &followingString)
 		}
 		
 		let attributedString = attributedStringFromString(results.escapedCharacters, withStyle: style).mutableCopy() as! NSMutableAttributedString
 		if let hasString = followingString as String? {
-
+			
 			let prefix = ( style == .code && start ) ? "\t" : ""
 			let attString = attributedStringFromString(prefix + hasString, withStyle: style, attributes: attributes)
 			attributedString.append(attString)
@@ -317,14 +364,16 @@ open class SwiftyMarkdown {
 	func attributedStringFromString(_ string : String, withStyle style : LineStyle, attributes : [String : AnyObject] = [:] ) -> NSAttributedString {
 		let textStyle : UIFontTextStyle
 		var fontName : String?
-        var attributes = attributes
-
+		var attributes = attributes
+		var fontSize : CGFloat?
+		
 		// What type are we and is there a font name set?
 		
 		
 		switch currentType {
 		case .h1:
 			fontName = h1.fontName
+			fontSize = h1.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFontTextStyle.title1
 			} else {
@@ -333,6 +382,7 @@ open class SwiftyMarkdown {
 			attributes[NSForegroundColorAttributeName] = h1.color
 		case .h2:
 			fontName = h2.fontName
+			fontSize = h2.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFontTextStyle.title2
 			} else {
@@ -341,6 +391,7 @@ open class SwiftyMarkdown {
 			attributes[NSForegroundColorAttributeName] = h2.color
 		case .h3:
 			fontName = h3.fontName
+			fontSize = h3.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFontTextStyle.title2
 			} else {
@@ -349,18 +400,22 @@ open class SwiftyMarkdown {
 			attributes[NSForegroundColorAttributeName] = h3.color
 		case .h4:
 			fontName = h4.fontName
+			fontSize = h4.fontSize
 			textStyle = UIFontTextStyle.headline
 			attributes[NSForegroundColorAttributeName] = h4.color
 		case .h5:
 			fontName = h5.fontName
+			fontSize = h5.fontSize
 			textStyle = UIFontTextStyle.subheadline
 			attributes[NSForegroundColorAttributeName] = h5.color
 		case .h6:
 			fontName = h6.fontName
+			fontSize = h6.fontSize
 			textStyle = UIFontTextStyle.footnote
 			attributes[NSForegroundColorAttributeName] = h6.color
 		default:
 			fontName = body.fontName
+			fontSize = body.fontSize
 			textStyle = UIFontTextStyle.body
 			attributes[NSForegroundColorAttributeName] = body.color
 			break
@@ -370,11 +425,13 @@ open class SwiftyMarkdown {
 		
 		if style == .code {
 			fontName = code.fontName
+			fontSize = code.fontSize
 			attributes[NSForegroundColorAttributeName] = code.color
 		}
 		
 		if style == .link {
 			fontName = link.fontName
+			fontSize = link.fontSize
 			attributes[NSForegroundColorAttributeName] = link.color
 		}
 		
@@ -385,9 +442,10 @@ open class SwiftyMarkdown {
 			fontName = body.fontName
 		}
 		
+		fontSize = fontSize == 0.0 ? nil : fontSize
 		let font = UIFont.preferredFont(forTextStyle: textStyle)
 		let styleDescriptor = font.fontDescriptor
-		let styleSize = styleDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] as? CGFloat ?? CGFloat(14)
+		let styleSize = fontSize ?? styleDescriptor.fontAttributes[UIFontDescriptorSizeAttribute] as? CGFloat ?? CGFloat(14)
 		
 		var finalFont : UIFont
 		if let finalFontName = fontName, let font = UIFont(name: finalFontName, size: styleSize) {
