@@ -275,6 +275,20 @@ class SwiftyMarkdownTests: XCTestCase {
 //		XCTAssertEqual(md.attributedString().string, "Twitter @VoyageTravelApp\n")
 	}
 	
+    /*
+        The reason for this test is because the list of items dropped every other item in bullet lists marked with "-"
+        The faulty result was: "A cool title\n \n- Här har vi svenska ÅÄÖåäö tecken\n \nA Link\n"
+        As you can see, "- Point number one" and "- Point number two" are mysteriously missing.
+        It incorrectly identified rows as `Alt-H2` 
+     */
+    func testInternationalCharactersInList() {
+        
+        let extected = "A cool title\n \n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n \nA Link\n"
+        let input = "# A cool title\n\n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n\n[A Link](http://dooer.com)"
+        let output = SwiftyMarkdown(string: input).attributedString().string
 
+        XCTAssertEqual(output, extected)
+        
+    }
 	
 }
