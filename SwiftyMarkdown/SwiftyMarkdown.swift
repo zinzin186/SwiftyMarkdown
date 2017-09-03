@@ -212,18 +212,24 @@ enum LineStyle : Int {
 			if lineCount  < lines.count {
 				let nextLine = lines[lineCount]
 				
-				if let range = nextLine.range(of: "=") , range.lowerBound == nextLine.startIndex {
+				let hasNonWhiteSpaceCharacters = (line.rangeOfCharacter(from: CharacterSet.whitespacesAndNewlines.inverted) != nil)
+                
+				if hasNonWhiteSpaceCharacters, let range = nextLine.range(of: "=") , range.lowerBound == nextLine.startIndex {
 					// Make H1
 					currentType = .h1
 					// We need to skip the next line
 					skipLine = true
 				}
 				
-				if let range = nextLine.range(of: "-") , range.lowerBound == nextLine.startIndex {
-					// Make H2
-					currentType = .h2
-					// We need to skip the next line
-					skipLine = true
+				if hasNonWhiteSpaceCharacters, let nextRange = nextLine.range(of: "-") , nextRange.lowerBound == nextLine.startIndex {
+					if let range = line.range(of: "-"), range.lowerBound == line.startIndex {
+						// This is a bullet list, not an `Alt-H2`, don't skip
+					} else {
+						// Make H2
+						currentType = .h2
+						// We need to skip the next line
+						skipLine = true
+					}
 				}
 			}
 			
