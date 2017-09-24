@@ -349,7 +349,7 @@ enum LineStyle : Int {
 				
 				if matchedCharacters.characters.count > 1 {
 					let newRange = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
-					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange).replacingOccurrences(of: "\\", with: "")
+					foundCharacters = foundCharacters + matchedCharacters[newRange].replacingOccurrences(of: "\\", with: "")
 					
 					matchedCharacters.removeSubrange(newRange)
 				} else {
