@@ -14,7 +14,7 @@ var matchedCharacters : String = "\\Some string ''\\"
 if let hasRange = matchedCharacters.range(of: "\\") {
 	
 	let newRange  = hasRange.lowerBound..<hasRange.upperBound
-	foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange)
+	foundCharacters = foundCharacters + matchedCharacters[newRange]
 	
 	matchedCharacters.removeSubrange(newRange)
 }

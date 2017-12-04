@@ -27,6 +27,7 @@ xcode-select --install
 <td width="33%"><code>sudo gem install fastlane -NV</code></td>
 </tr>
 </table>
+
 # Available Actions
 ## iOS
 ### ios patch
@@ -80,6 +81,11 @@ This does the following:
 - Pushes it to the remote repository
 
 - Updates the spec repository
+### ios test
+```
+fastlane ios test
+```
+
 ### ios submit_pod
 ```
 fastlane ios submit_pod
