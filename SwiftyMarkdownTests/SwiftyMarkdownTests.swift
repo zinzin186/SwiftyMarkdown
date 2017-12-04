@@ -28,13 +28,13 @@ class SwiftyMarkdownTests: XCTestCase {
 		let headerStringWithItalic = "## Header 2 _With Italics_"
 		
 		var md = SwiftyMarkdown(string: headerString)
-		XCTAssertEqual(md.attributedString().string, "Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6\n")
+		XCTAssertEqual(md.attributedString().string, "Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6")
 		
 		 md = SwiftyMarkdown(string: headerStringWithBold)
-		XCTAssertEqual(md.attributedString().string, "Bold Header 1\n")
+		XCTAssertEqual(md.attributedString().string, "Bold Header 1")
 		
 		md = SwiftyMarkdown(string: headerStringWithItalic)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Italics\n")
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Italics")
 		
 	}
 	
@@ -47,19 +47,19 @@ class SwiftyMarkdownTests: XCTestCase {
 		let h2StringWithCode = "Header 2 `With Code`\n---\nSome following text"
 		
 		var md = SwiftyMarkdown(string: h1String)
-		XCTAssertEqual(md.attributedString().string, "Header 1\nSome following text\n")
+		XCTAssertEqual(md.attributedString().string, "Header 1\nSome following text")
 		
 		md = SwiftyMarkdown(string: h2String)
-		XCTAssertEqual(md.attributedString().string, "Header 2\nSome following text\n")
+		XCTAssertEqual(md.attributedString().string, "Header 2\nSome following text")
 		
 		md = SwiftyMarkdown(string: h1StringWithBold)
-		XCTAssertEqual(md.attributedString().string, "Header 1 With Bold\nSome following text\n")
+		XCTAssertEqual(md.attributedString().string, "Header 1 With Bold\nSome following text")
 		
 		md = SwiftyMarkdown(string: h2StringWithItalic)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Italic\nSome following text\n")
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Italic\nSome following text")
 		
 		md = SwiftyMarkdown(string: h2StringWithCode)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Code\nSome following text\n")
+		XCTAssertEqual(md.attributedString().string, "Header 2 With Code\nSome following text")
 	}
 	
 	func testThatRegularTraitsAreParsedCorrectly() {
@@ -78,34 +78,34 @@ class SwiftyMarkdownTests: XCTestCase {
 		
 		
 		var md = SwiftyMarkdown(string: boldAtStartOfString)
-		XCTAssertEqual(md.attributedString().string, "A bold string\n")
+		XCTAssertEqual(md.attributedString().string, "A bold string")
 		
 		md = SwiftyMarkdown(string: boldWithinString)
-		XCTAssertEqual(md.attributedString().string, "A string with a bold word\n")
+		XCTAssertEqual(md.attributedString().string, "A string with a bold word")
 		
 		md = SwiftyMarkdown(string: codeAtStartOfString)
-		XCTAssertEqual(md.attributedString().string, "\tCode (should be indented)\n")
+		XCTAssertEqual(md.attributedString().string, "\tCode (should be indented)")
 		
 		md = SwiftyMarkdown(string: codeWithinString)
-		XCTAssertEqual(md.attributedString().string, "A string with code (should not be indented)\n")
+		XCTAssertEqual(md.attributedString().string, "A string with code (should not be indented)")
 		
 		md = SwiftyMarkdown(string: italicAtStartOfString)
-		XCTAssertEqual(md.attributedString().string, "An italicised string\n")
+		XCTAssertEqual(md.attributedString().string, "An italicised string")
 		
 		md = SwiftyMarkdown(string: italicWithinString)
-		XCTAssertEqual(md.attributedString().string, "A string with italicised text\n")
+		XCTAssertEqual(md.attributedString().string, "A string with italicised text")
 		
 		md = SwiftyMarkdown(string: multipleBoldWords)
-		XCTAssertEqual(md.attributedString().string, "A bold string with a mix of bold styles\n")
+		XCTAssertEqual(md.attributedString().string, "A bold string with a mix of bold styles")
 		
 		md = SwiftyMarkdown(string: multipleCodeWords)
-		XCTAssertEqual(md.attributedString().string, "\tA code string with multiple code instances\n")
+		XCTAssertEqual(md.attributedString().string, "\tA code string with multiple code instances")
 		
 		md = SwiftyMarkdown(string: multipleItalicWords)
-		XCTAssertEqual(md.attributedString().string, "An italic string with a mix of italic styles\n")
+		XCTAssertEqual(md.attributedString().string, "An italic string with a mix of italic styles")
 
 		md = SwiftyMarkdown(string: longMixedString)
-		XCTAssertEqual(md.attributedString().string, "An italic string, follwed by a bold one, with some code, **and some** _escaped_ `characters`, ending with more variety.\n")
+		XCTAssertEqual(md.attributedString().string, "An italic string, follwed by a bold one, with some code, **and some** _escaped_ `characters`, ending with more variety.")
 		
 	}
 	
@@ -114,10 +114,10 @@ class SwiftyMarkdownTests: XCTestCase {
 		let mismatchedBoldCharactersWithin = "A string *that should be italic**"
 		
 		var md = SwiftyMarkdown(string: mismatchedBoldCharactersAtStart)
-		XCTAssertEqual(md.attributedString().string, "This should be bold\n")
+		XCTAssertEqual(md.attributedString().string, "This should be bold")
 		
 		md = SwiftyMarkdown(string: mismatchedBoldCharactersWithin)
-		XCTAssertEqual(md.attributedString().string, "A string that should be italic\n")
+		XCTAssertEqual(md.attributedString().string, "A string that should be italic")
 		
 	}
 	
@@ -138,39 +138,42 @@ class SwiftyMarkdownTests: XCTestCase {
 		let oneEscapedAsteriskTwoNormalWithin = "A string with *\\**escaped**\\* asterisks"
 		
 		var md = SwiftyMarkdown(string: escapedBoldAtStart)
-		XCTAssertEqual(md.attributedString().string, "**A normal string**\n")
+		XCTAssertEqual(md.attributedString().string, "**A normal string**")
 
 		md = SwiftyMarkdown(string: escapedBoldWithin)
-		XCTAssertEqual(md.attributedString().string, "A string with **escaped** asterisks\n")
+		XCTAssertEqual(md.attributedString().string, "A string with **escaped** asterisks")
 		
 		md = SwiftyMarkdown(string: escapedItalicAtStart)
-		XCTAssertEqual(md.attributedString().string, "_A normal string_\n")
+		XCTAssertEqual(md.attributedString().string, "_A normal string_")
 		
 		md = SwiftyMarkdown(string: escapedItalicWithin)
-		XCTAssertEqual(md.attributedString().string, "A string with _escaped_ underscores\n")
+		XCTAssertEqual(md.attributedString().string, "A string with _escaped_ underscores")
 		
 		md = SwiftyMarkdown(string: escapedBackticksAtStart)
-		XCTAssertEqual(md.attributedString().string, "`A normal string`\n")
+		XCTAssertEqual(md.attributedString().string, "`A normal string`")
 		
 		md = SwiftyMarkdown(string: escapedBacktickWithin)
-		XCTAssertEqual(md.attributedString().string, "A string with `escaped` backticks\n")
+		XCTAssertEqual(md.attributedString().string, "A string with `escaped` backticks")
 		
 		md = SwiftyMarkdown(string: oneEscapedAsteriskOneNormalAtStart)
-		XCTAssertEqual(md.attributedString().string, "*A normal string*\n")
+		XCTAssertEqual(md.attributedString().string, "*A normal string*")
 		
 		md = SwiftyMarkdown(string: oneEscapedAsteriskOneNormalWithin)
-		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks\n")
+		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks")
 		
 		md = SwiftyMarkdown(string: oneEscapedAsteriskTwoNormalAtStart)
-		XCTAssertEqual(md.attributedString().string, "*A normal string*\n")
+		XCTAssertEqual(md.attributedString().string, "*A normal string*")
 		
 		md = SwiftyMarkdown(string: oneEscapedAsteriskTwoNormalWithin)
-		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks\n")
+		XCTAssertEqual(md.attributedString().string, "A string with *escaped* asterisks")
 		
 	}
 	
 	func testThatAsterisksAndUnderscoresNotAttachedToWordsAreNotRemoved() {
-		let asteriskSpace = "An asterisk followed by a space: * "
+		let asteriskSpace = """
+An asterisk followed by a space: *
+Line break
+"""
 		let backtickSpace = "A backtick followed by a space: ` "
 		let underscoreSpace = "An underscore followed by a space: _ "
 
@@ -187,40 +190,40 @@ class SwiftyMarkdownTests: XCTestCase {
 		let underscoreWithItalic = "An _italic_ word followed by an underscore _ "
 		
 		var md = SwiftyMarkdown(string: asteriskSpace)
-		XCTAssertEqual(md.attributedString().string, asteriskSpace + "\n")
+		XCTAssertEqual(md.attributedString().string, asteriskSpace)
 		
 		md = SwiftyMarkdown(string: backtickSpace)
-		XCTAssertEqual(md.attributedString().string, backtickSpace + "\n")
+		XCTAssertEqual(md.attributedString().string, backtickSpace)
 		
 		md = SwiftyMarkdown(string: underscoreSpace)
-		XCTAssertEqual(md.attributedString().string, underscoreSpace + "\n")
+		XCTAssertEqual(md.attributedString().string, underscoreSpace)
 		
 		md = SwiftyMarkdown(string: asteriskFullStop)
-		XCTAssertEqual(md.attributedString().string, asteriskFullStop + "\n")
+		XCTAssertEqual(md.attributedString().string, asteriskFullStop)
 		
 		md = SwiftyMarkdown(string: backtickFullStop)
-		XCTAssertEqual(md.attributedString().string, backtickFullStop + "\n")
+		XCTAssertEqual(md.attributedString().string, backtickFullStop)
 		
 		md = SwiftyMarkdown(string: underscoreFullStop)
-		XCTAssertEqual(md.attributedString().string, underscoreFullStop + "\n")
+		XCTAssertEqual(md.attributedString().string, underscoreFullStop)
 		
 		md = SwiftyMarkdown(string: asteriskComma)
-		XCTAssertEqual(md.attributedString().string, asteriskComma + "\n")
+		XCTAssertEqual(md.attributedString().string, asteriskComma)
 		
 		md = SwiftyMarkdown(string: backtickComma)
-		XCTAssertEqual(md.attributedString().string, backtickComma + "\n")
+		XCTAssertEqual(md.attributedString().string, backtickComma)
 		
 		md = SwiftyMarkdown(string: underscoreComma)
-		XCTAssertEqual(md.attributedString().string, underscoreComma + "\n")
+		XCTAssertEqual(md.attributedString().string, underscoreComma)
 		
 		md = SwiftyMarkdown(string: asteriskWithBold)
-		XCTAssertEqual(md.attributedString().string, "A bold word followed by an asterisk * \n")
+		XCTAssertEqual(md.attributedString().string, "A bold word followed by an asterisk * ")
 		
 		md = SwiftyMarkdown(string: backtickWithCode)
-		XCTAssertEqual(md.attributedString().string, "A code word followed by a backtick ` \n")
+		XCTAssertEqual(md.attributedString().string, "A code word followed by a backtick ` ")
 		
 		md = SwiftyMarkdown(string: underscoreWithItalic)
-		XCTAssertEqual(md.attributedString().string, "An italic word followed by an underscore _ \n")
+		XCTAssertEqual(md.attributedString().string, "An italic word followed by an underscore _ ")
 		
 	}
 		
@@ -242,48 +245,48 @@ class SwiftyMarkdownTests: XCTestCase {
 		let syntaxErrorParenthesisWithin = "A [Link](http://voyagetravelapps.com/"
 		
 		var md = SwiftyMarkdown(string: linkAtStart)
-		XCTAssertEqual(md.attributedString().string, "Link at start\n")
+		XCTAssertEqual(md.attributedString().string, "Link at start")
 		
 		md = SwiftyMarkdown(string: linkWithin)
-		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		XCTAssertEqual(md.attributedString().string, "A Link")
 		
 		md = SwiftyMarkdown(string: headerLink)
-		XCTAssertEqual(md.attributedString().string, "Header link\n")
+		XCTAssertEqual(md.attributedString().string, "Header link")
 		
 		md = SwiftyMarkdown(string: multipleLinks)
-		XCTAssertEqual(md.attributedString().string, "Link 1, Link 2\n")
+		XCTAssertEqual(md.attributedString().string, "Link 1, Link 2")
 		
 		md = SwiftyMarkdown(string: syntaxErrorSquareBracketAtStart)
-		XCTAssertEqual(md.attributedString().string, "Link with missing square\n")
+		XCTAssertEqual(md.attributedString().string, "Link with missing square")
 		
 		md = SwiftyMarkdown(string: syntaxErrorSquareBracketWithin)
-		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		XCTAssertEqual(md.attributedString().string, "A Link")
 		
 		md = SwiftyMarkdown(string: syntaxErrorParenthesisAtStart)
-		XCTAssertEqual(md.attributedString().string, "Link with missing parenthesis\n")
+		XCTAssertEqual(md.attributedString().string, "Link with missing parenthesis")
 		
 		md = SwiftyMarkdown(string: syntaxErrorParenthesisWithin)
-		XCTAssertEqual(md.attributedString().string, "A Link\n")
+		XCTAssertEqual(md.attributedString().string, "A Link")
 		
 		md = SwiftyMarkdown(string: mailtoAndTwitterLinks)
-		XCTAssertEqual(md.attributedString().string, "Email us at simon@voyagetravelapps.com Twitter @VoyageTravelApp\n")
+		XCTAssertEqual(md.attributedString().string, "Email us at simon@voyagetravelapps.com Twitter @VoyageTravelApp")
 		
 	
 		
 //		let mailtoAndTwitterLinks = "Twitter [@VoyageTravelApp](twitter://user?screen_name=VoyageTravelApp)"
 //		let md = SwiftyMarkdown(string: mailtoAndTwitterLinks)
-//		XCTAssertEqual(md.attributedString().string, "Twitter @VoyageTravelApp\n")
+//		XCTAssertEqual(md.attributedString().string, "Twitter @VoyageTravelApp")
 	}
 	
     /*
         The reason for this test is because the list of items dropped every other item in bullet lists marked with "-"
-        The faulty result was: "A cool title\n \n- Här har vi svenska ÅÄÖåäö tecken\n \nA Link\n"
+        The faulty result was: "A cool title\n \n- Här har vi svenska ÅÄÖåäö tecken\n \nA Link"
         As you can see, "- Point number one" and "- Point number two" are mysteriously missing.
         It incorrectly identified rows as `Alt-H2` 
      */
     func testInternationalCharactersInList() {
         
-        let extected = "A cool title\n \n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n \nA Link\n"
+        let extected = "A cool title\n \n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n \nA Link"
         let input = "# A cool title\n\n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n\n[A Link](http://dooer.com)"
         let output = SwiftyMarkdown(string: input).attributedString().string
 
