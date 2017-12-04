@@ -234,7 +234,7 @@ enum LineStyle : Int {
 			}
 			
 			// If this is not an empty line...
-			if line.characters.count > 0 {
+			if line.count > 0 {
 				
 				// ...start scanning
 				let scanner = Scanner(string: line)
@@ -347,7 +347,7 @@ enum LineStyle : Int {
 		while matchedCharacters.contains("\\") {
 			if let hasRange = matchedCharacters.range(of: "\\") {
 				
-				if matchedCharacters.characters.count > 1 {
+				if matchedCharacters.count > 1 {
 					let newRange = hasRange.lowerBound..<matchedCharacters.index(hasRange.upperBound, offsetBy: 1)
 					foundCharacters = foundCharacters + matchedCharacters.substring(with: newRange).replacingOccurrences(of: "\\", with: "")
 					
