@@ -8,17 +8,9 @@ let package = Package(
         .tvOS(SupportedPlatform.TVOSVersion.v9),
     ],
     products: [
-        .library(
-            name: "SwiftyMarkdown",
-            targets: ["SwiftyMarkdown"]),
+        .library(name: "SwiftyMarkdown", targets: ["SwiftyMarkdown"]),
     ],
     targets: [
-        .target(
-            name: "SwiftyMarkdown",
-            path: "SwiftyMarkdown"),
-        .testTarget(
-            name: "SwiftyMarkdownTests",
-            dependencies: ["SwiftyMarkdown"],
-            path: "SwiftyMarkdownTests"),
+        .target(name: "SwiftyMarkdown", path: "SwiftyMarkdown"),
     ]
 )
