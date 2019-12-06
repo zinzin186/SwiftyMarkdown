@@ -22,7 +22,7 @@ A struct defining the styles that can be applied to the parsed Markdown. The `fo
 If that is not set, then the system default will be used.
 */
 @objc open class BasicStyles : NSObject, FontProperties {
-	public var fontName : String? = UIFont.preferredFont(forTextStyle: UIFont.TextStyle.body).fontName
+	public var fontName : String? 
 	public var color = UIColor.black
 	public var fontSize : CGFloat = 0.0
 }
@@ -30,7 +30,6 @@ If that is not set, then the system default will be used.
 enum LineType : Int {
 	case h1, h2, h3, h4, h5, h6, body
 }
-
 
 enum LineStyle : Int {
 	case none
