@@ -200,7 +200,7 @@ enum LineStyle : Int {
 					let endHeadingString = heading.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					line = startHeadingString.replacingOccurrences(of: endHeadingString, with: "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 					
-					currentType = LineType(rawValue: headings.index(of: heading)!)!
+					currentType = LineType(rawValue: headings.firstIndex(of: heading)!)!
 					
 					// We found a heading so break out of the inner loop
 					break
