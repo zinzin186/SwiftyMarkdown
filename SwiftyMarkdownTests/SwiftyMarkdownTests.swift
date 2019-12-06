@@ -286,12 +286,19 @@ Line break
      */
     func testInternationalCharactersInList() {
         
-        let extected = "A cool title\n \n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n \nA Link"
+        let expected = "A cool title\n \n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n \nA Link"
         let input = "# A cool title\n\n- Point number one\n- Här har vi svenska ÅÄÖåäö tecken\n- Point number two\n\n[A Link](http://dooer.com)"
         let output = SwiftyMarkdown(string: input).attributedString().string
 
-        XCTAssertEqual(output, extected)
+        XCTAssertEqual(output, expected)
         
     }
+	
+	func testReportedCrashingStrings() {
+		let text = "[**\\!bang**](https://duckduckgo.com/bang) "
+		let expected = "\\!bang"
+		let output = SwiftyMarkdown(string: text).attributedString().string
+		XCTAssertEqual(output, expected)
+	}
 	
 }
