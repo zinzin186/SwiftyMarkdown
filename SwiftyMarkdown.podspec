@@ -14,6 +14,6 @@ s.requires_arc = true
 
 s.source_files = 'SwiftyMarkdown/'
 
-s.swift_version = 5.0
+s.swift_version = "5.0"
 
 end
