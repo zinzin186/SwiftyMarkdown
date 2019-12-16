@@ -47,7 +47,7 @@ if let url = Bundle.main.url(forResource: "file", withExtension: "md"), md = Swi
     
     `code`
     [Links](http://voyagetravelapps.com/)
-    ![Images](<Name of asset in bundle, or URL>)
+    ![Images](<Name of asset in bundle>)
     
     > Blockquotes
 		
@@ -62,8 +62,11 @@ md.body.fontName = "AvenirNextCondensed-Medium"
 md.h1.color = UIColor.redColor()
 md.h1.fontName = "AvenirNextCondensed-Bold"
 md.h1.fontSize = 16
+
+md.italic.color = UIColor.blueColor()
+
+md.underlineLinks = true
 ```
-	md.italic.color = UIColor.blueColor()
 
 ## Screenshot
 
