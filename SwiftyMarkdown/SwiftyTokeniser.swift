@@ -146,6 +146,7 @@ public class SwiftyTokeniser {
 				var newTokens : [Token] = []
 				for token in replacements[key]! {
 					var newToken = token
+					newToken.metadataString = existingToken.metadataString
 					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
 					newTokens.append(newToken)
 				}
@@ -158,6 +159,9 @@ public class SwiftyTokeniser {
 	func handleClosingTagFromOpenTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule ) {
 		
 		guard rule.closingTag != nil else {
+			return
+		}
+		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
 			return
 		}
 		
@@ -175,21 +179,25 @@ public class SwiftyTokeniser {
 				}
 			}
 		}
-		
-		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
-			return
-		}
+
 		var metadataString : String = ""
 		for i in metadataIndex..<closeTokenIdx {
-			var otherTokens = tokens[i]
-			otherTokens.type = .metadata
-			tokens[i] = otherTokens
-			metadataString.append(otherTokens.outputString)
+			if tokens[i].type == .string {
+				metadataString.append(tokens[i].outputString)
+				tokens[i].type = .metadata
+			}
 		}
+		
+		for i in index..<metadataIndex {
+			if tokens[i].type == .string {
+				tokens[i].metadataString = metadataString
+			}
+		}
+		
 		tokens[closeTokenIdx].type = .processed
 		tokens[metadataIndex].type = .processed
 		tokens[index].type = .processed
-		tokens[index].metadataString = metadataString
+		
 		
 		
 		

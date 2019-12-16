@@ -482,7 +482,6 @@ public class SwiftyTokeniser {
 }
 
 
-
 // Example customisation
 public enum CharacterStyle : CharacterStyling {
 	case none
@@ -557,11 +556,34 @@ let challenge10 = TokenTest(input: "A string with a **bold** word", output: "A s
 	Token(type: .string, inputString: " word", characterStyles: [])
 ])
 
+let oneEscapedAsteriskOneNormalAtStart = TokenTest(input: "\\**A normal string\\**", output: "*A normal string*", tokens: [
+	Token(type: .string, inputString: "*", characterStyles: []),
+	Token(type: .string, inputString: "A normal string*", characterStyles: [CharacterStyle.italic]),
+])
+
+
 let escapedBoldAtStart = TokenTest(input: "\\*\\*A normal string\\*\\*", output: "**A normal string**", tokens: [
 	Token(type: .string, inputString: "**A normal string**", characterStyles: [])
 ])
 
-let challenges = [escapedBoldAtStart]
+let escapedBoldWithin = TokenTest(input: "A string with \\*\\*escaped\\*\\* asterisks", output: "A string with **escaped** asterisks", tokens: [
+	Token(type: .string, inputString: "A string with **escaped** asterisks", characterStyles: [])
+])
+
+let oneEscapedAsteriskOneNormalWithin = TokenTest(input: "A string with one \\**escaped\\** asterisk, one not at either end", output: "A string with one *escaped* asterisk, one not at either end", tokens: [
+	Token(type: .string, inputString: "A string with one *", characterStyles: []),
+	Token(type: .string, inputString: "escaped*", characterStyles: [CharacterStyle.italic]),
+	Token(type: .string, inputString: " asterisk, one not at either end", characterStyles: [])
+])
+
+let oneEscapedAsteriskTwoNormalWithin = TokenTest(input: "A string with randomly *\\**escaped**\\* asterisks", output: "A string with randomly **escaped** asterisks", tokens: [
+	Token(type: .string, inputString: "A string with randomly **", characterStyles: []),
+	Token(type: .string, inputString: "escaped", characterStyles: [CharacterStyle.italic]),
+	Token(type: .string, inputString: "** asterisks", characterStyles: [])
+])
+
+
+let challenges = [oneEscapedAsteriskTwoNormalWithin]
 
 var links = CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1)
 var codeblock = CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1)
