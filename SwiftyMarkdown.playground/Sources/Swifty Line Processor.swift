@@ -1,3 +1,11 @@
+//
+//  SwiftyLineProcessor.swift
+//  SwiftyMarkdown
+//
+//  Created by Simon Fairbairn on 16/12/2019.
+//  Copyright © 2019 Voyage Travel Apps. All rights reserved.
+//
+
 import Foundation
 
 public protocol LineStyling {
@@ -70,7 +78,7 @@ public class SwiftyLineProcessor {
     
     func findTrailingLineElement( _ element : LineRule, in string : String ) -> String {
         var output = string
-        var token = element.token.trimmingCharacters(in: .whitespaces)
+        let token = element.token.trimmingCharacters(in: .whitespaces)
         if let range = output.index(output.endIndex, offsetBy: -(token.count), limitedBy: output.startIndex), output[range..<output.endIndex] == token {
             output.removeSubrange(range..<output.endIndex)
             return output
@@ -91,13 +99,12 @@ public class SwiftyLineProcessor {
                 return SwiftyLine(line: "", lineStyle: element.type)
             }
         }
-        var rules = lineRules.filter({ $0.changeAppliesTo == .current })
         for element in lineRules {
             guard element.token.count > 0 else {
                 continue
             }
             var output : String = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
-            var unprocessed = output
+            let unprocessed = output
             
             switch element.removeFrom {
             case .leading:

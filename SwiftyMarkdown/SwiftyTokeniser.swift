@@ -43,18 +43,20 @@ public struct CharacterRule {
 	public var spacesAllowed : SpaceAllowed = .oneSide
 	public var cancels : Cancel = .none
 	
-	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1) {
+	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1, cancels : Cancel = .none) {
 		self.openTag = openTag
 		self.intermediateTag = intermediateTag
 		self.closingTag = closingTag
 		self.escapeCharacter = escapeCharacter
 		self.styles = styles
 		self.maxTags = maxTags
+		self.cancels = cancels
 	}
 }
 
 // Token definition
 public enum TokenType {
+	case repeatingTag
 	case openTag
 	case intermediateTag
 	case closeTag
@@ -77,13 +79,15 @@ public struct Token {
 	public var outputString : String {
 		get {
 			switch self.type {
-			case .openTag, .closeTag, .intermediateTag:
+			case .repeatingTag:
 				if count == 0 {
 					return ""
 				} else {
 					let range = inputString.startIndex..<inputString.index(inputString.startIndex, offsetBy: self.count)
 					return String(inputString[range])
 				}
+			case .openTag, .closeTag, .intermediateTag:
+				return inputString
 			case .metadata, .processed:
 				return ""
 			case .escape, .string:
@@ -119,20 +123,22 @@ public class SwiftyTokeniser {
 				currentTokens = self.applyStyles(to: self.scan(inputString, with: nextRule), usingRule: nextRule)
 				continue
 			}
-			
 			// Each string could have additional tokens within it, so they have to be scanned as well with the current rule.
 			// The one string token might then be exploded into multiple more tokens
 			var replacements : [Int : [Token]] = [:]
 			for (idx,token) in currentTokens.enumerated() {
 				switch token.type {
 				case .string:
-					let nextTokens = self.scan(token.outputString, with: nextRule)
-					replacements[idx] = self.applyStyles(to: nextTokens, usingRule: nextRule)
+					
+					if !token.shouldSkip {
+						let nextTokens = self.scan(token.outputString, with: nextRule)
+						replacements[idx] = self.applyStyles(to: nextTokens, usingRule: nextRule)
+					}
+					
 				default:
 					break
 				}
 			}
-			
 			// This replaces the individual string tokens with the new token arrays
 			// making sure to apply any previously found styles to the new tokens.
 			for key in replacements.keys.sorted(by: { $0 > $1 }) {
@@ -191,7 +197,6 @@ public class SwiftyTokeniser {
 	
 	
 	func applyStyles( to tokens : [Token], usingRule rule : CharacterRule ) -> [Token] {
-		var nextTokens : [Token] = []
 		var mutableTokens : [Token] = tokens
 		print( tokens.map( { ( $0.outputString, $0.count )}))
 		for idx in 0..<mutableTokens.count {
@@ -199,22 +204,11 @@ public class SwiftyTokeniser {
 			switch token.type {
 			case .escape:
 				print( "Found escape (\(token.inputString))" )
-				nextTokens.append(token)
-			case .openTag:
+			case .repeatingTag:
 				let theToken = mutableTokens[idx]
-				print ("Found open tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
-				
-				guard rule.closingTag == nil else {
-					
-					// If there's an intermediate tag, get the index of that
-					self.handleClosingTagFromOpenTag(withIndex: idx, in: &mutableTokens, following: rule)
-					// Get the index of the closing tag
-					
-					continue
-				}
+				print ("Found repeating tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
 				
 				guard theToken.count > 0 else {
-					nextTokens.append(theToken)
 					continue
 				}
 				
@@ -225,49 +219,58 @@ public class SwiftyTokeniser {
 					endIdx = nextTokenIdx
 				}
 				guard let existentEnd = endIdx else {
-					nextTokens.append(theToken)
 					continue
 				}
 				
 				let styles : [CharacterStyling] = rule.styles[theToken.count] ?? []
 				for i in startIdx..<existentEnd {
-					var otherTokens = mutableTokens[i]
 					for style in styles {
-						otherTokens.characterStyles.append(style)
+						mutableTokens[i].characterStyles.append(style)
 					}
-					mutableTokens[i] = otherTokens
+					if rule.cancels == .allRemaining {
+						mutableTokens[i].shouldSkip = true
+					}
 				}
-				var newToken = theToken
-				newToken.count = 0
-				nextTokens.append(newToken)
-				mutableTokens[idx] = newToken
+				mutableTokens[idx].count = 0
+				mutableTokens[existentEnd].count = 0
+			case .openTag:
+				let theToken = mutableTokens[idx]
+				print ("Found open tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
 				
-				var closeToken = mutableTokens[existentEnd]
-				closeToken.count = 0
-				mutableTokens[existentEnd] = closeToken
+				guard rule.closingTag != nil else {
+					
+					// If there's an intermediate tag, get the index of that
+					
+					// Get the index of the closing tag
+					
+					continue
+				}
+				self.handleClosingTagFromOpenTag(withIndex: idx, in: &mutableTokens, following: rule)
+				
+				
 			case .intermediateTag:
 				let theToken = mutableTokens[idx]
 				print ("Found intermediate tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
-				nextTokens.append(theToken)
+				
 			case .closeTag:
 				let theToken = mutableTokens[idx]
 				print ("Found close tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
-				nextTokens.append(theToken)
+				
 			case .string:
 				let theToken = mutableTokens[idx]
 				print ("Found String: \(theToken.inputString)" )
-				nextTokens.append(theToken)
+				
 			case .metadata:
 				let theToken = mutableTokens[idx]
 				print ("Found metadata: \(theToken.inputString)" )
-				nextTokens.append(theToken)
+				
 			case .processed:
 				let theToken = mutableTokens[idx]
 				print ("Found already processed tag: \(theToken.inputString)" )
-				nextTokens.append(theToken)
+				
 			}
 		}
-		return nextTokens
+		return mutableTokens
 	}
 	
 	
@@ -280,6 +283,7 @@ public class SwiftyTokeniser {
 			set.insert(charactersIn: String(existentEscape))
 		}
 		
+		var openTagFound = false
 		var openingString = ""
 		while !scanner.isAtEnd {
 			
@@ -322,10 +326,9 @@ public class SwiftyTokeniser {
 			
 			guard let foundChars = maybeFoundChars else {
 				tokens.append(Token(type: .string, inputString: "\(openingString)"))
+				openingString = ""
 				continue
 			}
-			
-			
 			
 			if !validateSpacing(nextCharacter: nextChar, previousCharacter: lastChar, with: rule) {
 				let escapeString = String("\(rule.escapeCharacter ?? Character(""))")
@@ -367,7 +370,9 @@ public class SwiftyTokeniser {
 					tokens.append(Token(type: .string, inputString: "\(openingString)"))
 					openingString = ""
 				}
-				var token = Token(type: type, inputString: inputString)
+				let actualType : TokenType = ( rule.intermediateTag == nil && rule.closingTag == nil ) ? .repeatingTag : type
+				
+				var token = Token(type: actualType, inputString: inputString)
 				if rule.closingTag == nil {
 					token.count = inputString.count
 				}
@@ -415,26 +420,30 @@ public class SwiftyTokeniser {
 				if cumulativeString == rule.openTag {
 					openString.append(char)
 					cumulativeString = ""
-				} else if cumulativeString == rule.intermediateTag {
+					openTagFound = true
+				} else if cumulativeString == rule.intermediateTag, openTagFound {
 					intermediateString.append(cumulativeString)
 					cumulativeString = ""
-				} else if cumulativeString == rule.closingTag {
+				} else if cumulativeString == rule.closingTag, openTagFound {
 					closedString.append(char)
 					cumulativeString = ""
+					openTagFound = false
 				}
 			}
-			
 			// If we're here, it means that an escape character was found but without a corresponding
 			// tag, which means it might belong to a different rule.
 			// It should be added to the next group of regular characters
-			if maybeEscapeNext {
-				openingString.append( cumulativeString )
-			}
+			
 			addToken(for: .openTag)
 			addToken(for: .intermediateTag)
 			addToken(for: .closeTag)
-		
+			openingString.append( cumulativeString )
 		}
+		
+		if !openingString.isEmpty {
+			tokens.append(Token(type: .string, inputString: "\(openingString)"))
+		}
+		
 		return tokens
 	}
 	

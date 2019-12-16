@@ -2,12 +2,7 @@
 <playground version='6.0' target-platform='ios' last-migration='1120'>
     <pages>
         <page name='Scanner Tests'/>
-        <page name='Untitled Page'/>
-        <page name='Tokenising'/>
-        <page name='SwiftyMarkdown'/>
-        <page name='Tokenise'/>
         <page name='Line Processing'/>
-        <page name='Removal List'/>
-        <page name='Fucking Again'/>
+        <page name='Tokenising'/>
     </pages>
 </playground>
