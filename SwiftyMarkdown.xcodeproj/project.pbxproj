@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F44E3F46239C365A00508290 /* String+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */; };
+		F49A0DA623A711920005B8B2 /* SwiftyLineProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */; };
+		F49A0DA823A71A2C0005B8B2 /* SwiftyTokeniser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */; };
 		F4CE98851C8A921300D735C1 /* SwiftyMarkdown.h in Headers */ = {isa = PBXBuildFile; fileRef = F4CE98841C8A921300D735C1 /* SwiftyMarkdown.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F4CE988C1C8A921300D735C1 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4CE98811C8A921300D735C1 /* SwiftyMarkdown.framework */; };
 		F4CE98911C8A921300D735C1 /* SwiftyMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98901C8A921300D735C1 /* SwiftyMarkdownTests.swift */; };
@@ -26,6 +29,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
+		F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
+		F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyTokeniser.swift; sourceTree = "<group>"; };
 		F4CE98811C8A921300D735C1 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftyMarkdown.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4CE98841C8A921300D735C1 /* SwiftyMarkdown.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftyMarkdown.h; sourceTree = "<group>"; };
 		F4CE98861C8A921300D735C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -84,6 +90,9 @@
 				F4CE98841C8A921300D735C1 /* SwiftyMarkdown.h */,
 				F4CE98861C8A921300D735C1 /* Info.plist */,
 				F4CE989B1C8A922E00D735C1 /* SwiftyMarkdown.swift */,
+				F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */,
+				F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */,
+				F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */,
 			);
 			path = SwiftyMarkdown;
 			sourceTree = "<group>";
@@ -211,7 +220,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F49A0DA623A711920005B8B2 /* SwiftyLineProcessor.swift in Sources */,
 				F4CE989C1C8A922E00D735C1 /* SwiftyMarkdown.swift in Sources */,
+				F49A0DA823A71A2C0005B8B2 /* SwiftyTokeniser.swift in Sources */,
+				F44E3F46239C365A00508290 /* String+SwiftyMarkdown.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

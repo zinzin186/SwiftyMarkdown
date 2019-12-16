@@ -18,6 +18,9 @@ if let hasRange = matchedCharacters.range(of: "\\") {
 	
 	matchedCharacters.removeSubrange(newRange)
 }
+
+
+
 //
 //public protocol FontProperties {
 //	var fontName : String { get set }

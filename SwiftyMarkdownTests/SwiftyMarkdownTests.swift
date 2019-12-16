@@ -20,10 +20,37 @@ class SwiftyMarkdownTests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
         super.tearDown()
     }
+	
+	struct StringTest {
+		let input : String
+		let expectedOutput : String
+		var acutalOutput : String = ""
+	}
+	
+
     
 	func testThatOctothorpeHeadersAreHandledCorrectly() {
 		
-		let headerString = "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6"
+		let heading1 = StringTest(input: "# Heading 1", expectedOutput: "Heading 1")
+		let heading2 = StringTest(input: "## Heading 2", expectedOutput: "Heading 2")
+		let heading3 = StringTest(input: "### #Heading #3", expectedOutput: "#Heading #3")
+		let heading4 = StringTest(input: "  #### #Heading 4 ####", expectedOutput: "#Heading 4")
+		let heading5 = StringTest(input: " ##### Heading 5 ####   ", expectedOutput: "Heading 5 ####")
+		let heading6 = StringTest(input: " ##### Heading 5 #### More ", expectedOutput: "Heading 5 #### More")
+		let heading7 = StringTest(input: "# **Bold Header 1** ", expectedOutput: "Bold Header 1")
+		let heading8 = StringTest(input: "## Header 2 _With Italics_", expectedOutput: "Header 2 With Italics")
+		let tricksterHeading = StringTest(input: "    # Heading 1", expectedOutput: "# Heading 1")
+		
+		let inputStrings = [heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8, tricksterHeading]
+		
+		let inputString = inputStrings.map({ $0.input }).joined(separator: "\n")
+		
+		let swiftyMarkdown = SwiftyMarkdown(string: inputString)
+		XCTAssertEqual(swiftyMarkdown.attributedString().string, inputStrings.map({ $0.expectedOutput}).joined(separator: "\n"))
+		
+		///
+		
+		var headerString = "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6"
 		let headerStringWithBold = "# **Bold Header 1**"
 		let headerStringWithItalic = "## Header 2 _With Italics_"
 		
@@ -257,16 +284,16 @@ Line break
 		XCTAssertEqual(md.attributedString().string, "Link 1, Link 2")
 		
 		md = SwiftyMarkdown(string: syntaxErrorSquareBracketAtStart)
-		XCTAssertEqual(md.attributedString().string, "Link with missing square")
+		XCTAssertEqual(md.attributedString().string, "[Link with missing square(http://voyagetravelapps.com/)")
 		
 		md = SwiftyMarkdown(string: syntaxErrorSquareBracketWithin)
-		XCTAssertEqual(md.attributedString().string, "A Link")
+		XCTAssertEqual(md.attributedString().string, "A [Link(http://voyagetravelapps.com/)")
 		
 		md = SwiftyMarkdown(string: syntaxErrorParenthesisAtStart)
-		XCTAssertEqual(md.attributedString().string, "Link with missing parenthesis")
+		XCTAssertEqual(md.attributedString().string, "[Link with missing parenthesis](http://voyagetravelapps.com/")
 		
 		md = SwiftyMarkdown(string: syntaxErrorParenthesisWithin)
-		XCTAssertEqual(md.attributedString().string, "A Link")
+		XCTAssertEqual(md.attributedString().string, "A [Link](http://voyagetravelapps.com/")
 		
 		md = SwiftyMarkdown(string: mailtoAndTwitterLinks)
 		XCTAssertEqual(md.attributedString().string, "Email us at simon@voyagetravelapps.com Twitter @VoyageTravelApp")
@@ -295,10 +322,10 @@ Line break
     }
 	
 	func testReportedCrashingStrings() {
-//		let text = "[**\\!bang**](https://duckduckgo.com/bang) "
-//		let expected = "\\!bang"
-//		let output = SwiftyMarkdown(string: text).attributedString().string
-//		XCTAssertEqual(output, expected)
+		let text = "[**\\!bang**](https://duckduckgo.com/bang) "
+		let expected = "\\!bang"
+		let output = SwiftyMarkdown(string: text).attributedString().string
+		XCTAssertEqual(output, expected)
 	}
 	
 }
