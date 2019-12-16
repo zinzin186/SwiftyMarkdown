@@ -13,6 +13,7 @@ enum CharacterStyle : CharacterStyling {
 	case bold
 	case italic
 	case code
+	case link
 }
 
 enum MarkdownLineStyle : LineStyling {
@@ -87,9 +88,10 @@ If that is not set, then the system default will be used.
 	]
 	
 	static let characterRules = [
-		SwiftyTagging(openTag: "`", intermediateTag: nil, closingTag: nil, escapeString: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1),
-		SwiftyTagging(openTag: "*", intermediateTag: nil, closingTag: "*", escapeString: "\\", styles: [1 : [.italic], 2 : [.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
-		SwiftyTagging(openTag: "_", intermediateTag: nil, closingTag: nil, escapeString: "\\", styles: [1 : [.italic], 2 : [.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
+		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1),
+		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
+		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body)
@@ -223,7 +225,11 @@ If that is not set, then the system default will be used.
 		
 		var strings : [String] = []
 		for line in foundAttributes {
+			
+			attributedString.append(attributedStringFor(line))
+			
 			let finalTokens = self.tokeniser.process(line.line)
+			
 			
 			let string = finalTokens.map({ $0.outputString }).joined()
 			strings.append(string)
@@ -231,13 +237,100 @@ If that is not set, then the system default will be used.
 		
 		let finalString = strings.joined(separator: "\n")
 		
-		return NSAttributedString(string: finalString)
+		return attributedString
 	}
 	
 	
 }
 
 extension SwiftyMarkdown {
+	
+	func attributedStringFor( _ line : SwiftyLine ) -> NSAttributedString {
+		var outputLine = line.line
+		if let style = line.lineStyle as? MarkdownLineStyle, style == .codeblock {
+			outputLine = "\t\(outputLine)"
+		}
+		let textStyle : UIFont.TextStyle
+		var fontName : String?
+		var attributes : [NSAttributedString.Key : AnyObject] = [:]
+		var fontSize : CGFloat?
+		
+		// What type are we and is there a font name set?
+		
+		
+		switch line.lineStyle as! MarkdownLineStyle {
+		case .h1:
+			fontName = h1.fontName
+			fontSize = h1.fontSize
+			if #available(iOS 9, *) {
+				textStyle = UIFont.TextStyle.title1
+			} else {
+				textStyle = UIFont.TextStyle.headline
+			}
+			attributes[NSAttributedString.Key.foregroundColor] = h1.color
+		case .h2:
+			fontName = h2.fontName
+			fontSize = h2.fontSize
+			if #available(iOS 9, *) {
+				textStyle = UIFont.TextStyle.title2
+			} else {
+				textStyle = UIFont.TextStyle.headline
+			}
+			attributes[NSAttributedString.Key.foregroundColor] = h2.color
+		case .h3:
+			fontName = h3.fontName
+			fontSize = h3.fontSize
+			if #available(iOS 9, *) {
+				textStyle = UIFont.TextStyle.title2
+			} else {
+				textStyle = UIFont.TextStyle.subheadline
+			}
+			attributes[NSAttributedString.Key.foregroundColor] = h3.color
+		case .h4:
+			fontName = h4.fontName
+			fontSize = h4.fontSize
+			textStyle = UIFont.TextStyle.headline
+			attributes[NSAttributedString.Key.foregroundColor] = h4.color
+		case .h5:
+			fontName = h5.fontName
+			fontSize = h5.fontSize
+			textStyle = UIFont.TextStyle.subheadline
+			attributes[NSAttributedString.Key.foregroundColor] = h5.color
+		case .h6:
+			fontName = h6.fontName
+			fontSize = h6.fontSize
+			textStyle = UIFont.TextStyle.footnote
+			attributes[NSAttributedString.Key.foregroundColor] = h6.color
+		default:
+			fontName = body.fontName
+			fontSize = body.fontSize
+			textStyle = UIFont.TextStyle.body
+			attributes[NSAttributedString.Key.foregroundColor] = body.color
+			break
+		}
+
+		if let _ = fontName {
+			
+		} else {
+			fontName = body.fontName
+		}
+		
+		fontSize = fontSize == 0.0 ? nil : fontSize
+		let font = UIFont.preferredFont(forTextStyle: textStyle)
+		let styleDescriptor = font.fontDescriptor
+		let styleSize = fontSize ?? styleDescriptor.fontAttributes[UIFontDescriptor.AttributeName.size] as? CGFloat ?? CGFloat(14)
+		
+		var finalFont : UIFont
+		if let finalFontName = fontName, let font = UIFont(name: finalFontName, size: styleSize) {
+			finalFont = font
+		} else {
+			finalFont = UIFont.preferredFont(forTextStyle:  textStyle)
+		}
+
+		attributes[NSAttributedString.Key.font] = finalFont
+		
+		return NSAttributedString(string: outputLine, attributes: attributes)
+	}
 	
 	func attributedStringFromString(_ string : String, withStyle style : MarkdownLineStyle, attributes : [NSAttributedString.Key : AnyObject] = [:] ) -> NSAttributedString {
 		let textStyle : UIFont.TextStyle

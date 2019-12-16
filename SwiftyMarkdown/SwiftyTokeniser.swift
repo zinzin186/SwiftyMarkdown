@@ -5,9 +5,16 @@
 //  Created by Simon Fairbairn on 16/12/2019.
 //  Copyright © 2019 Voyage Travel Apps. All rights reserved.
 //
-
 import Foundation
+import os.log
 
+extension OSLog {
+	private static var subsystem = "SwiftyTokeniser"
+	static let tokenising = OSLog(subsystem: subsystem, category: "Tokenising")
+	static let styling = OSLog(subsystem: subsystem, category: "Styling")
+}
+
+// Tag definition
 public protocol CharacterStyling {
 	
 }
@@ -26,21 +33,21 @@ public enum Cancel {
     case currentSet
 }
 
-public struct SwiftyTagging {
+public struct CharacterRule {
 	public let openTag : String
 	public let intermediateTag : String?
 	public let closingTag : String?
-	public let escapeString : String?
+	public let escapeCharacter : Character?
 	public let styles : [Int : [CharacterStyling]]
 	public var maxTags : Int = 1
 	public var spacesAllowed : SpaceAllowed = .oneSide
 	public var cancels : Cancel = .none
 	
-	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeString: String? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1) {
+	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1) {
 		self.openTag = openTag
 		self.intermediateTag = intermediateTag
 		self.closingTag = closingTag
-		self.escapeString = escapeString
+		self.escapeCharacter = escapeCharacter
 		self.styles = styles
 		self.maxTags = maxTags
 	}
@@ -51,16 +58,19 @@ public enum TokenType {
 	case openTag
 	case intermediateTag
 	case closeTag
+	case processed
 	case string
 	case escape
+	case metadata
 }
 
 
 
 public struct Token {
 	public let id = UUID().uuidString
-	public let type : TokenType
+	public var type : TokenType
 	public let inputString : String
+	public var metadataString : String? = nil
 	public var characterStyles : [CharacterStyling] = []
 	public var count : Int = 0
 	public var shouldSkip : Bool = false
@@ -74,7 +84,9 @@ public struct Token {
 					let range = inputString.startIndex..<inputString.index(inputString.startIndex, offsetBy: self.count)
 					return String(inputString[range])
 				}
-			default:
+			case .metadata, .processed:
+				return ""
+			case .escape, .string:
 				return inputString
 			}
 		}
@@ -87,9 +99,9 @@ public struct Token {
 }
 
 public class SwiftyTokeniser {
-	let rules : [SwiftyTagging]
+	let rules : [CharacterRule]
 	
-	public init( with rules : [SwiftyTagging] ) {
+	public init( with rules : [CharacterRule] ) {
 		self.rules = rules
 	}
 	
@@ -97,63 +109,127 @@ public class SwiftyTokeniser {
 		guard rules.count > 0 else {
 			return [Token(type: .string, inputString: inputString)]
 		}
-		var tagLookup : [String : [Int : [CharacterStyling]]] = [:]
-		var finalTokens : [Token] = []
+
+		var currentTokens : [Token] = []
 		var mutableRules = self.rules
-		let firstRule = mutableRules.removeFirst()
-		tagLookup[firstRule.openTag] = firstRule.styles
-		var tokens = self.scan(inputString, with: firstRule)
-		if firstRule.cancels != .allRemaining {
-			while !mutableRules.isEmpty {
-				let nextRule = mutableRules.removeFirst()
-				tagLookup[nextRule.openTag] = nextRule.styles
-				var newTokens : [Token] = []
-				for token in tokens {
-					switch token.type {
-					case .string:
-						newTokens.append(contentsOf: self.scan(token.outputString, with: nextRule))
-					default:
-						newTokens.append(token)
-					}
-				}
-				tokens = newTokens
-	//			let tokens = self.scan(string, with: rule)
-				switch nextRule.cancels {
-				case .allRemaining:
-					break
+		while !mutableRules.isEmpty {
+			let nextRule = mutableRules.removeFirst()
+			if currentTokens.isEmpty {
+				// This means it's the first time through
+				currentTokens = self.applyStyles(to: self.scan(inputString, with: nextRule), usingRule: nextRule)
+				continue
+			}
+			
+			// Each string could have additional tokens within it, so they have to be scanned as well with the current rule.
+			// The one string token might then be exploded into multiple more tokens
+			var replacements : [Int : [Token]] = [:]
+			for (idx,token) in currentTokens.enumerated() {
+				switch token.type {
+				case .string:
+					let nextTokens = self.scan(token.outputString, with: nextRule)
+					replacements[idx] = self.applyStyles(to: nextTokens, usingRule: nextRule)
 				default:
-					continue
+					break
+				}
+			}
+			
+			// This replaces the individual string tokens with the new token arrays
+			// making sure to apply any previously found styles to the new tokens.
+			for key in replacements.keys.sorted(by: { $0 > $1 }) {
+				let existingToken = currentTokens[key]
+				var newTokens : [Token] = []
+				for token in replacements[key]! {
+					var newToken = token
+					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
+					newTokens.append(newToken)
+				}
+				currentTokens.replaceSubrange(key...key, with: newTokens)
+			}
+		}
+		return currentTokens
+	}
+	
+	func handleClosingTagFromOpenTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule ) {
+		
+		guard rule.closingTag != nil else {
+			return
+		}
+		
+		var metadataIndex = index
+		// If there's an intermediate tag, get the index of that
+		if rule.intermediateTag != nil {
+			guard let nextTokenIdx = tokens.firstIndex(where: { $0.type == .intermediateTag }) else {
+				return
+			}
+			metadataIndex = nextTokenIdx
+			let styles : [CharacterStyling] = rule.styles[1] ?? []
+			for i in index..<nextTokenIdx {
+				for style in styles {
+					tokens[i].characterStyles.append(style)
 				}
 			}
 		}
-
+		
+		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
+			return
+		}
+		var metadataString : String = ""
+		for i in metadataIndex..<closeTokenIdx {
+			var otherTokens = tokens[i]
+			otherTokens.type = .metadata
+			tokens[i] = otherTokens
+			metadataString.append(otherTokens.outputString)
+		}
+		tokens[closeTokenIdx].type = .processed
+		tokens[metadataIndex].type = .processed
+		tokens[index].type = .processed
+		tokens[index].metadataString = metadataString
+		
+		
+		
+	}
+	
+	
+	func applyStyles( to tokens : [Token], usingRule rule : CharacterRule ) -> [Token] {
+		var nextTokens : [Token] = []
 		var mutableTokens : [Token] = tokens
-		for (idx, token) in tokens.enumerated() {
+		print( tokens.map( { ( $0.outputString, $0.count )}))
+		for idx in 0..<mutableTokens.count {
+			let token = mutableTokens[idx]
 			switch token.type {
 			case .escape:
 				print( "Found escape (\(token.inputString))" )
-				finalTokens.append(token)
+				nextTokens.append(token)
 			case .openTag:
-				
 				let theToken = mutableTokens[idx]
-				print ("Found open tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
+				print ("Found open tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
+				
+				guard rule.closingTag == nil else {
+					
+					// If there's an intermediate tag, get the index of that
+					self.handleClosingTagFromOpenTag(withIndex: idx, in: &mutableTokens, following: rule)
+					// Get the index of the closing tag
+					
+					continue
+				}
+				
 				guard theToken.count > 0 else {
-					finalTokens.append(theToken)
+					nextTokens.append(theToken)
 					continue
 				}
 				
 				let startIdx = idx
 				var endIdx : Int? = nil
-
+				
 				if let nextTokenIdx = mutableTokens.firstIndex(where: { $0.inputString == theToken.inputString && $0.type == theToken.type && $0.count == theToken.count && $0.id != theToken.id }) {
 					endIdx = nextTokenIdx
 				}
 				guard let existentEnd = endIdx else {
-					finalTokens.append(theToken)
+					nextTokens.append(theToken)
 					continue
 				}
 				
-				let styles : [CharacterStyling] = tagLookup[String(theToken.inputString.first!)]?[theToken.count] ?? []
+				let styles : [CharacterStyling] = rule.styles[theToken.count] ?? []
 				for i in startIdx..<existentEnd {
 					var otherTokens = mutableTokens[i]
 					for style in styles {
@@ -163,30 +239,47 @@ public class SwiftyTokeniser {
 				}
 				var newToken = theToken
 				newToken.count = 0
-				finalTokens.append(newToken)
+				nextTokens.append(newToken)
 				mutableTokens[idx] = newToken
 				
 				var closeToken = mutableTokens[existentEnd]
 				closeToken.count = 0
 				mutableTokens[existentEnd] = closeToken
-				
+			case .intermediateTag:
+				let theToken = mutableTokens[idx]
+				print ("Found intermediate tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
+				nextTokens.append(theToken)
+			case .closeTag:
+				let theToken = mutableTokens[idx]
+				print ("Found close tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
+				nextTokens.append(theToken)
 			case .string:
 				let theToken = mutableTokens[idx]
 				print ("Found String: \(theToken.inputString)" )
-				finalTokens.append(theToken)
-			default:
-				break
+				nextTokens.append(theToken)
+			case .metadata:
+				let theToken = mutableTokens[idx]
+				print ("Found metadata: \(theToken.inputString)" )
+				nextTokens.append(theToken)
+			case .processed:
+				let theToken = mutableTokens[idx]
+				print ("Found already processed tag: \(theToken.inputString)" )
+				nextTokens.append(theToken)
 			}
 		}
-		return finalTokens
-		
+		return nextTokens
 	}
 	
-	func scan( _ string : String, with rule : SwiftyTagging) -> [Token] {
+	
+	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
 		let scanner = Scanner(string: string)
 		scanner.charactersToBeSkipped = nil
 		var tokens : [Token] = []
-		let set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")\(rule.escapeString ?? "")")
+		var set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")")
+		if let existentEscape = rule.escapeCharacter {
+			set.insert(charactersIn: String(existentEscape))
+		}
+		
 		var openingString = ""
 		while !scanner.isAtEnd {
 			
@@ -235,33 +328,33 @@ public class SwiftyTokeniser {
 			
 			
 			if !validateSpacing(nextCharacter: nextChar, previousCharacter: lastChar, with: rule) {
-				var escaped = foundChars.replacingOccurrences(of: "\(rule.escapeString ?? "")\(rule.openTag)", with: rule.openTag)
+				let escapeString = String("\(rule.escapeCharacter ?? Character(""))")
+				var escaped = foundChars.replacingOccurrences(of: "\(escapeString)\(rule.openTag)", with: rule.openTag)
 				if let hasIntermediateTag = rule.intermediateTag {
-					escaped = foundChars.replacingOccurrences(of: "\(rule.escapeString ?? "")\(hasIntermediateTag)", with: hasIntermediateTag)
+					escaped = foundChars.replacingOccurrences(of: "\(escapeString)\(hasIntermediateTag)", with: hasIntermediateTag)
 				}
 				if let existentClosingTag = rule.closingTag {
-					escaped = foundChars.replacingOccurrences(of: "\(rule.escapeString ?? "")\(existentClosingTag)", with: existentClosingTag)
+					escaped = foundChars.replacingOccurrences(of: "\(escapeString)\(existentClosingTag)", with: existentClosingTag)
 				}
 				
 				openingString.append(escaped)
 				continue
 			}
-			if !openingString.isEmpty {
-				tokens.append(Token(type: .string, inputString: "\(openingString)"))
-				openingString = ""
-			}
-			
-			
+
 			var cumulativeString = ""
 			var openString = ""
+			var intermediateString = ""
 			var closedString = ""
 			var maybeEscapeNext = false
+			
 			
 			func addToken( for type : TokenType ) {
 				var inputString : String
 				switch type {
 				case .openTag:
 					inputString = openString
+				case .intermediateTag:
+					inputString = intermediateString
 				case .closeTag:
 					inputString = closedString
 				default:
@@ -270,13 +363,22 @@ public class SwiftyTokeniser {
 				guard !inputString.isEmpty else {
 					return
 				}
+				if !openingString.isEmpty {
+					tokens.append(Token(type: .string, inputString: "\(openingString)"))
+					openingString = ""
+				}
 				var token = Token(type: type, inputString: inputString)
-				token.count = inputString.count
+				if rule.closingTag == nil {
+					token.count = inputString.count
+				}
+				
 				tokens.append(token)
 				
 				switch type {
 				case .openTag:
 					openString = ""
+				case .intermediateTag:
+					intermediateString = ""
 				case .closeTag:
 					closedString = ""
 				default:
@@ -284,30 +386,37 @@ public class SwiftyTokeniser {
 				}
 			}
 			
-			
+			// Here I am going through and adding the characters in the found set to a cumulative string.
+			// If there is an escape character, then the loop stops and any open tags are tokenised.
 			for char in foundChars {
 				cumulativeString.append(char)
 				if maybeEscapeNext {
 					
 					var escaped = cumulativeString
 					if String(char) == rule.openTag || String(char) == rule.intermediateTag || String(char) == rule.closingTag {
-						escaped = String(cumulativeString.replacingOccurrences(of: rule.escapeString ?? "", with: ""))
+						escaped = String(cumulativeString.replacingOccurrences(of: String(rule.escapeCharacter ?? Character("")), with: ""))
 					}
 					
-					tokens.append(Token(type: .string, inputString: escaped ))
+					openingString.append(escaped)
 					cumulativeString = ""
 					maybeEscapeNext = false
 				}
-				
-				if cumulativeString == rule.escapeString {
-					maybeEscapeNext = true
-					addToken(for: .openTag)
-					addToken(for: .closeTag)
-					continue
+				if let existentEscape = rule.escapeCharacter {
+					if cumulativeString == String(existentEscape) {
+						maybeEscapeNext = true
+						addToken(for: .openTag)
+						addToken(for: .intermediateTag)
+						addToken(for: .closeTag)
+						continue
+					}
 				}
+				
 				
 				if cumulativeString == rule.openTag {
 					openString.append(char)
+					cumulativeString = ""
+				} else if cumulativeString == rule.intermediateTag {
+					intermediateString.append(cumulativeString)
 					cumulativeString = ""
 				} else if cumulativeString == rule.closingTag {
 					closedString.append(char)
@@ -322,13 +431,14 @@ public class SwiftyTokeniser {
 				openingString.append( cumulativeString )
 			}
 			addToken(for: .openTag)
+			addToken(for: .intermediateTag)
 			addToken(for: .closeTag)
 		
 		}
 		return tokens
 	}
 	
-	func validateSpacing( nextCharacter : String?, previousCharacter : String?, with rule : SwiftyTagging ) -> Bool {
+	func validateSpacing( nextCharacter : String?, previousCharacter : String?, with rule : CharacterRule ) -> Bool {
 		switch rule.spacesAllowed {
 		case .leadingSide:
 			guard nextCharacter != nil else {

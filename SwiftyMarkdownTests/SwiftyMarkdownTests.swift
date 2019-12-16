@@ -11,6 +11,7 @@ import XCTest
 
 class SwiftyMarkdownTests: XCTestCase {
     
+	
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -27,72 +28,129 @@ class SwiftyMarkdownTests: XCTestCase {
 		var acutalOutput : String = ""
 	}
 	
-
-    
+	struct TokenTest {
+		let input : String
+		let output : String
+		let tokens : [Token]
+	}
+	
 	func testThatOctothorpeHeadersAreHandledCorrectly() {
 		
 		let heading1 = StringTest(input: "# Heading 1", expectedOutput: "Heading 1")
+		var smd = SwiftyMarkdown(string:heading1.input )
+		XCTAssertEqual(smd.attributedString().string, heading1.expectedOutput)
+		
 		let heading2 = StringTest(input: "## Heading 2", expectedOutput: "Heading 2")
+		smd = SwiftyMarkdown(string:heading2.input )
+		XCTAssertEqual(smd.attributedString().string, heading2.expectedOutput)
+		
 		let heading3 = StringTest(input: "### #Heading #3", expectedOutput: "#Heading #3")
+		smd = SwiftyMarkdown(string:heading3.input )
+		XCTAssertEqual(smd.attributedString().string, heading3.expectedOutput)
+		
 		let heading4 = StringTest(input: "  #### #Heading 4 ####", expectedOutput: "#Heading 4")
+		smd = SwiftyMarkdown(string:heading4.input )
+		XCTAssertEqual(smd.attributedString().string, heading4.expectedOutput)
+		
 		let heading5 = StringTest(input: " ##### Heading 5 ####   ", expectedOutput: "Heading 5 ####")
+		smd = SwiftyMarkdown(string:heading5.input )
+		XCTAssertEqual(smd.attributedString().string, heading5.expectedOutput)
+		
 		let heading6 = StringTest(input: " ##### Heading 5 #### More ", expectedOutput: "Heading 5 #### More")
+		smd = SwiftyMarkdown(string:heading6.input )
+		XCTAssertEqual(smd.attributedString().string, heading6.expectedOutput)
+		
 		let heading7 = StringTest(input: "# **Bold Header 1** ", expectedOutput: "Bold Header 1")
+		smd = SwiftyMarkdown(string:heading7.input )
+		XCTAssertEqual(smd.attributedString().string, heading7.expectedOutput)
+		
 		let heading8 = StringTest(input: "## Header 2 _With Italics_", expectedOutput: "Header 2 With Italics")
-		let tricksterHeading = StringTest(input: "    # Heading 1", expectedOutput: "# Heading 1")
+		smd = SwiftyMarkdown(string:heading8.input )
+		XCTAssertEqual(smd.attributedString().string, heading8.expectedOutput)
 		
-		let inputStrings = [heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8, tricksterHeading]
+		let heading9 = StringTest(input: "    # Heading 1", expectedOutput: "# Heading 1")
+		smd = SwiftyMarkdown(string:heading9.input )
+		XCTAssertEqual(smd.attributedString().string, heading9.expectedOutput)
+
+		let allHeaders = [heading1, heading2, heading3, heading4, heading5, heading6, heading7, heading8, heading9]
+		smd = SwiftyMarkdown(string: allHeaders.map({ $0.input }).joined(separator: "\n"))
+		XCTAssertEqual(smd.attributedString().string, allHeaders.map({ $0.expectedOutput}).joined(separator: "\n"))
 		
-		let inputString = inputStrings.map({ $0.input }).joined(separator: "\n")
+		let headerString = StringTest(input: "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6", expectedOutput: "Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6")
+		smd = SwiftyMarkdown(string: headerString.input)
+		XCTAssertEqual(smd.attributedString().string, headerString.expectedOutput)
 		
-		let swiftyMarkdown = SwiftyMarkdown(string: inputString)
-		XCTAssertEqual(swiftyMarkdown.attributedString().string, inputStrings.map({ $0.expectedOutput}).joined(separator: "\n"))
+		let headerStringWithBold = StringTest(input: "# **Bold Header 1**", expectedOutput: "Bold Header 1")
+		smd = SwiftyMarkdown(string: headerStringWithBold.input)
+		XCTAssertEqual(smd.attributedString().string, headerStringWithBold.expectedOutput )
 		
-		///
-		
-		var headerString = "# Header 1\n## Header 2 ##\n### Header 3 ### \n#### Header 4#### \n##### Header 5\n###### Header 6"
-		let headerStringWithBold = "# **Bold Header 1**"
-		let headerStringWithItalic = "## Header 2 _With Italics_"
-		
-		var md = SwiftyMarkdown(string: headerString)
-		XCTAssertEqual(md.attributedString().string, "Header 1\nHeader 2\nHeader 3\nHeader 4\nHeader 5\nHeader 6")
-		
-		 md = SwiftyMarkdown(string: headerStringWithBold)
-		XCTAssertEqual(md.attributedString().string, "Bold Header 1")
-		
-		md = SwiftyMarkdown(string: headerStringWithItalic)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Italics")
+		let headerStringWithItalic = StringTest(input: "## Header 2 _With Italics_", expectedOutput: "Header 2 With Italics")
+		smd = SwiftyMarkdown(string: headerStringWithItalic.input)
+		XCTAssertEqual(smd.attributedString().string, headerStringWithItalic.expectedOutput)
 		
 	}
+
 	
 	func testThatUndelinedHeadersAreHandledCorrectly() {
-		let h1String = "Header 1\n===\nSome following text"
-		let h2String = "Header 2\n---\nSome following text"
+
+		let h1String = StringTest(input: "Header 1\n===\nSome following text", expectedOutput: "Header 1\nSome following text")
+		var md = SwiftyMarkdown(string: h1String.input)
+		XCTAssertEqual(md.attributedString().string, h1String.expectedOutput)
 		
-		let h1StringWithBold = "Header 1 **With Bold**\n===\nSome following text"
-		let h2StringWithItalic = "Header 2 _With Italic_\n---\nSome following text"
-		let h2StringWithCode = "Header 2 `With Code`\n---\nSome following text"
+		let h2String = StringTest(input: "Header 2\n---\nSome following text", expectedOutput: "Header 2\nSome following text")
+		md = SwiftyMarkdown(string: h2String.input)
+		XCTAssertEqual(md.attributedString().string, h2String.expectedOutput)
 		
-		var md = SwiftyMarkdown(string: h1String)
-		XCTAssertEqual(md.attributedString().string, "Header 1\nSome following text")
+		let h1StringWithBold = StringTest(input: "Header 1 **With Bold**\n===\nSome following text", expectedOutput: "Header 1 With Bold\nSome following text")
+		md = SwiftyMarkdown(string: h1StringWithBold.input)
+		XCTAssertEqual(md.attributedString().string, h1StringWithBold.expectedOutput)
 		
-		md = SwiftyMarkdown(string: h2String)
-		XCTAssertEqual(md.attributedString().string, "Header 2\nSome following text")
+		let h2StringWithItalic = StringTest(input: "Header 2 _With Italic_\n---\nSome following text", expectedOutput: "Header 2 With Italic\nSome following text")
+		md = SwiftyMarkdown(string: h2StringWithItalic.input)
+		XCTAssertEqual(md.attributedString().string, h2StringWithItalic.expectedOutput)
 		
-		md = SwiftyMarkdown(string: h1StringWithBold)
-		XCTAssertEqual(md.attributedString().string, "Header 1 With Bold\nSome following text")
+		let h2StringWithCode = StringTest(input: "Header 2 `With Code`\n---\nSome following text", expectedOutput: "Header 2 With Code\nSome following text")
+		md = SwiftyMarkdown(string: h2StringWithCode.input)
+		XCTAssertEqual(md.attributedString().string, h2StringWithCode.expectedOutput)
+	}
+	
+	func attempt( _ challenge : TokenTest ) {
+		let md = SwiftyMarkdown(string: challenge.input)
+		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
+		let tokens = tokeniser.process(challenge.input)
+		let stringTokens = tokens.filter({ $0.type == .string })
+		XCTAssertEqual(challenge.tokens.count, stringTokens.count)
+		XCTAssertEqual(tokens.map({ $0.outputString }).joined(), challenge.output)
 		
-		md = SwiftyMarkdown(string: h2StringWithItalic)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Italic\nSome following text")
+		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
+		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
 		
-		md = SwiftyMarkdown(string: h2StringWithCode)
-		XCTAssertEqual(md.attributedString().string, "Header 2 With Code\nSome following text")
+		XCTAssertEqual(existentTokenStyles, expectedStyles)
+
+		let attributedString = md.attributedString()
+		XCTAssertEqual(attributedString.string, challenge.output)
+		
+		let att = attributedString.attribute(.font, at: 0, effectiveRange: nil)
+		XCTAssertNotNil(att)
+		
 	}
 	
 	func testThatRegularTraitsAreParsedCorrectly() {
-		let boldAtStartOfString = "**A bold string**"
-		let boldWithinString = "A string with a **bold** word"
-		let codeAtStartOfString = "`Code (should be indented)`"
+
+		let challenge1 = TokenTest(input: "**A bold string**", output: "A bold string",  tokens: [
+			Token(type: .string, inputString: "A bold string", characterStyles: [CharacterStyle.bold])
+		])
+		self.attempt(challenge1)
+		
+		let challenge2 = TokenTest(input: "A string with a **bold** word", output: "A string with a bold word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		self.attempt(challenge2)
+		
+		
+		let codeAtStartOfString = "`Code (should not be indented)`"
 		let codeWithinString = "A string with `code` (should not be indented)"
 		let italicAtStartOfString = "*An italicised string*"
 		let italicWithinString = "A string with *italicised* text"
@@ -104,14 +162,8 @@ class SwiftyMarkdownTests: XCTestCase {
 		let longMixedString = "_An italic string_, **follwed by a bold one**, `with some code`, \\*\\*and some\\*\\* \\_escaped\\_ \\`characters\\`, `ending` *with* __more__ variety."
 		
 		
-		var md = SwiftyMarkdown(string: boldAtStartOfString)
-		XCTAssertEqual(md.attributedString().string, "A bold string")
-		
-		md = SwiftyMarkdown(string: boldWithinString)
-		XCTAssertEqual(md.attributedString().string, "A string with a bold word")
-		
-		md = SwiftyMarkdown(string: codeAtStartOfString)
-		XCTAssertEqual(md.attributedString().string, "\tCode (should be indented)")
+		var md = SwiftyMarkdown(string: codeAtStartOfString)
+		XCTAssertEqual(md.attributedString().string, "Code (should not be indented)")
 		
 		md = SwiftyMarkdown(string: codeWithinString)
 		XCTAssertEqual(md.attributedString().string, "A string with code (should not be indented)")
@@ -126,7 +178,7 @@ class SwiftyMarkdownTests: XCTestCase {
 		XCTAssertEqual(md.attributedString().string, "A bold string with a mix of bold styles")
 		
 		md = SwiftyMarkdown(string: multipleCodeWords)
-		XCTAssertEqual(md.attributedString().string, "\tA code string with multiple code instances")
+		XCTAssertEqual(md.attributedString().string, "A code string with multiple code instances")
 		
 		md = SwiftyMarkdown(string: multipleItalicWords)
 		XCTAssertEqual(md.attributedString().string, "An italic string with a mix of italic styles")

@@ -120,11 +120,11 @@ func replaceTokens( in line : SwiftyLine ) -> SwiftyLine {
     var replacementString : String = line.line
     
     var newTokens : [Token] = []
-    for var token in line.tokens {
-        replacementString = token.replaceToken(in: replacementString)
-        newTokens.append(token)
-    }
-    return Line(line: replacementString, lineStyle: line.lineStyle, tokens: newTokens)
+//    for var token in line.tokens {
+//        replacementString = token.replaceToken(in: replacementString)
+//        newTokens.append(token)
+//    }
+    return line // SwiftyLine(line: replacementString, lineStyle: line.lineStyle)
 }
 
 func tokenisePre13( _ line : SwiftyLine ) -> SwiftyLine {
@@ -135,9 +135,9 @@ func tokenisePre13( _ line : SwiftyLine ) -> SwiftyLine {
 func tokenise( _ line : SwiftyLine ) -> SwiftyLine {
     
     // Do nothing if it's a codeblock
-    if !line.lineStyle.tokenise {
-        return line
-    }
+//    if !line.lineStyle.tokenise {
+//        return line
+//    }
     var output : String = ""
     let textScanner = Scanner(string: line.line)
     textScanner.charactersToBeSkipped = nil
@@ -197,7 +197,7 @@ func tokenise( _ line : SwiftyLine ) -> SwiftyLine {
             break
         }
     }
-    return Line(line: output, lineStyle: line.lineStyle, tokens: tokens)
+    return line // SwiftyLine(line: output, lineStyle: line.lineStyle)
 }
 
 func handleLinks( in token : Token ) -> Token {
@@ -352,7 +352,7 @@ func process( _ tokens : [Token] ) -> [Token] {
     return doneTokens
 }
 
-func attributedString( for line : Line ) -> NSAttributedString {
+func attributedString( for line : SwiftyLine ) -> NSAttributedString {
     return NSAttributedString(string: line.line)
 }
 
