@@ -146,7 +146,10 @@ public class SwiftyTokeniser {
 				var newTokens : [Token] = []
 				for token in replacements[key]! {
 					var newToken = token
-					newToken.metadataString = existingToken.metadataString
+					if existingToken.metadataString != nil {
+						newToken.metadataString = existingToken.metadataString
+					}
+					
 					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
 					newTokens.append(newToken)
 				}
@@ -197,10 +200,6 @@ public class SwiftyTokeniser {
 		tokens[closeTokenIdx].type = .processed
 		tokens[metadataIndex].type = .processed
 		tokens[index].type = .processed
-		
-		
-		
-		
 	}
 	
 	
@@ -267,7 +266,9 @@ public class SwiftyTokeniser {
 			case .string:
 				let theToken = mutableTokens[idx]
 				print ("Found String: \(theToken.inputString)" )
-				
+				if let hasMetadata = theToken.metadataString {
+					print ("With metadata: \(hasMetadata)" )
+				}
 			case .metadata:
 				let theToken = mutableTokens[idx]
 				print ("Found metadata: \(theToken.inputString)" )

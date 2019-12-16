@@ -1,12 +1,7 @@
-//
-//  SwiftyMarkdown.swift
-//  SwiftyMarkdown
-//
-//  Created by Simon Fairbairn on 05/03/2016.
-//  Copyright © 2016 Voyage Travel Apps. All rights reserved.
-//
+//: [Previous](@previous)
 
 import UIKit
+
 
 enum CharacterStyle : CharacterStyling {
 	case none
@@ -52,18 +47,11 @@ enum MarkdownLineStyle : LineStyling {
     }
 }
 
-@objc public enum FontStyle : Int {
-	case normal
-	case bold
-	case italic
-	case boldItalic
-}
 
 @objc public protocol FontProperties {
 	var fontName : String? { get set }
 	var color : UIColor { get set }
 	var fontSize : CGFloat { get set }
-	var fontStyle : FontStyle { get set }
 }
 
 
@@ -76,7 +64,6 @@ If that is not set, then the system default will be used.
 	public var fontName : String?
 	public var color = UIColor.black
 	public var fontSize : CGFloat = 0.0
-	public var fontStyle : FontStyle = .normal
 }
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
@@ -140,10 +127,6 @@ If that is not set, then the system default will be used.
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
 	open var code = BasicStyles()
 	
-	/// The styles to apply to any blockquotes found in the Markdown
-	open var blockquotes = BasicStyles()
-	
-	public var underlineLinks : Bool = false
 	
 	var currentType : MarkdownLineStyle = .body
 	
@@ -162,10 +145,6 @@ If that is not set, then the system default will be used.
 	*/
 	public init(string : String ) {
 		self.string = string
-		super.init()
-		if #available(iOS 13.0, *) {
-			self.setFontColorForAllStyles(with: .systemGray6)
-		}
 	}
 	
 	/**
@@ -202,7 +181,6 @@ If that is not set, then the system default will be used.
 		italic.fontSize = size
 		code.fontSize = size
 		link.fontSize = size
-		link.fontSize = size
 	}
 	
 	open func setFontColorForAllStyles(with color: UIColor) {
@@ -216,7 +194,6 @@ If that is not set, then the system default will be used.
 		italic.color = color
 		code.color = color
 		link.color = color
-		blockquotes.color = color
 	}
 	
 	open func setFontNameForAllStyles(with name: String) {
@@ -230,7 +207,6 @@ If that is not set, then the system default will be used.
 		italic.fontName = name
 		code.fontName = name
 		link.fontName = name
-		blockquotes.fontName = name
 	}
 	
 	
@@ -242,14 +218,12 @@ If that is not set, then the system default will be used.
 	*/
 	open func attributedString() -> NSAttributedString {
 		let attributedString = NSMutableAttributedString(string: "")
-		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
 		
 		var strings : [String] = []
 		for line in foundAttributes {
 			let finalTokens = self.tokeniser.process(line.line)
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
-			attributedString.append(NSAttributedString(string: "\n"))
 		}
 		
 		return attributedString
@@ -265,65 +239,48 @@ extension SwiftyMarkdown {
 		var fontName : String?
 		var fontSize : CGFloat?
 		
-		var globalBold = false
-		var globalItalic = false
-		
-		let style : BasicStyles
 		// What type are we and is there a font name set?
 		switch line.lineStyle as! MarkdownLineStyle {
 		case .h1:
-			style = self.h1
+			fontName = h1.fontName
+			fontSize = h1.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFont.TextStyle.title1
 			} else {
 				textStyle = UIFont.TextStyle.headline
 			}
 		case .h2:
-			style = self.h2
+			fontName = h2.fontName
+			fontSize = h2.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFont.TextStyle.title2
 			} else {
 				textStyle = UIFont.TextStyle.headline
 			}
 		case .h3:
-			style = self.h3
+			fontName = h3.fontName
+			fontSize = h3.fontSize
 			if #available(iOS 9, *) {
 				textStyle = UIFont.TextStyle.title2
 			} else {
 				textStyle = UIFont.TextStyle.subheadline
 			}
 		case .h4:
-			style = self.h4
+			fontName = h4.fontName
+			fontSize = h4.fontSize
 			textStyle = UIFont.TextStyle.headline
 		case .h5:
-			style = self.h5
+			fontName = h5.fontName
+			fontSize = h5.fontSize
 			textStyle = UIFont.TextStyle.subheadline
 		case .h6:
-			style = self.h6
+			fontName = h6.fontName
+			fontSize = h6.fontSize
 			textStyle = UIFont.TextStyle.footnote
-		case .codeblock:
-			style = self.code
-			textStyle = UIFont.TextStyle.body
-		case .blockquote:
-			style = self.blockquotes
-			textStyle = UIFont.TextStyle.body
 		default:
-			style = self.body
+			fontName = body.fontName
+			fontSize = body.fontSize
 			textStyle = UIFont.TextStyle.body
-		}
-		
-		fontName = style.fontName
-		fontSize = style.fontSize
-		switch style.fontStyle {
-		case .bold:
-			globalBold = true
-		case .italic:
-			globalItalic = true
-		case .boldItalic:
-			globalItalic = true
-			globalBold = true
-		case .normal:
-			break
 		}
 
 		if fontName == nil {
@@ -334,18 +291,8 @@ extension SwiftyMarkdown {
 			switch characterOverride {
 			case .code:
 				fontName = code.fontName ?? fontName
-				fontSize = code.fontSize
 			case .link:
 				fontName = link.fontName ?? fontName
-				fontSize = link.fontSize
-			case .bold:
-				fontName = bold.fontName ?? fontName
-				fontSize = bold.fontSize
-				globalBold = true
-			case .italic:
-				fontName = italic.fontName ?? fontName
-				fontSize = italic.fontSize
-				globalItalic = true
 			default:
 				break
 			}
@@ -373,13 +320,6 @@ extension SwiftyMarkdown {
 			font = UIFont.preferredFont(forTextStyle: textStyle)
 		}
 		
-		if globalItalic, let italicDescriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
-			font = UIFont(descriptor: italicDescriptor, size: 0)
-		}
-		if globalBold, let boldDescriptor = font.fontDescriptor.withSymbolicTraits(.traitBold) {
-			font = UIFont(descriptor: boldDescriptor, size: 0)
-		}
-		
 		return font
 		
 	}
@@ -404,58 +344,41 @@ extension SwiftyMarkdown {
 		case .codeblock:
 			return code.color
 		case .blockquote:
-			return blockquotes.color
+			return body.color
 		case .unorderedList:
 			return body.color
 		}
 	}
 	
 	func attributedStringFor( tokens : [Token], in line : SwiftyLine ) -> NSAttributedString {
-		
-		var finalTokens = tokens
-		let finalAttributedString = NSMutableAttributedString()
-		var attributes : [NSAttributedString.Key : AnyObject] = [:]
-	
-		
-		switch line.lineStyle as! MarkdownLineStyle {
-		case .codeblock:
-			let paragraphStyle = NSMutableParagraphStyle()
-			paragraphStyle.firstLineHeadIndent = 20.0
-			attributes[.paragraphStyle] = paragraphStyle
-		case .blockquote:
-			let paragraphStyle = NSMutableParagraphStyle()
-			paragraphStyle.firstLineHeadIndent = 20.0
-			attributes[.paragraphStyle] = paragraphStyle
-		case .unorderedList:
-			finalTokens.insert(Token(type: .string, inputString: "・ "), at: 0)
-		default:
-			break
+		var outputLine = line.line
+		if let style = line.lineStyle as? MarkdownLineStyle, style == .codeblock {
+			outputLine = "\t\(outputLine)"
 		}
 		
-		
-		for token in finalTokens {
-			attributes[.font] = self.font(for: line)
+		var attributes : [NSAttributedString.Key : AnyObject] = [:]
+		let finalAttributedString = NSMutableAttributedString()
+		for token in tokens {
+			var font = self.font(for: line)
 			attributes[.foregroundColor] = self.color(for: line)
 			guard let styles = token.characterStyles as? [CharacterStyle] else {
 				continue
 			}
 			if styles.contains(.italic) {
-				attributes[.font] = self.font(for: line, characterOverride: .italic)
-				attributes[.foregroundColor] = self.italic.color
+				if let italicDescriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
+					font = UIFont(descriptor: italicDescriptor, size: 0)
+				}
 			}
 			if styles.contains(.bold) {
-				attributes[.font] = self.font(for: line, characterOverride: .bold)
-				attributes[.foregroundColor] = self.bold.color
+				if let boldDescriptor = font.fontDescriptor.withSymbolicTraits(.traitBold) {
+					font = UIFont(descriptor: boldDescriptor, size: 0)
+				}
 			}
-			
+			attributes[.font] = font
 			if styles.contains(.link), let url = token.metadataString {
 				attributes[.foregroundColor] = self.link.color
 				attributes[.font] = self.font(for: line, characterOverride: .link)
 				attributes[.link] = url as AnyObject
-				
-				if underlineLinks {
-					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
-				}
 			}
 			
 			if styles.contains(.image), let imageName = token.metadataString {
@@ -480,3 +403,26 @@ extension SwiftyMarkdown {
 		return finalAttributedString
 	}
 }
+
+
+let image = UIImage(named: "bubble")
+let image1Attachment = NSTextAttachment()
+image1Attachment.image = image
+let att = NSAttributedString(attachment: image1Attachment)
+
+
+
+var str = "# Hello, *playground* `code` **bold** ![Image](bubble)"
+
+let md = SwiftyMarkdown(string: str)
+md.body.color = .red
+md.h1.color = .white
+md.h1.fontName = "Noteworthy-Light"
+
+md.link.color = .red
+
+md.code.fontName = "CourierNewPSMT"
+	
+md.attributedString()
+
+//: [Next](@next)

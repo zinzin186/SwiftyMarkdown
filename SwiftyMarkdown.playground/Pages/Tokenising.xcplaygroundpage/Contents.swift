@@ -1,5 +1,12 @@
 //: [Previous](@previous)
 
+//
+//  SwiftyTokeniser.swift
+//  SwiftyMarkdown
+//
+//  Created by Simon Fairbairn on 16/12/2019.
+//  Copyright © 2019 Voyage Travel Apps. All rights reserved.
+//
 import Foundation
 import os.log
 
@@ -141,6 +148,10 @@ public class SwiftyTokeniser {
 				var newTokens : [Token] = []
 				for token in replacements[key]! {
 					var newToken = token
+					if existingToken.metadataString != nil {
+						newToken.metadataString = existingToken.metadataString
+					}
+					
 					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
 					newTokens.append(newToken)
 				}
@@ -153,6 +164,9 @@ public class SwiftyTokeniser {
 	func handleClosingTagFromOpenTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule ) {
 		
 		guard rule.closingTag != nil else {
+			return
+		}
+		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
 			return
 		}
 		
@@ -170,24 +184,24 @@ public class SwiftyTokeniser {
 				}
 			}
 		}
-		
-		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
-			return
-		}
+
 		var metadataString : String = ""
 		for i in metadataIndex..<closeTokenIdx {
-			var otherTokens = tokens[i]
-			otherTokens.type = .metadata
-			tokens[i] = otherTokens
-			metadataString.append(otherTokens.outputString)
+			if tokens[i].type == .string {
+				metadataString.append(tokens[i].outputString)
+				tokens[i].type = .metadata
+			}
 		}
+		
+		for i in index..<metadataIndex {
+			if tokens[i].type == .string {
+				tokens[i].metadataString = metadataString
+			}
+		}
+		
 		tokens[closeTokenIdx].type = .processed
 		tokens[metadataIndex].type = .processed
 		tokens[index].type = .processed
-		tokens[index].metadataString = metadataString
-		
-		
-		
 	}
 	
 	
@@ -254,7 +268,9 @@ public class SwiftyTokeniser {
 			case .string:
 				let theToken = mutableTokens[idx]
 				print ("Found String: \(theToken.inputString)" )
-				
+				if let hasMetadata = theToken.metadataString {
+					print ("With metadata: \(hasMetadata)" )
+				}
 			case .metadata:
 				let theToken = mutableTokens[idx]
 				print ("Found metadata: \(theToken.inputString)" )
@@ -482,6 +498,7 @@ public class SwiftyTokeniser {
 }
 
 
+
 // Example customisation
 public enum CharacterStyle : CharacterStyling {
 	case none
@@ -489,7 +506,7 @@ public enum CharacterStyle : CharacterStyling {
 	case italic
 	case code
 	case link
-	
+	case image
 }
 
 
@@ -582,16 +599,19 @@ let oneEscapedAsteriskTwoNormalWithin = TokenTest(input: "A string with randomly
 	Token(type: .string, inputString: "** asterisks", characterStyles: [])
 ])
 
+"Given an array of integers, return **indices** of the two numbers such that they add up to a specific target.\n\nYou may assume that each input would have **_exactly_** one solution, and you may not use the _same_ element twice.\n\n**Example:**\n\nGiven nums = [2, 7, 11, 15], target = 9,\n\nBecause nums[**0**] + nums[**1**] = 2 + 7 = 9,\nreturn [**0**, **1**]."
 
-let challenges = [oneEscapedAsteriskTwoNormalWithin]
+let challenges = [challenge8]
 
+var images = CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1)
 var links = CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1)
 var codeblock = CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1)
 codeblock.cancels = .allRemaining
 let asterisks = CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [.italic], 2 : [.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
 let underscores = CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [.italic], 2 : [.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
 
-let scan = SwiftyTokeniser(with: [ links, codeblock, asterisks])
+let scan = SwiftyTokeniser(with: [ images, links, codeblock, asterisks])
+
 
 for challenge in challenges {
 	let finalTokens = scan.process(challenge.input)
@@ -635,6 +655,10 @@ for challenge in challenges {
 		case .string:
 			print("Expected: \(expected.outputString): \(expected.characterStyles)")
 			print("Found: \(token.outputString): \(token.characterStyles)")
+			if token.metadataString != nil {
+				print("Metadata: \(token.metadataString!)")
+			}
+			
 		default:
 			break
 		}

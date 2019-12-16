@@ -39,7 +39,11 @@ class ViewController: UIViewController {
 			md.h2.fontName = "AvenirNextCondensed-Bold"
 			md.h2.color = UIColor.red
 			md.code.fontName = "CourierNewPSMT"
-
+			
+			md.blockquotes.fontStyle = .italic
+		
+			md.underlineLinks = true
+			
 			self.textView.attributedText = md.attributedString()
 
 		} else {

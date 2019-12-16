@@ -131,9 +131,9 @@ public class SwiftyLineProcessor {
     
     public func process( _ string : String ) -> [SwiftyLine] {
         var foundAttributes : [SwiftyLine] = []
-        for  heading in string.split(separator: "\n") {
+        for  heading in string.components(separatedBy: CharacterSet.newlines) {
             
-            if processEmptyStrings == nil, heading.isEmpty {
+            if processEmptyStrings == nil && heading.isEmpty {
                 continue
             }
             

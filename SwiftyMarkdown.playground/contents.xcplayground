@@ -4,5 +4,6 @@
         <page name='Scanner Tests'/>
         <page name='Line Processing'/>
         <page name='Tokenising'/>
+        <page name='Attributed String'/>
     </pages>
 </playground>

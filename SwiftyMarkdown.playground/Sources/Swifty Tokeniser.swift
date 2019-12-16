@@ -123,15 +123,15 @@ public class SwiftyTokeniser {
 				currentTokens = self.applyStyles(to: self.scan(inputString, with: nextRule), usingRule: nextRule)
 				continue
 			}
-			
 			// Each string could have additional tokens within it, so they have to be scanned as well with the current rule.
 			// The one string token might then be exploded into multiple more tokens
 			var replacements : [Int : [Token]] = [:]
 			for (idx,token) in currentTokens.enumerated() {
 				switch token.type {
 				case .string:
-					let nextTokens = self.scan(token.outputString, with: nextRule)
+					
 					if !token.shouldSkip {
+						let nextTokens = self.scan(token.outputString, with: nextRule)
 						replacements[idx] = self.applyStyles(to: nextTokens, usingRule: nextRule)
 					}
 					
@@ -139,7 +139,6 @@ public class SwiftyTokeniser {
 					break
 				}
 			}
-			
 			// This replaces the individual string tokens with the new token arrays
 			// making sure to apply any previously found styles to the new tokens.
 			for key in replacements.keys.sorted(by: { $0 > $1 }) {
@@ -147,6 +146,10 @@ public class SwiftyTokeniser {
 				var newTokens : [Token] = []
 				for token in replacements[key]! {
 					var newToken = token
+					if existingToken.metadataString != nil {
+						newToken.metadataString = existingToken.metadataString
+					}
+					
 					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
 					newTokens.append(newToken)
 				}
@@ -159,6 +162,9 @@ public class SwiftyTokeniser {
 	func handleClosingTagFromOpenTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule ) {
 		
 		guard rule.closingTag != nil else {
+			return
+		}
+		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
 			return
 		}
 		
@@ -176,24 +182,24 @@ public class SwiftyTokeniser {
 				}
 			}
 		}
-		
-		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
-			return
-		}
+
 		var metadataString : String = ""
 		for i in metadataIndex..<closeTokenIdx {
-			var otherTokens = tokens[i]
-			otherTokens.type = .metadata
-			tokens[i] = otherTokens
-			metadataString.append(otherTokens.outputString)
+			if tokens[i].type == .string {
+				metadataString.append(tokens[i].outputString)
+				tokens[i].type = .metadata
+			}
 		}
+		
+		for i in index..<metadataIndex {
+			if tokens[i].type == .string {
+				tokens[i].metadataString = metadataString
+			}
+		}
+		
 		tokens[closeTokenIdx].type = .processed
 		tokens[metadataIndex].type = .processed
 		tokens[index].type = .processed
-		tokens[index].metadataString = metadataString
-		
-		
-		
 	}
 	
 	
@@ -260,7 +266,9 @@ public class SwiftyTokeniser {
 			case .string:
 				let theToken = mutableTokens[idx]
 				print ("Found String: \(theToken.inputString)" )
-				
+				if let hasMetadata = theToken.metadataString {
+					print ("With metadata: \(hasMetadata)" )
+				}
 			case .metadata:
 				let theToken = mutableTokens[idx]
 				print ("Found metadata: \(theToken.inputString)" )
@@ -327,6 +335,7 @@ public class SwiftyTokeniser {
 			
 			guard let foundChars = maybeFoundChars else {
 				tokens.append(Token(type: .string, inputString: "\(openingString)"))
+				openingString = ""
 				continue
 			}
 			
@@ -439,6 +448,11 @@ public class SwiftyTokeniser {
 			addToken(for: .closeTag)
 			openingString.append( cumulativeString )
 		}
+		
+		if !openingString.isEmpty {
+			tokens.append(Token(type: .string, inputString: "\(openingString)"))
+		}
+		
 		return tokens
 	}
 	
