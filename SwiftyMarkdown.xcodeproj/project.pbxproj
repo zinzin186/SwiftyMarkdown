@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		F40D3A7F23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */; };
 		F40D3A8123A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A8023A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift */; };
-		F40D3A8423A813240085CF6E /* SwiftyMarkdownAttributedStringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A8323A813240085CF6E /* SwiftyMarkdownAttributedStringTests.swift */; };
+		F40D3A8423A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A8323A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift */; };
 		F44E3F46239C365A00508290 /* String+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */; };
 		F49A0DA623A711920005B8B2 /* SwiftyLineProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */; };
 		F49A0DA823A71A2C0005B8B2 /* SwiftyTokeniser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */; };
+		F4A48AB923A8516E00713437 /* SwiftyMarkdownAttributedStringTests copy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A48AB823A8516E00713437 /* SwiftyMarkdownAttributedStringTests copy.swift */; };
+		F4A48ABB23A8521C00713437 /* test.md in Resources */ = {isa = PBXBuildFile; fileRef = F4A48ABA23A8518900713437 /* test.md */; };
 		F4CE98851C8A921300D735C1 /* SwiftyMarkdown.h in Headers */ = {isa = PBXBuildFile; fileRef = F4CE98841C8A921300D735C1 /* SwiftyMarkdown.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F4CE988C1C8A921300D735C1 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4CE98811C8A921300D735C1 /* SwiftyMarkdown.framework */; };
 		F4CE98911C8A921300D735C1 /* SwiftyMarkdownLineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98901C8A921300D735C1 /* SwiftyMarkdownLineTests.swift */; };
@@ -34,10 +36,12 @@
 /* Begin PBXFileReference section */
 		F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownCharacterTests.swift; sourceTree = "<group>"; };
 		F40D3A8023A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTest+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
-		F40D3A8323A813240085CF6E /* SwiftyMarkdownAttributedStringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownAttributedStringTests.swift; sourceTree = "<group>"; };
+		F40D3A8323A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownPerformanceTests.swift; sourceTree = "<group>"; };
 		F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
 		F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
 		F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyTokeniser.swift; sourceTree = "<group>"; };
+		F4A48AB823A8516E00713437 /* SwiftyMarkdownAttributedStringTests copy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdownAttributedStringTests copy.swift"; sourceTree = "<group>"; };
+		F4A48ABA23A8518900713437 /* test.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = test.md; sourceTree = "<group>"; };
 		F4CE98811C8A921300D735C1 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftyMarkdown.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4CE98841C8A921300D735C1 /* SwiftyMarkdown.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftyMarkdown.h; sourceTree = "<group>"; };
 		F4CE98861C8A921300D735C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -106,11 +110,13 @@
 		F4CE988F1C8A921300D735C1 /* SwiftyMarkdownTests */ = {
 			isa = PBXGroup;
 			children = (
+				F4A48ABA23A8518900713437 /* test.md */,
 				F4CE98901C8A921300D735C1 /* SwiftyMarkdownLineTests.swift */,
 				F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */,
 				F4CE98921C8A921300D735C1 /* Info.plist */,
 				F40D3A8023A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift */,
-				F40D3A8323A813240085CF6E /* SwiftyMarkdownAttributedStringTests.swift */,
+				F4A48AB823A8516E00713437 /* SwiftyMarkdownAttributedStringTests copy.swift */,
+				F40D3A8323A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift */,
 			);
 			path = SwiftyMarkdownTests;
 			sourceTree = "<group>";
@@ -219,6 +225,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4A48ABB23A8521C00713437 /* test.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,9 +248,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				F40D3A8123A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift in Sources */,
+				F4A48AB923A8516E00713437 /* SwiftyMarkdownAttributedStringTests copy.swift in Sources */,
 				F40D3A7F23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift in Sources */,
 				F4CE98911C8A921300D735C1 /* SwiftyMarkdownLineTests.swift in Sources */,
-				F40D3A8423A813240085CF6E /* SwiftyMarkdownAttributedStringTests.swift in Sources */,
+				F40D3A8423A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -330,8 +330,7 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		} else {
 			XCTFail("Failed to find an open link tag")
 		}
-		
-		return
+
 		
 		challenge = TokenTest(input: "A [Link](http://voyagetravelapps.com/)", output: "A Link", tokens: [
 			Token(type: .string, inputString: "A ", characterStyles: []),
@@ -418,5 +417,19 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
+	}
+	
+	func testForImages() {
+		let challenge = TokenTest(input: "An ![Image](imageName)", output: "An Image", tokens: [
+			Token(type: .string, inputString: "An Image", characterStyles: []),
+			Token(type: .string, inputString: "", characterStyles: [CharacterStyle.image])
+		])
+		let results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		let links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.image) ?? false) })
+		XCTAssertEqual(links.count, 1)
+		XCTAssertEqual(links[0].metadataString, "imageName")
 	}
 }

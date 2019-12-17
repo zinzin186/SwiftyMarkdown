@@ -1,11 +1,4 @@
-//
-//  SwiftyMarkdown.swift
-//  SwiftyMarkdown
-//
-//  Created by Simon Fairbairn on 05/03/2016.
-//  Copyright © 2016 Voyage Travel Apps. All rights reserved.
-//
-
+import Foundation
 import UIKit
 
 enum CharacterStyle : CharacterStyling {
@@ -268,13 +261,10 @@ If that is not set, then the system default will be used.
 		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
 
-		for (idx, line) in foundAttributes.enumerated() {
-			if idx > 0 {
-				attributedString.append(NSAttributedString(string: "\n"))
-			}
+		for line in foundAttributes {
 			let finalTokens = self.tokeniser.process(line.line)
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
-			
+			attributedString.append(NSAttributedString(string: "\n"))
 		}
 		return attributedString
 	}

@@ -15,16 +15,9 @@ extension XCTestCase {
 		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
 		let tokens = tokeniser.process(challenge.input)
 		let stringTokens = tokens.filter({ $0.type == .string })
-		XCTAssertEqual(challenge.tokens.count, stringTokens.count)
-		XCTAssertEqual(tokens.map({ $0.outputString }).joined(), challenge.output)
 		
 		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
 		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
-		
-		XCTAssertEqual(existentTokenStyles, expectedStyles)
-		
-		let attributedString = md.attributedString()
-		XCTAssertEqual(attributedString.string, challenge.output)
 		
 		return (tokens, stringTokens, md.attributedString(), existentTokenStyles, expectedStyles)
 	}

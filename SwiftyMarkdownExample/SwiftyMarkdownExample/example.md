@@ -10,6 +10,7 @@ Customise fonts and colours easily in a Swift-like way:
 
     md.h2.fontName = "AvenirNextCondensed-Medium"
     md.h2.color = UIColor.redColor()
+    md.h2.alignment = .center
 
 *An italic line*
 

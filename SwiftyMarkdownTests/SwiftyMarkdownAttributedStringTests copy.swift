@@ -29,7 +29,7 @@ A more *complicated* example. This one has **it all**. Here is a [link](http://v
 		
 		XCTAssertNotNil(attributedString)
 		
-		XCTAssertEqual(attributedString.string, "Heading 1\nA more complicated example. This one has it all. Here is a link.\nHeading 2\nHeading 3\nThis one is a blockquote")
+		XCTAssertEqual(attributedString.string, "Heading 1\n\nA more complicated example. This one has it all. Here is a link.\n\nHeading 2\n\nHeading 3\n\nThis one is a blockquote")
 		
 		
 	}
