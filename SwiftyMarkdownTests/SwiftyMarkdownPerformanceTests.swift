@@ -26,11 +26,10 @@ class SwiftyMarkdownPerformanceTests: XCTestCase {
 	
 	func testThatStringsAreProcessedQuickly() {
 		let string = "SwiftyMarkdown converts Markdown files and strings into `NSAttributedString`s using sensible defaults and a *Swift*-style syntax. It uses **dynamic type** to set the font size correctly with [whatever](https://www.neverendingvoyage.com/) font you'd like to use."
+		let md = SwiftyMarkdown(string: string)
 		measure {
-			let md = SwiftyMarkdown(string: string)
-			_ = md.attributedString()
+			_ = md.attributedString(from: string)
 		}
-		
 	}
 	
 }

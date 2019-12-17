@@ -164,7 +164,7 @@ If that is not set, then the system default will be used.
 	var currentType : MarkdownLineStyle = .body
 	
 	
-	let string : String
+	var string : String
 	
 	let tagList = "!\\_*`[]()"
 	let validMarkdownTags = CharacterSet(charactersIn: "!\\_*`[]()")
@@ -263,7 +263,10 @@ If that is not set, then the system default will be used.
 	
 	- returns: An NSAttributedString with the styles applied
 	*/
-	open func attributedString() -> NSAttributedString {
+	open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
+		if let existentMarkdownString = markdownString {
+			self.string = existentMarkdownString
+		}
 		let attributedString = NSMutableAttributedString(string: "")
 		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
@@ -278,7 +281,6 @@ If that is not set, then the system default will be used.
 		}
 		return attributedString
 	}
-	
 	
 }
 
