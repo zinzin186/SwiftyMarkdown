@@ -296,7 +296,7 @@ public class SwiftyTokeniser {
 		var openingString = ""
 		while !scanner.isAtEnd {
 			
-			if #available(iOS 13.0, *) {
+			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				if let start = scanner.scanUpToCharacters(from: set) {
 					openingString.append(start)
 				}
@@ -310,14 +310,14 @@ public class SwiftyTokeniser {
 			}
 			
 			let lastChar : String?
-			if #available(iOS 13.0, *) {
+			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				lastChar = ( scanner.currentIndex > string.startIndex ) ? String(string[string.index(before: scanner.currentIndex)..<scanner.currentIndex]) : nil
 			} else {
 				let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation)
 				lastChar = ( scanLocation > string.startIndex ) ? String(string[string.index(before: scanLocation)..<scanLocation]) : nil
 			}
 			let maybeFoundChars : String?
-			if #available(iOS 13.0, *) {
+			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				maybeFoundChars = scanner.scanCharacters(from: set )
 			} else {
 				var string : NSString?
@@ -326,7 +326,7 @@ public class SwiftyTokeniser {
 			}
 			
 			let nextChar : String?
-			if #available(iOS 13.0, *) {
+			if #available(iOS 13.0, OSX 10.15,  watchOS 6.0,tvOS 13.0, *) {
 				 nextChar = (scanner.currentIndex != string.endIndex) ? String(string[scanner.currentIndex]) : nil
 			} else {
 				let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation)
