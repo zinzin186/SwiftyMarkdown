@@ -19,6 +19,7 @@ public protocol CharacterStyling {
 	
 }
 
+
 public enum SpaceAllowed {
 	case no
 	case bothSides
@@ -33,7 +34,7 @@ public enum Cancel {
     case currentSet
 }
 
-public struct CharacterRule {
+public struct CharacterRule : CustomStringConvertible {
 	public let openTag : String
 	public let intermediateTag : String?
 	public let closingTag : String?
@@ -42,6 +43,10 @@ public struct CharacterRule {
 	public var maxTags : Int = 1
 	public var spacesAllowed : SpaceAllowed = .oneSide
 	public var cancels : Cancel = .none
+	
+	public var description: String {
+		return "Character Rule with Open tag: \(self.openTag) and current styles : \(self.styles) "
+	}
 	
 	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1, cancels : Cancel = .none) {
 		self.openTag = openTag
@@ -60,22 +65,24 @@ public enum TokenType {
 	case openTag
 	case intermediateTag
 	case closeTag
-	case processed
 	case string
 	case escape
-	case metadata
+	case replacement
 }
 
 
 
 public struct Token {
 	public let id = UUID().uuidString
-	public var type : TokenType
+	public let type : TokenType
 	public let inputString : String
-	public var metadataString : String? = nil
-	public var characterStyles : [CharacterStyling] = []
-	public var count : Int = 0
-	public var shouldSkip : Bool = false
+	public fileprivate(set) var metadataString : String? = nil
+	public fileprivate(set) var characterStyles : [CharacterStyling] = []
+	public fileprivate(set) var count : Int = 0
+	public fileprivate(set) var shouldSkip : Bool = false
+	public fileprivate(set) var tokenIndex : Int = -1
+	public fileprivate(set) var isProcessed : Bool = false
+	public fileprivate(set) var isMetadata : Bool = false
 	public var outputString : String {
 		get {
 			switch self.type {
@@ -87,11 +94,11 @@ public struct Token {
 					return String(inputString[range])
 				}
 			case .openTag, .closeTag, .intermediateTag:
-				return inputString
-			case .metadata, .processed:
-				return ""
+				return (self.isProcessed || self.isMetadata) ? "" : inputString
 			case .escape, .string:
-				return inputString
+				return (self.isProcessed || self.isMetadata) ? "" : inputString
+			case .replacement:
+				return self.inputString
 			}
 		}
 	}
@@ -100,10 +107,25 @@ public struct Token {
 		self.inputString = inputString
 		self.characterStyles = characterStyles
 	}
+	
+	func newToken( fromSubstring string: String,  isReplacement : Bool) -> Token {
+		var newToken = Token(type: (isReplacement) ? .replacement : .string , inputString: string, characterStyles: self.characterStyles)
+		newToken.metadataString = self.metadataString
+		newToken.isMetadata = self.isMetadata
+		newToken.isProcessed = self.isProcessed
+		return newToken
+	}
+}
+
+extension Sequence where Iterator.Element == Token {
+    var oslogDisplay: String {
+		return "[\"\(self.map( {  ($0.outputString.isEmpty) ? "\($0.type): \($0.inputString)" : $0.outputString }).joined(separator: "\", \""))\"]"
+    }
 }
 
 public class SwiftyTokeniser {
 	let rules : [CharacterRule]
+	var replacements : [String : [Token]] = [:]
 	
 	public init( with rules : [CharacterRule] ) {
 		self.rules = rules
@@ -118,60 +140,200 @@ public class SwiftyTokeniser {
 		var mutableRules = self.rules
 		while !mutableRules.isEmpty {
 			let nextRule = mutableRules.removeFirst()
+			os_log("------------------------------", log: .tokenising, type: .info)
+			os_log("RULE: %@", log: OSLog.tokenising, type:.info , nextRule.description)
+			os_log("Applying rule to : %@", log: OSLog.tokenising, type:.info , currentTokens.oslogDisplay )
+	
 			if currentTokens.isEmpty {
 				// This means it's the first time through
 				currentTokens = self.applyStyles(to: self.scan(inputString, with: nextRule), usingRule: nextRule)
 				continue
 			}
+			
+			var outerStringTokens : [Token] = []
+			var innerStringTokens : [Token] = []
+			var isOuter = true
+			for idx in 0..<currentTokens.count {
+				let nextToken = currentTokens[idx]
+				if nextToken.type == .openTag && nextToken.isProcessed {
+					isOuter = false
+				}
+				if nextToken.type == .closeTag {
+					
+					let ref = UUID().uuidString
+					outerStringTokens.append(Token(type: .replacement, inputString: ref))
+
+					innerStringTokens.append(nextToken)
+					self.replacements[ref] = self.handleReplacementTokens(innerStringTokens, with: nextRule)
+					
+					innerStringTokens.removeAll()
+					isOuter = true
+					continue
+				}
+				(isOuter) ? outerStringTokens.append(nextToken) : innerStringTokens.append(nextToken)
+			}
+			
+			currentTokens = self.handleReplacementTokens(outerStringTokens, with: nextRule)
+			
+			var finalTokens : [Token] = []
+			for token in currentTokens {
+				guard token.type == .replacement else {
+					finalTokens.append(token)
+					continue
+				}
+				if let hasReplacement = self.replacements[token.inputString] {
+					for var repToken in hasReplacement {
+						guard repToken.type == .string else {
+							finalTokens.append(repToken)
+							continue
+						}
+						repToken.characterStyles.append(contentsOf: token.characterStyles)
+						finalTokens.append(repToken)
+					}
+				}
+			}
+			currentTokens = finalTokens
+			
+			
 			// Each string could have additional tokens within it, so they have to be scanned as well with the current rule.
 			// The one string token might then be exploded into multiple more tokens
-			var replacements : [Int : [Token]] = [:]
-			for (idx,token) in currentTokens.enumerated() {
-				switch token.type {
-				case .string:
-					
-					if !token.shouldSkip {
-						let nextTokens = self.scan(token.outputString, with: nextRule)
-						replacements[idx] = self.applyStyles(to: nextTokens, usingRule: nextRule)
-					}
-					
-				default:
-					break
-				}
-			}
-			// This replaces the individual string tokens with the new token arrays
-			// making sure to apply any previously found styles to the new tokens.
-			for key in replacements.keys.sorted(by: { $0 > $1 }) {
-				let existingToken = currentTokens[key]
-				var newTokens : [Token] = []
-				for token in replacements[key]! {
-					var newToken = token
-					if existingToken.metadataString != nil {
-						newToken.metadataString = existingToken.metadataString
-					}
-					
-					newToken.characterStyles.append(contentsOf: existingToken.characterStyles)
-					newTokens.append(newToken)
-				}
-				currentTokens.replaceSubrange(key...key, with: newTokens)
-			}
 		}
+
+		
+		
+		os_log("Final output: %@", log: .tokenising, type: .info, currentTokens.oslogDisplay)
+		os_log("=====RULE PROCESSING COMPLETE=====", log: .tokenising, type: .info)
+		os_log("==================================", log: .tokenising, type: .info)
+		
 		return currentTokens
 	}
+	
+	func scanReplacements(_ replacements : [Token], in token : Token ) -> [Token] {
+		guard !token.outputString.isEmpty && !replacements.isEmpty else {
+			return [token]
+		}
+		
+		
+		var outputTokens : [Token] = []
+		let scanner = Scanner(string: token.outputString)
+		scanner.charactersToBeSkipped = nil
+		var repTokens = replacements
+		while !scanner.isAtEnd {
+			var outputString : String = ""
+			var testString = "\n"
+			if repTokens.count > 0 {
+				testString = repTokens.removeFirst().inputString
+			}
+			
+			if #available(iOS 13.0, *) {
+				if let nextString = scanner.scanUpToString(testString) {
+					outputString = nextString
+					outputTokens.append(token.newToken(fromSubstring: outputString, isReplacement: false))
+					if let outputToken = scanner.scanString(testString) {
+						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+					}
+				} else if let outputToken = scanner.scanString(testString) {
+					outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+				}
+			} else {
+				var oldString : NSString? = nil
+				var tokenString : NSString? = nil
+				scanner.scanUpTo(testString, into: &oldString)
+				if let nextString = oldString {
+					outputString = nextString as String
+					outputTokens.append(token.newToken(fromSubstring: outputString, isReplacement: false))
+					scanner.scanString(testString, into: &tokenString)
+					if let outputToken = tokenString as String? {
+						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+					}
+				} else {
+					scanner.scanString(testString, into: &tokenString)
+					if let outputToken = tokenString as String? {
+						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+					}
+				}
+			}
+		}
+		return outputTokens
+	}
+	
+	func scanReplacementTokens( _ tokens : [Token], with rule : CharacterRule ) -> [Token] {
+		guard tokens.count > 0 else {
+			return []
+		}
+		
+		let combinedString = tokens.map({ $0.outputString }).joined()
+		
+		let nextTokens = self.scan(combinedString, with: rule)
+		var replacedTokens = self.applyStyles(to: nextTokens, usingRule: rule)
+		
+		for idx in 0..<replacedTokens.count {
+			guard replacedTokens[idx].type == .string || replacedTokens[idx].type == .replacement else {
+				continue
+			}
+			if tokens.first!.metadataString != nil && replacedTokens[idx].metadataString == nil {
+				replacedTokens[idx].metadataString = tokens.first!.metadataString
+			}
+			replacedTokens[idx].characterStyles.append(contentsOf: tokens.first!.characterStyles)
+		}
+		
+		// Swap replacement tokens back in, remembering to apply newly found styles to the replacement token
+		let replacements = tokens.filter({ $0.type == .replacement })
+		var outputTokens : [Token] = []
+		for token in replacedTokens {
+			guard token.type == .string else {
+				outputTokens.append(token)
+				continue
+			}
+			outputTokens.append(contentsOf: self.scanReplacements(replacements, in: token))
+		}
+		
+		return outputTokens
+	}
+	
+	func handleReplacementTokens( _ incomingTokens : [Token], with rule : CharacterRule) -> [Token] {
+	
+		// Online combine string and replacements that are next to each other.
+		os_log("Handling replacements: %@", log: .tokenising, type: .info, incomingTokens.oslogDisplay)
+		
+		var newTokenSet : [Token] = []
+		var currentTokenSet : [Token] = []
+		for i in 0..<incomingTokens.count {
+			guard incomingTokens[i].type == .string || incomingTokens[i].type == .replacement else {
+				newTokenSet.append(contentsOf: self.scanReplacementTokens(currentTokenSet, with: rule))
+				newTokenSet.append(incomingTokens[i])
+				currentTokenSet.removeAll()
+				continue
+			}
+			guard !incomingTokens[i].isProcessed && !incomingTokens[i].isMetadata && !incomingTokens[i].shouldSkip else {
+				newTokenSet.append(contentsOf: self.scanReplacementTokens(currentTokenSet, with: rule))
+				newTokenSet.append(incomingTokens[i])
+				currentTokenSet.removeAll()
+				continue
+			}
+			currentTokenSet.append(incomingTokens[i])
+		}
+		newTokenSet.append(contentsOf: self.scanReplacementTokens(currentTokenSet, with: rule))
+		
+		os_log("Replacements: %@", log: .tokenising, type: .info, newTokenSet.oslogDisplay)
+
+		return newTokenSet
+	}
+	
 	
 	func handleClosingTagFromOpenTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule ) {
 		
 		guard rule.closingTag != nil else {
 			return
 		}
-		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag }) else {
+		guard let closeTokenIdx = tokens.firstIndex(where: { $0.type == .closeTag && !$0.isProcessed }) else {
 			return
 		}
 		
 		var metadataIndex = index
 		// If there's an intermediate tag, get the index of that
 		if rule.intermediateTag != nil {
-			guard let nextTokenIdx = tokens.firstIndex(where: { $0.type == .intermediateTag }) else {
+			guard let nextTokenIdx = tokens.firstIndex(where: { $0.type == .intermediateTag  && !$0.isProcessed }) else {
 				return
 			}
 			metadataIndex = nextTokenIdx
@@ -187,7 +349,7 @@ public class SwiftyTokeniser {
 		for i in metadataIndex..<closeTokenIdx {
 			if tokens[i].type == .string {
 				metadataString.append(tokens[i].outputString)
-				tokens[i].type = .metadata
+				tokens[i].isMetadata = true
 			}
 		}
 		
@@ -197,23 +359,24 @@ public class SwiftyTokeniser {
 			}
 		}
 		
-		tokens[closeTokenIdx].type = .processed
-		tokens[metadataIndex].type = .processed
-		tokens[index].type = .processed
+		tokens[closeTokenIdx].isProcessed = true
+		tokens[metadataIndex].isProcessed = true
+		tokens[index].isProcessed = true
 	}
 	
 	
 	func applyStyles( to tokens : [Token], usingRule rule : CharacterRule ) -> [Token] {
 		var mutableTokens : [Token] = tokens
-		print( tokens.map( { ( $0.outputString, $0.count )}))
+		
+		os_log("Applying styles to tokens: %@", log: .tokenising, type: .info,  tokens.oslogDisplay )
 		for idx in 0..<mutableTokens.count {
 			let token = mutableTokens[idx]
 			switch token.type {
 			case .escape:
-				print( "Found escape (\(token.inputString))" )
+				os_log("Found escape: %@", log: .tokenising, type: .info, token.inputString )
 			case .repeatingTag:
 				let theToken = mutableTokens[idx]
-				print ("Found repeating tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
+				os_log("Found repeating tag with tag count: %i, tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString, rule.openTag )
 				
 				guard theToken.count > 0 else {
 					continue
@@ -242,8 +405,8 @@ public class SwiftyTokeniser {
 				mutableTokens[existentEnd].count = 0
 			case .openTag:
 				let theToken = mutableTokens[idx]
-				print ("Found open tag with tag count \(theToken.count) tags: \(theToken.inputString). Current rule open tag = \(rule.openTag)" )
-				
+				os_log("Found repeating tag with tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.inputString, rule.openTag )
+								
 				guard rule.closingTag != nil else {
 					
 					// If there's an intermediate tag, get the index of that
@@ -257,26 +420,25 @@ public class SwiftyTokeniser {
 				
 			case .intermediateTag:
 				let theToken = mutableTokens[idx]
-				print ("Found intermediate tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
+				os_log("Found intermediate tag with tag count: %i, tags: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString )
 				
 			case .closeTag:
 				let theToken = mutableTokens[idx]
-				print ("Found close tag with tag count \(theToken.count) tags: \(theToken.inputString)" )
+				os_log("Found close tag with tag count: %i, tags: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString )
 				
 			case .string:
 				let theToken = mutableTokens[idx]
-				print ("Found String: \(theToken.inputString)" )
-				if let hasMetadata = theToken.metadataString {
-					print ("With metadata: \(hasMetadata)" )
+				if theToken.isMetadata {
+					os_log("Found Metadata: %@", log: .tokenising, type: .info, theToken.inputString )
+				} else {
+					os_log("Found String: %@", log: .tokenising, type: .info, theToken.inputString )
 				}
-			case .metadata:
-				let theToken = mutableTokens[idx]
-				print ("Found metadata: \(theToken.inputString)" )
 				
-			case .processed:
-				let theToken = mutableTokens[idx]
-				print ("Found already processed tag: \(theToken.inputString)" )
-				
+				if let hasMetadata = theToken.metadataString {
+					os_log("...with metadata: %@", log: .tokenising, type: .info, hasMetadata )
+				}
+			case .replacement:
+				os_log("Found replacement with ID: %@", log: .tokenising, type: .info, mutableTokens[idx].inputString )
 			}
 		}
 		return mutableTokens

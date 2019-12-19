@@ -12,6 +12,16 @@ import XCTest
 
 class SwiftyMarkdownCharacterTests: XCTestCase {
 	
+	func testIsolatedCase() {
+		let challenge = TokenTest(input: "`Code (**should** not process internal tags)`", output: "Code (**should** not process internal tags)",  tokens: [
+			Token(type: .string, inputString: "Code (**should** not process internal tags) ", characterStyles: [CharacterStyle.code])
+		])
+		let results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+	}
 	
 	
 	func testThatRegularTraitsAreParsedCorrectly() {
@@ -416,7 +426,41 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
+	
+	}
+	
+	func testLinksWithOtherStyles() {
+		var challenge = TokenTest(input: "A **Bold [Link](http://voyagetravelapps.com/)**", output: "A Bold Link", tokens: [
+			Token(type: .string, inputString: "A ", characterStyles: []),
+			Token(type: .string, inputString: "Bold ", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.link, CharacterStyle.bold, CharacterStyle.bold])
+		])
+		var results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+//		XCTAssertEqual(results.attributedString.string, challenge.output)
+		var links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
+		XCTAssertEqual(links.count, 1)
+		if links.count == 1 {
+			XCTAssertEqual(links[0].metadataString, "http://voyagetravelapps.com/")
+		} else {
+			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
+		}
 		
+		
+		challenge = TokenTest(input: "A Bold [**Link**](http://voyagetravelapps.com/)", output: "A Bold Link", tokens: [
+			Token(type: .string, inputString: "A Bold ", characterStyles: []),
+			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.bold, CharacterStyle.link])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
+		XCTAssertEqual(links.count, 1)
+		XCTAssertEqual(links[0].metadataString, "http://voyagetravelapps.com/")
 	}
 	
 	func testForImages() {
