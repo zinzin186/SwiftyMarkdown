@@ -19,6 +19,13 @@ enum CharacterStyle : CharacterStyling {
 	case code
 	case link
 	case image
+	
+	func isEqualTo(_ other: CharacterStyling) -> Bool {
+		guard let other = other as? CharacterStyle else {
+			return false
+		}
+		return other == self 
+	}
 }
 
 enum MarkdownLineStyle : LineStyling {

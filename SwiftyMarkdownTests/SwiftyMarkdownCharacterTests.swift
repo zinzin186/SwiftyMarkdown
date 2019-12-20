@@ -13,14 +13,17 @@ import XCTest
 class SwiftyMarkdownCharacterTests: XCTestCase {
 	
 	func testIsolatedCase() {
-		let challenge = TokenTest(input: "`Code (**should** not process internal tags)`", output: "Code (**should** not process internal tags)",  tokens: [
-			Token(type: .string, inputString: "Code (**should** not process internal tags) ", characterStyles: [CharacterStyle.code])
+		let challenge = TokenTest(input: "A string with a ****bold italic**** word", output: "A string with a *bold italic* word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "*bold italic*", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		let results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
+			
 	}
 	
 	
@@ -149,6 +152,53 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
+	
+	func testThatExtraCharactersAreHandles() {
+		var challenge = TokenTest(input: "***A bold italic string***", output: "A bold italic string",  tokens: [
+			Token(type: .string, inputString: "A bold italic string", characterStyles: [CharacterStyle.bold, CharacterStyle.italic])
+		])
+		var results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with a ****bold italic**** word", output: "A string with a *bold italic* word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "*bold italic*", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with a ****bold italic*** word", output: "A string with a *bold italic word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "*bold italic", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with a ***bold** italic* word", output: "A string with a bold italic word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: " italic", characterStyles: [CharacterStyle.italic]),
+			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+	}
+	
 	
 	// The new version of SwiftyMarkdown is a lot more strict than the old version, although this may change in future
 	func offtestThatMarkdownMistakesAreHandledAppropriately() {
@@ -433,7 +483,7 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		var challenge = TokenTest(input: "A **Bold [Link](http://voyagetravelapps.com/)**", output: "A Bold Link", tokens: [
 			Token(type: .string, inputString: "A ", characterStyles: []),
 			Token(type: .string, inputString: "Bold ", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.link, CharacterStyle.bold, CharacterStyle.bold])
+			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.link, CharacterStyle.bold])
 		])
 		var results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)

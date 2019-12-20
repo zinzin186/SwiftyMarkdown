@@ -37,7 +37,7 @@ if let url = Bundle.main.url(forResource: "file", withExtension: "md"), md = Swi
 }
 ```
 
-## Supported Features
+## Supported Markdown Features
 
     *italics* or _italics_
     **bold** or __bold__
@@ -57,7 +57,6 @@ if let url = Bundle.main.url(forResource: "file", withExtension: "md"), md = Swi
 		
 		Indented code blocks
 
-  
 
 ## Customisation 
 ```swift

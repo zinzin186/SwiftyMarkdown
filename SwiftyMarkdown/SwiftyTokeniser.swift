@@ -16,7 +16,7 @@ extension OSLog {
 
 // Tag definition
 public protocol CharacterStyling {
-	
+	func isEqualTo( _ other : CharacterStyling ) -> Bool
 }
 
 
@@ -87,7 +87,7 @@ public struct Token {
 		get {
 			switch self.type {
 			case .repeatingTag:
-				if count == 0 {
+				if count <= 0 {
 					return ""
 				} else {
 					let range = inputString.startIndex..<inputString.index(inputString.startIndex, offsetBy: self.count)
@@ -131,6 +131,18 @@ public class SwiftyTokeniser {
 		self.rules = rules
 	}
 	
+	
+	/// This goes through every CharacterRule in order and applies it to the input string, tokenising the string
+	/// if there are any matches.
+	///
+	/// The for loop in the while loop (yeah, I know) is there to separate strings from within tags to
+	/// those outside them.
+	///
+	/// e.g. "A string with a \[link\]\(url\) tag" would have the "link" text tokenised separately.
+	///
+	/// This is to prevent situations like **\[link**\](url) from returing a bold string.
+	///
+	/// - Parameter inputString: A string to have the CharacterRules in `self.rules` applied to
 	public func process( _ inputString : String ) -> [Token] {
 		guard rules.count > 0 else {
 			return [Token(type: .string, inputString: inputString)]
@@ -138,11 +150,13 @@ public class SwiftyTokeniser {
 
 		var currentTokens : [Token] = []
 		var mutableRules = self.rules
+		
+		
+		
 		while !mutableRules.isEmpty {
 			let nextRule = mutableRules.removeFirst()
 			os_log("------------------------------", log: .tokenising, type: .info)
 			os_log("RULE: %@", log: OSLog.tokenising, type:.info , nextRule.description)
-			os_log("Applying rule to : %@", log: OSLog.tokenising, type:.info , currentTokens.oslogDisplay )
 	
 			if currentTokens.isEmpty {
 				// This means it's the first time through
@@ -159,13 +173,10 @@ public class SwiftyTokeniser {
 					isOuter = false
 				}
 				if nextToken.type == .closeTag {
-					
 					let ref = UUID().uuidString
 					outerStringTokens.append(Token(type: .replacement, inputString: ref))
-
 					innerStringTokens.append(nextToken)
 					self.replacements[ref] = self.handleReplacementTokens(innerStringTokens, with: nextRule)
-					
 					innerStringTokens.removeAll()
 					isOuter = true
 					continue
@@ -187,7 +198,12 @@ public class SwiftyTokeniser {
 							finalTokens.append(repToken)
 							continue
 						}
-						repToken.characterStyles.append(contentsOf: token.characterStyles)
+						for style in token.characterStyles {
+							if !repToken.characterStyles.contains(where: { $0.isEqualTo(style)}) {
+								repToken.characterStyles.append(contentsOf: token.characterStyles)
+							}
+						}
+						
 						finalTokens.append(repToken)
 					}
 				}
@@ -199,23 +215,38 @@ public class SwiftyTokeniser {
 			// The one string token might then be exploded into multiple more tokens
 		}
 
-		
-		
-		os_log("Final output: %@", log: .tokenising, type: .info, currentTokens.oslogDisplay)
 		os_log("=====RULE PROCESSING COMPLETE=====", log: .tokenising, type: .info)
 		os_log("==================================", log: .tokenising, type: .info)
 		
 		return currentTokens
 	}
 	
-	func scanReplacements(_ replacements : [Token], in token : Token ) -> [Token] {
-		guard !token.outputString.isEmpty && !replacements.isEmpty else {
-			return [token]
+	
+	
+	/// In order to reinsert the original replacements into the new string token, the replacements
+	/// need to be searched for in the incoming string one by one.
+	///
+	/// Using the `newToken(fromSubstring:isReplacement:)` function ensures that any metadata and character styles
+	/// are passed over into the newly created tokens.
+	///
+	/// E.g. A string token that has an `outputString` of "This string AAAAA-BBBBB-CCCCC replacements", with
+	/// a characterStyle of `bold` for the entire string, needs to be separated into the following tokens:
+	///
+	/// - `string`: "This string "
+	/// - `replacement`: "AAAAA-BBBBB-CCCCC"
+	/// - `string`: " replacements"
+	///
+	/// Each of these need to have a character style of `bold`.
+	///
+	/// - Parameters:
+	///   - replacements: An array of `replacement` tokens
+	///   - token: The new `string` token that may contain replacement IDs contained in the `replacements` array
+	func reinsertReplacements(_ replacements : [Token], from stringToken : Token ) -> [Token] {
+		guard !stringToken.outputString.isEmpty && !replacements.isEmpty else {
+			return [stringToken]
 		}
-		
-		
 		var outputTokens : [Token] = []
-		let scanner = Scanner(string: token.outputString)
+		let scanner = Scanner(string: stringToken.outputString)
 		scanner.charactersToBeSkipped = nil
 		var repTokens = replacements
 		while !scanner.isAtEnd {
@@ -228,12 +259,12 @@ public class SwiftyTokeniser {
 			if #available(iOS 13.0, *) {
 				if let nextString = scanner.scanUpToString(testString) {
 					outputString = nextString
-					outputTokens.append(token.newToken(fromSubstring: outputString, isReplacement: false))
+					outputTokens.append(stringToken.newToken(fromSubstring: outputString, isReplacement: false))
 					if let outputToken = scanner.scanString(testString) {
-						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+						outputTokens.append(stringToken.newToken(fromSubstring: outputToken, isReplacement: true))
 					}
 				} else if let outputToken = scanner.scanString(testString) {
-					outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+					outputTokens.append(stringToken.newToken(fromSubstring: outputToken, isReplacement: true))
 				}
 			} else {
 				var oldString : NSString? = nil
@@ -241,15 +272,15 @@ public class SwiftyTokeniser {
 				scanner.scanUpTo(testString, into: &oldString)
 				if let nextString = oldString {
 					outputString = nextString as String
-					outputTokens.append(token.newToken(fromSubstring: outputString, isReplacement: false))
+					outputTokens.append(stringToken.newToken(fromSubstring: outputString, isReplacement: false))
 					scanner.scanString(testString, into: &tokenString)
 					if let outputToken = tokenString as String? {
-						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+						outputTokens.append(stringToken.newToken(fromSubstring: outputToken, isReplacement: true))
 					}
 				} else {
 					scanner.scanString(testString, into: &tokenString)
 					if let outputToken = tokenString as String? {
-						outputTokens.append(token.newToken(fromSubstring: outputToken, isReplacement: true))
+						outputTokens.append(stringToken.newToken(fromSubstring: outputToken, isReplacement: true))
 					}
 				}
 			}
@@ -257,6 +288,44 @@ public class SwiftyTokeniser {
 		return outputTokens
 	}
 	
+	
+	/// This function is necessary because a previously tokenised string might have
+	///
+	/// Consider a previously tokenised string, where AAAAA-BBBBB-CCCCC represents a replaced \[link\](url) instance.
+	///
+	/// The incoming tokens will look like this:
+	///
+	/// - `string`: "A \*\*Bold"
+	/// - `replacement` : "AAAAA-BBBBB-CCCCC"
+	/// - `string`: " with a trailing string**"
+	///
+	///	However, because the scanner can only tokenise individual strings, passing in the string values
+	///	of these tokens individually and applying the styles will not correctly detect the starting and
+	///	ending `repeatingTag` instances. (e.g. the scanner will see "A \*\*Bold", and then "AAAAA-BBBBB-CCCCC",
+	///	and finally " with a trailing string\*\*")
+	///
+	///	The strings need to be combined, so that they form a single string:
+	///	A \*\*Bold AAAAA-BBBBB-CCCCC with a trailing string\*\*.
+	///	This string is then parsed and tokenised so that it looks like this:
+	///
+	/// - `string`: "A "
+	///	- `repeatingTag`: "\*\*"
+	///	- `string`: "Bold AAAAA-BBBBB-CCCCC with a trailing string"
+	///	- `repeatingTag`: "\*\*"
+	///
+	///	Finally, the replacements from the original incoming token array are searched for and pulled out
+	///	of this new string, so the final result looks like this:
+	///
+	/// - `string`: "A "
+	///	- `repeatingTag`: "\*\*"
+	///	- `string`: "Bold "
+	///	- `replacement`: "AAAAA-BBBBB-CCCCC"
+	///	- `string`: " with a trailing string"
+	///	- `repeatingTag`: "\*\*"
+	///
+	/// - Parameters:
+	///   - tokens: The tokens to be combined, scanned, re-tokenised, and merged
+	///   - rule: The character rule currently being applied
 	func scanReplacementTokens( _ tokens : [Token], with rule : CharacterRule ) -> [Token] {
 		guard tokens.count > 0 else {
 			return []
@@ -267,6 +336,9 @@ public class SwiftyTokeniser {
 		let nextTokens = self.scan(combinedString, with: rule)
 		var replacedTokens = self.applyStyles(to: nextTokens, usingRule: rule)
 		
+		/// It's necessary here to check to see if the first token (which will always represent the styles
+		/// to be applied from previous scans) has any existing metadata or character styles and apply them
+		/// to *all* the string and replacement tokens found by the new scan.
 		for idx in 0..<replacedTokens.count {
 			guard replacedTokens[idx].type == .string || replacedTokens[idx].type == .replacement else {
 				continue
@@ -277,7 +349,7 @@ public class SwiftyTokeniser {
 			replacedTokens[idx].characterStyles.append(contentsOf: tokens.first!.characterStyles)
 		}
 		
-		// Swap replacement tokens back in, remembering to apply newly found styles to the replacement token
+		// Swap the original replacement tokens back in
 		let replacements = tokens.filter({ $0.type == .replacement })
 		var outputTokens : [Token] = []
 		for token in replacedTokens {
@@ -285,17 +357,25 @@ public class SwiftyTokeniser {
 				outputTokens.append(token)
 				continue
 			}
-			outputTokens.append(contentsOf: self.scanReplacements(replacements, in: token))
+			outputTokens.append(contentsOf: self.reinsertReplacements(replacements, from: token))
 		}
 		
 		return outputTokens
 	}
 	
+	
+	
+	/// This function ensures that only concurrent `string` and `replacement` tokens are processed together.
+	///
+	/// i.e. If there is an existing `repeatingTag` token between two strings, then those strings will be
+	/// processed individually. This prevents incorrect parsing of strings like "\*\*\_Should only be bold\*\*\_"
+	///
+	/// - Parameters:
+	///   - incomingTokens: A group of tokens whose string tokens and replacement tokens should be combined and re-tokenised
+	///   - rule: The current rule being processed
 	func handleReplacementTokens( _ incomingTokens : [Token], with rule : CharacterRule) -> [Token] {
 	
-		// Online combine string and replacements that are next to each other.
-		os_log("Handling replacements: %@", log: .tokenising, type: .info, incomingTokens.oslogDisplay)
-		
+		// Only combine string and replacements that are next to each other.
 		var newTokenSet : [Token] = []
 		var currentTokenSet : [Token] = []
 		for i in 0..<incomingTokens.count {
@@ -314,8 +394,6 @@ public class SwiftyTokeniser {
 			currentTokenSet.append(incomingTokens[i])
 		}
 		newTokenSet.append(contentsOf: self.scanReplacementTokens(currentTokenSet, with: rule))
-		
-		os_log("Replacements: %@", log: .tokenising, type: .info, newTokenSet.oslogDisplay)
 
 		return newTokenSet
 	}
@@ -340,7 +418,9 @@ public class SwiftyTokeniser {
 			let styles : [CharacterStyling] = rule.styles[1] ?? []
 			for i in index..<nextTokenIdx {
 				for style in styles {
-					tokens[i].characterStyles.append(style)
+					if !tokens[i].characterStyles.contains(where: { $0.isEqualTo(style )}) {
+						tokens[i].characterStyles.append(style)
+					}
 				}
 			}
 		}
@@ -364,6 +444,50 @@ public class SwiftyTokeniser {
 		tokens[index].isProcessed = true
 	}
 	
+	func handleClosingTagFromRepeatingTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule) {
+		let theToken = tokens[index]
+		os_log("Found repeating tag with tag count: %i, tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString, rule.openTag )
+		
+		guard theToken.count > 0 else {
+			return
+		}
+		
+		let startIdx = index
+		var endIdx : Int? = nil
+		
+		let maxCount = (theToken.count > rule.maxTags) ? rule.maxTags : theToken.count
+		if let nextTokenIdx = tokens.firstIndex(where: { $0.inputString.first == theToken.inputString.first && $0.type == theToken.type && $0.count >= 1 && $0.id != theToken.id  && !$0.isProcessed }) {
+			endIdx = nextTokenIdx
+		}
+		guard let existentEnd = endIdx else {
+			return
+		}
+		
+		
+		let styles : [CharacterStyling] = rule.styles[maxCount] ?? []
+		for i in startIdx..<existentEnd {
+			for style in styles {
+				if !tokens[i].characterStyles.contains(where: { $0.isEqualTo(style )}) {
+					tokens[i].characterStyles.append(style)
+				}
+			}
+			if rule.cancels == .allRemaining {
+				tokens[i].shouldSkip = true
+			}
+		}
+		
+		let maxEnd = (tokens[existentEnd].count > rule.maxTags) ? rule.maxTags : tokens[existentEnd].count
+		tokens[index].count = theToken.count - maxEnd
+		tokens[existentEnd].count = tokens[existentEnd].count - maxEnd
+		if maxEnd < rule.maxTags {
+			self.handleClosingTagFromRepeatingTag(withIndex: index, in: &tokens, following: rule)
+		} else {
+			tokens[existentEnd].isProcessed = true
+			tokens[index].isProcessed = true
+		}
+		
+		
+	}
 	
 	func applyStyles( to tokens : [Token], usingRule rule : CharacterRule ) -> [Token] {
 		var mutableTokens : [Token] = tokens
@@ -375,34 +499,7 @@ public class SwiftyTokeniser {
 			case .escape:
 				os_log("Found escape: %@", log: .tokenising, type: .info, token.inputString )
 			case .repeatingTag:
-				let theToken = mutableTokens[idx]
-				os_log("Found repeating tag with tag count: %i, tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString, rule.openTag )
-				
-				guard theToken.count > 0 else {
-					continue
-				}
-				
-				let startIdx = idx
-				var endIdx : Int? = nil
-				
-				if let nextTokenIdx = mutableTokens.firstIndex(where: { $0.inputString == theToken.inputString && $0.type == theToken.type && $0.count == theToken.count && $0.id != theToken.id }) {
-					endIdx = nextTokenIdx
-				}
-				guard let existentEnd = endIdx else {
-					continue
-				}
-				
-				let styles : [CharacterStyling] = rule.styles[theToken.count] ?? []
-				for i in startIdx..<existentEnd {
-					for style in styles {
-						mutableTokens[i].characterStyles.append(style)
-					}
-					if rule.cancels == .allRemaining {
-						mutableTokens[i].shouldSkip = true
-					}
-				}
-				mutableTokens[idx].count = 0
-				mutableTokens[existentEnd].count = 0
+				self.handleClosingTagFromRepeatingTag(withIndex: idx, in: &mutableTokens, following: rule)
 			case .openTag:
 				let theToken = mutableTokens[idx]
 				os_log("Found repeating tag with tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.inputString, rule.openTag )
