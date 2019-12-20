@@ -417,14 +417,18 @@ extension SwiftyMarkdown {
 				continue
 				#endif
 				
-				let image1Attachment = NSTextAttachment()
+				
 				#if !os(macOS)
+				let image1Attachment = NSTextAttachment()
 				image1Attachment.image = UIImage(named: imageName)
-				#else
-				image1Attachment.image = NSImage(named: imageName)
-				#endif
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
+				#elseif !os(watchOS)
+				let image1Attachment = NSTextAttachment()
+				image1Attachment.image = NSImage(named: imageName)
+				let str = NSAttributedString(attachment: image1Attachment)
+				finalAttributedString.append(str)
+				#endif
 				continue
 			}
 			

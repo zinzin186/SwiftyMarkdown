@@ -256,7 +256,7 @@ public class SwiftyTokeniser {
 				testString = repTokens.removeFirst().inputString
 			}
 			
-			if #available(iOS 13.0, *) {
+			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				if let nextString = scanner.scanUpToString(testString) {
 					outputString = nextString
 					outputTokens.append(stringToken.newToken(fromSubstring: outputString, isReplacement: false))

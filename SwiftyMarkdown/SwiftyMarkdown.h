@@ -6,7 +6,7 @@
 //  Copyright © 2016 Voyage Travel Apps. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+
 
 //! Project version number for SwiftyMarkdown.
 FOUNDATION_EXPORT double SwiftyMarkdownVersionNumber;
