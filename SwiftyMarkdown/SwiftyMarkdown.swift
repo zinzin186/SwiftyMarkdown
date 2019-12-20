@@ -412,12 +412,8 @@ extension SwiftyMarkdown {
 				}
 			}
 			
+			#if !os(watchOS)
 			if styles.contains(.image), let imageName = token.metadataString {
-				#if os(watchOS)
-				continue
-				#endif
-				
-				
 				#if !os(macOS)
 				let image1Attachment = NSTextAttachment()
 				image1Attachment.image = UIImage(named: imageName)
@@ -431,6 +427,7 @@ extension SwiftyMarkdown {
 				#endif
 				continue
 			}
+			#endif
 			
 			if styles.contains(.code) {
 				attributes[.foregroundColor] = self.code.color
