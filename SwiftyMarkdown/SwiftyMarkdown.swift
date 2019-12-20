@@ -413,8 +413,10 @@ extension SwiftyMarkdown {
 			}
 			
 			if styles.contains(.image), let imageName = token.metadataString {
+				#if os(watchOS)
+				continue
+				#endif
 				
-				#if !os(watchOS)
 				let image1Attachment = NSTextAttachment()
 				#if !os(macOS)
 				image1Attachment.image = UIImage(named: imageName)
@@ -423,7 +425,6 @@ extension SwiftyMarkdown {
 				#endif
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
-				#endif
 				continue
 			}
 			

@@ -13,9 +13,11 @@ import XCTest
 class SwiftyMarkdownCharacterTests: XCTestCase {
 	
 	func testIsolatedCase() {
-		let challenge = TokenTest(input: "A string with a ****bold italic**** word", output: "A string with a *bold italic* word",  tokens: [
+		let challenge = TokenTest(input: "A string with a **bold*italic*bold** word", output: "A string with a bolditalicbold word",  tokens: [
 			Token(type: .string, inputString: "A string with a ", characterStyles: []),
-			Token(type: .string, inputString: "*bold italic*", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: "italic", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		let results = self.attempt(challenge)
@@ -189,6 +191,19 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 			Token(type: .string, inputString: "A string with a ", characterStyles: []),
 			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
 			Token(type: .string, inputString: " italic", characterStyles: [CharacterStyle.italic]),
+			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with a **bold*italic*bold** word", output: "A string with a bolditalicbold word",  tokens: [
+			Token(type: .string, inputString: "A string with a ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: "italic", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)

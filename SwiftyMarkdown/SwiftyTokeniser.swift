@@ -444,6 +444,18 @@ public class SwiftyTokeniser {
 		tokens[index].isProcessed = true
 	}
 	
+	
+	/// This is here to manage how opening tags are matched with closing tags when they're all the same
+	/// character.
+	///
+	/// Of course, because Markdown is about as loose as a spec can be while still being considered any
+	/// kind of spec, the number of times this character repeats causes different effects. Then there
+	/// is the ill-defined way it should work if the number of opening and closing tags are different.
+	///
+	/// - Parameters:
+	///   - index: The index of the current token in the loop
+	///   - tokens: An inout variable of the loop tokens of interest
+	///   - rule: The character rule being applied
 	func handleClosingTagFromRepeatingTag(withIndex index : Int, in tokens: inout [Token], following rule : CharacterRule) {
 		let theToken = tokens[index]
 		os_log("Found repeating tag with tag count: %i, tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.count, theToken.inputString, rule.openTag )
@@ -456,7 +468,12 @@ public class SwiftyTokeniser {
 		var endIdx : Int? = nil
 		
 		let maxCount = (theToken.count > rule.maxTags) ? rule.maxTags : theToken.count
-		if let nextTokenIdx = tokens.firstIndex(where: { $0.inputString.first == theToken.inputString.first && $0.type == theToken.type && $0.count >= 1 && $0.id != theToken.id  && !$0.isProcessed }) {
+		// Try to find exact match first
+		if let nextTokenIdx = tokens.firstIndex(where: { $0.inputString.first == theToken.inputString.first && $0.type == theToken.type && $0.count == theToken.count && $0.id != theToken.id && !$0.isProcessed }) {
+			endIdx = nextTokenIdx
+		}
+		
+		if endIdx == nil, let nextTokenIdx = tokens.firstIndex(where: { $0.inputString.first == theToken.inputString.first && $0.type == theToken.type && $0.count >= 1 && $0.id != theToken.id  && !$0.isProcessed }) {
 			endIdx = nextTokenIdx
 		}
 		guard let existentEnd = endIdx else {
