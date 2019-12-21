@@ -10,6 +10,8 @@
 		F40D3A7F23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */; };
 		F40D3A8123A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A8023A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift */; };
 		F40D3A8423A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40D3A8323A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift */; };
+		F4440ABC23A8585C00F21DD0 /* SwiftyMarkdown+macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4440ABB23A8585C00F21DD0 /* SwiftyMarkdown+macOS.swift */; };
+		F4440ABE23A8587C00F21DD0 /* SwiftyMarkdown+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4440ABD23A8587C00F21DD0 /* SwiftyMarkdown+iOS.swift */; };
 		F44E3F46239C365A00508290 /* String+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */; };
 		F49A0DA623A711920005B8B2 /* SwiftyLineProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */; };
 		F49A0DA823A71A2C0005B8B2 /* SwiftyTokeniser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */; };
@@ -37,6 +39,8 @@
 		F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownCharacterTests.swift; sourceTree = "<group>"; };
 		F40D3A8023A8085F0085CF6E /* XCTest+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTest+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
 		F40D3A8323A813240085CF6E /* SwiftyMarkdownPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdownPerformanceTests.swift; sourceTree = "<group>"; };
+		F4440ABB23A8585C00F21DD0 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+macOS.swift"; sourceTree = "<group>"; };
+		F4440ABD23A8587C00F21DD0 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
 		F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
 		F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
 		F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyTokeniser.swift; sourceTree = "<group>"; };
@@ -103,6 +107,8 @@
 				F44E3F45239C365A00508290 /* String+SwiftyMarkdown.swift */,
 				F49A0DA523A711910005B8B2 /* SwiftyLineProcessor.swift */,
 				F49A0DA723A71A2C0005B8B2 /* SwiftyTokeniser.swift */,
+				F4440ABD23A8587C00F21DD0 /* SwiftyMarkdown+iOS.swift */,
+				F4440ABB23A8585C00F21DD0 /* SwiftyMarkdown+macOS.swift */,
 			);
 			path = SwiftyMarkdown;
 			sourceTree = "<group>";
@@ -236,7 +242,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4440ABC23A8585C00F21DD0 /* SwiftyMarkdown+macOS.swift in Sources */,
 				F49A0DA623A711920005B8B2 /* SwiftyLineProcessor.swift in Sources */,
+				F4440ABE23A8587C00F21DD0 /* SwiftyMarkdown+iOS.swift in Sources */,
 				F4CE989C1C8A922E00D735C1 /* SwiftyMarkdown.swift in Sources */,
 				F49A0DA823A71A2C0005B8B2 /* SwiftyTokeniser.swift in Sources */,
 				F44E3F46239C365A00508290 /* String+SwiftyMarkdown.swift in Sources */,
@@ -395,6 +403,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.voyagetravelapps.SwiftyMarkdown;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 5.0;
@@ -420,6 +429,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.voyagetravelapps.SwiftyMarkdown;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
 				SWIFT_VERSION = 5.0;

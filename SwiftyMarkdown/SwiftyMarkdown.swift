@@ -6,7 +6,11 @@
 //  Copyright © 2016 Voyage Travel Apps. All rights reserved.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 enum CharacterStyle : CharacterStyling {
 	case none
@@ -15,6 +19,13 @@ enum CharacterStyle : CharacterStyling {
 	case code
 	case link
 	case image
+	
+	func isEqualTo(_ other: CharacterStyling) -> Bool {
+		guard let other = other as? CharacterStyle else {
+			return false
+		}
+		return other == self 
+	}
 }
 
 enum MarkdownLineStyle : LineStyling {
@@ -59,12 +70,22 @@ enum MarkdownLineStyle : LineStyling {
 	case boldItalic
 }
 
+#if os(macOS)
+@objc public protocol FontProperties {
+	var fontName : String? { get set }
+	var color : NSColor { get set }
+	var fontSize : CGFloat { get set }
+	var fontStyle : FontStyle { get set }
+}
+#else
 @objc public protocol FontProperties {
 	var fontName : String? { get set }
 	var color : UIColor { get set }
 	var fontSize : CGFloat { get set }
 	var fontStyle : FontStyle { get set }
 }
+#endif
+
 
 @objc public protocol LineProperties {
 	var alignment : NSTextAlignment { get set }
@@ -78,14 +99,22 @@ If that is not set, then the system default will be used.
 */
 @objc open class BasicStyles : NSObject, FontProperties {
 	public var fontName : String?
+	#if os(macOS)
+	public var color = NSColor.black
+	#else
 	public var color = UIColor.black
+	#endif
 	public var fontSize : CGFloat = 0.0
 	public var fontStyle : FontStyle = .normal
 }
 
 @objc open class LineStyles : NSObject, FontProperties, LineProperties {
 	public var fontName : String?
+	#if os(macOS)
+	public var color = NSColor.black
+	#else
 	public var color = UIColor.black
+	#endif
 	public var fontSize : CGFloat = 0.0
 	public var fontStyle : FontStyle = .normal
 	public var alignment: NSTextAlignment = .left
@@ -95,7 +124,7 @@ If that is not set, then the system default will be used.
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
-	static let lineRules = [
+	static public var lineRules = [
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
@@ -110,7 +139,7 @@ If that is not set, then the system default will be used.
 		LineRule(token: "# ",type : MarkdownLineStyle.h1, removeFrom: .both)
 	]
 	
-	static let characterRules = [
+	static public var characterRules = [
 		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1),
 		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
@@ -179,9 +208,13 @@ If that is not set, then the system default will be used.
 	public init(string : String ) {
 		self.string = string
 		super.init()
-		if #available(iOS 13.0, *) {
+		#if os(macOS)
+		self.setFontColorForAllStyles(with: .labelColor)
+		#elseif !os(watchOS)
+		if #available(iOS 13.0, tvOS 13.0, *) {
 			self.setFontColorForAllStyles(with: .label)
 		}
+		#endif
 	}
 	
 	/**
@@ -201,9 +234,13 @@ If that is not set, then the system default will be used.
 			return nil
 		}
 		super.init()
-		if #available(iOS 13.0, *) {
+		#if os(macOS)
+		self.setFontColorForAllStyles(with: .labelColor)
+		#elseif !os(watchOS)
+		if #available(iOS 13.0, tvOS 13.0, *) {
 			self.setFontColorForAllStyles(with: .label)
 		}
+		#endif
 	}
 	
 	/**
@@ -226,6 +263,22 @@ If that is not set, then the system default will be used.
 		link.fontSize = size
 	}
 	
+	#if os(macOS)
+	open func setFontColorForAllStyles(with color: NSColor) {
+		h1.color = color
+		h2.color = color
+		h3.color = color
+		h4.color = color
+		h5.color = color
+		h6.color = color
+		body.color = color
+		italic.color = color
+		bold.color = color
+		code.color = color
+		link.color = color
+		blockquotes.color = color
+	}
+	#else
 	open func setFontColorForAllStyles(with color: UIColor) {
 		h1.color = color
 		h2.color = color
@@ -240,6 +293,7 @@ If that is not set, then the system default will be used.
 		link.color = color
 		blockquotes.color = color
 	}
+	#endif
 	
 	open func setFontNameForAllStyles(with name: String) {
 		h1.fontName = name
@@ -285,156 +339,6 @@ If that is not set, then the system default will be used.
 }
 
 extension SwiftyMarkdown {
-	
-	func font( for line : SwiftyLine, characterOverride : CharacterStyle? = nil ) -> UIFont {
-		let textStyle : UIFont.TextStyle
-		var fontName : String?
-		var fontSize : CGFloat?
-		
-		var globalBold = false
-		var globalItalic = false
-		
-		let style : FontProperties
-		// What type are we and is there a font name set?
-		switch line.lineStyle as! MarkdownLineStyle {
-		case .h1:
-			style = self.h1
-			if #available(iOS 9, *) {
-				textStyle = UIFont.TextStyle.title1
-			} else {
-				textStyle = UIFont.TextStyle.headline
-			}
-		case .h2:
-			style = self.h2
-			if #available(iOS 9, *) {
-				textStyle = UIFont.TextStyle.title2
-			} else {
-				textStyle = UIFont.TextStyle.headline
-			}
-		case .h3:
-			style = self.h3
-			if #available(iOS 9, *) {
-				textStyle = UIFont.TextStyle.title2
-			} else {
-				textStyle = UIFont.TextStyle.subheadline
-			}
-		case .h4:
-			style = self.h4
-			textStyle = UIFont.TextStyle.headline
-		case .h5:
-			style = self.h5
-			textStyle = UIFont.TextStyle.subheadline
-		case .h6:
-			style = self.h6
-			textStyle = UIFont.TextStyle.footnote
-		case .codeblock:
-			style = self.code
-			textStyle = UIFont.TextStyle.body
-		case .blockquote:
-			style = self.blockquotes
-			textStyle = UIFont.TextStyle.body
-		default:
-			style = self.body
-			textStyle = UIFont.TextStyle.body
-		}
-		
-		fontName = style.fontName
-		fontSize = style.fontSize
-		switch style.fontStyle {
-		case .bold:
-			globalBold = true
-		case .italic:
-			globalItalic = true
-		case .boldItalic:
-			globalItalic = true
-			globalBold = true
-		case .normal:
-			break
-		}
-
-		if fontName == nil {
-			fontName = body.fontName
-		}
-		
-		if let characterOverride = characterOverride {
-			switch characterOverride {
-			case .code:
-				fontName = code.fontName ?? fontName
-				fontSize = code.fontSize
-			case .link:
-				fontName = link.fontName ?? fontName
-				fontSize = link.fontSize
-			case .bold:
-				fontName = bold.fontName ?? fontName
-				fontSize = bold.fontSize
-				globalBold = true
-			case .italic:
-				fontName = italic.fontName ?? fontName
-				fontSize = italic.fontSize
-				globalItalic = true
-			default:
-				break
-			}
-		}
-		
-		fontSize = fontSize == 0.0 ? nil : fontSize
-		var font : UIFont
-		if let existentFontName = fontName {
-			font = UIFont.preferredFont(forTextStyle: textStyle)
-			let finalSize : CGFloat
-			if let existentFontSize = fontSize {
-				finalSize = existentFontSize
-			} else {
-				let styleDescriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: textStyle)
-				finalSize = styleDescriptor.fontAttributes[.size] as? CGFloat ?? CGFloat(14)
-			}
-			
-			if let customFont = UIFont(name: existentFontName, size: finalSize)  {
-				let fontMetrics = UIFontMetrics(forTextStyle: textStyle)
-				font = fontMetrics.scaledFont(for: customFont)
-			} else {
-				font = UIFont.preferredFont(forTextStyle: textStyle)
-			}
-		} else {
-			font = UIFont.preferredFont(forTextStyle: textStyle)
-		}
-		
-		if globalItalic, let italicDescriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
-			font = UIFont(descriptor: italicDescriptor, size: 0)
-		}
-		if globalBold, let boldDescriptor = font.fontDescriptor.withSymbolicTraits(.traitBold) {
-			font = UIFont(descriptor: boldDescriptor, size: 0)
-		}
-		
-		return font
-		
-	}
-	
-	func color( for line : SwiftyLine ) -> UIColor {
-		// What type are we and is there a font name set?
-		switch line.lineStyle as! MarkdownLineStyle {
-		case .h1, .previousH1:
-			return h1.color
-		case .h2, .previousH2:
-			return h2.color
-		case .h3:
-			return h3.color
-		case .h4:
-			return h4.color
-		case .h5:
-			return h5.color
-		case .h6:
-			return h6.color
-		case .body:
-			return body.color
-		case .codeblock:
-			return code.color
-		case .blockquote:
-			return blockquotes.color
-		case .unorderedList:
-			return body.color
-		}
-	}
 	
 	func attributedStringFor( tokens : [Token], in line : SwiftyLine ) -> NSAttributedString {
 		
@@ -508,13 +412,22 @@ extension SwiftyMarkdown {
 				}
 			}
 			
+			#if !os(watchOS)
 			if styles.contains(.image), let imageName = token.metadataString {
+				#if !os(macOS)
 				let image1Attachment = NSTextAttachment()
 				image1Attachment.image = UIImage(named: imageName)
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
+				#elseif !os(watchOS)
+				let image1Attachment = NSTextAttachment()
+				image1Attachment.image = NSImage(named: imageName)
+				let str = NSAttributedString(attachment: image1Attachment)
+				finalAttributedString.append(str)
+				#endif
 				continue
 			}
+			#endif
 			
 			if styles.contains(.code) {
 				attributes[.foregroundColor] = self.code.color

@@ -14,7 +14,7 @@ extension XCTestCase {
 		let md = SwiftyMarkdown(string: challenge.input)
 		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
 		let tokens = tokeniser.process(challenge.input)
-		let stringTokens = tokens.filter({ $0.type == .string })
+		let stringTokens = tokens.filter({ $0.type == .string && !$0.isMetadata })
 		
 		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
 		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
