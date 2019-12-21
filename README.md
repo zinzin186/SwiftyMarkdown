@@ -284,26 +284,37 @@ This example would only process strings with `*` and `_` characters, ignoring li
 
 If you wanted to create a rule that applied a style of `Elf` to a range of characters between "The elf will speak now: %Here is my elf speaking%", you could set things up like this:
 
-	enum Characters : CharacterStyling {
-		case elf
+```swift
+enum Characters : CharacterStyling {
+	case elf
+
+	func isEqualTo( _ other : CharacterStyling) -> Bool {
+		if let other = other as? Characters else {
+			return false
+		}
+		return other == self
 	}
-	
-	let characterRules = [
-		CharacterRule(openTag: "%", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.elf]], maxTags: 1)
-	]
-	
-	let processor = SwiftyTokeniser( with : characterRules )
-	let string = "The elf will speak now: %Here is my elf speaking%"
-	let tokens = processor.process(string)
+}
+
+let characterRules = [
+	CharacterRule(openTag: "%", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.elf]], maxTags: 1)
+]
+
+let processor = SwiftyTokeniser( with : characterRules )
+let string = "The elf will speak now: %Here is my elf speaking%"
+let tokens = processor.process(string)
+```
 
 The output is an array of tokens would be equivalent to:
 
-	[
-		Token(type: .string, inputString: "The elf will speak now: ", characterStyles: []),
-		Token(type: .openTag, inputString: "%", characterStyles: []),
-		Token(type: .string, inputString: "Here is my elf speaking", characterStyles: [.elf]),
-		Token(type: .openTag, inputString: "%", characterStyles: [])
-	]
+```swift
+[
+	Token(type: .string, inputString: "The elf will speak now: ", characterStyles: []),
+	Token(type: .repeatingTag, inputString: "%", characterStyles: []),
+	Token(type: .string, inputString: "Here is my elf speaking", characterStyles: [.elf]),
+	Token(type: .repeatingTag, inputString: "%", characterStyles: [])
+]
+```
 
 ### C) SpriteKit Support
 
