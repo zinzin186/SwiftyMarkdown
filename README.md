@@ -16,7 +16,7 @@ Line-level attributes can now have a paragraph alignment applied to them (e.g. `
 
 It also uses the system color `.label` as the default font color on iOS 13 and above for Dark Mode support out of the box. 
 
-Finally, support for all of Apple's platforms has been enabled.
+Support for all of Apple's platforms has been enabled.
 
 ## Installation
 
@@ -54,11 +54,11 @@ md.attributedString(from: "A **SECOND** Markdown string. *Fancy!*")
 
 The attributed string can then be assigned to any label or text control that has support for attributed text. 
 
-	let md = SwiftyMarkdown(string: "# Heading\nMy *Markdown* string")
-	let label = UILabel()
-	label.attributedText = md.attributedString()
-
-
+```swift
+let md = SwiftyMarkdown(string: "# Heading\nMy *Markdown* string")
+let label = UILabel()
+label.attributedText = md.attributedString()
+```
 
 ## Supported Markdown Features
 
@@ -209,9 +209,10 @@ underlineLinks : Bool
 
 If you like a bit of chaos:
 
-	md.bold.fontStyle = .italic
-	md.italic.fontStyle = .bold
-
+```swift
+md.bold.fontStyle = .italic
+md.italic.fontStyle = .bold
+```
 
 ### B) Advanced Customisation
 
@@ -219,66 +220,71 @@ SwiftyMarkdown uses a rules-based line processing and customisation engine that 
 
 For example, here's how a small subset of Markdown line tags are set up within SwiftyMarkdown:
 
-	enum MarkdownLineStyle : LineStyling {
-		case h1
-		case h2
-		case previousH1
-		case codeblock
-		case body
-		
-		var shouldTokeniseLine: Bool {
-			switch self {
-			case .codeblock:
-				return false
-			default:
-				return true
-			}
-		}
-		
-		func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
-			switch self {
-			case .previousH1:
-				return MarkdownLineStyle.h1
-			default :
-				return nil
-			}
+```swift
+enum MarkdownLineStyle : LineStyling {
+	case h1
+	case h2
+	case previousH1
+	case codeblock
+	case body
+	
+	var shouldTokeniseLine: Bool {
+		switch self {
+		case .codeblock:
+			return false
+		default:
+			return true
 		}
 	}
+	
+	func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
+		switch self {
+		case .previousH1:
+			return MarkdownLineStyle.h1
+		default :
+			return nil
+		}
+	}
+}
 
-	static public var lineRules = [
-		LineRule(token: "    ",type : MarkdownLineStyle.codeblock, removeFrom: .leading),
-		LineRule(token: "=",type : MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
-		LineRule(token: "## ",type : MarkdownLineStyle.h2, removeFrom: .both),
-		LineRule(token: "# ",type : MarkdownLineStyle.h1, removeFrom: .both)
-	]
-	
-	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, default: MarkdownLineStyle.body)
-	
+static public var lineRules = [
+	LineRule(token: "    ",type : MarkdownLineStyle.codeblock, removeFrom: .leading),
+	LineRule(token: "=",type : MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
+	LineRule(token: "## ",type : MarkdownLineStyle.h2, removeFrom: .both),
+	LineRule(token: "# ",type : MarkdownLineStyle.h1, removeFrom: .both)
+]
+
+let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, default: MarkdownLineStyle.body)
+```
+
 Similarly, the character styles all follow rules:
-	
-	enum CharacterStyle : CharacterStyling {
-		case link, bold, italic, code
-	}
-	
-	static public var characterRules = [
-		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
-		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1),
-		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
-		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
-	]
+
+```swift
+enum CharacterStyle : CharacterStyling {
+	case link, bold, italic, code
+}
+
+static public var characterRules = [
+	CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
+	CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1),
+	CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
+	CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+]
+```
 
 #### Rule Subsets
 
 If you want to only support a small subset of Markdown, it's now easy to do. 
 
 This example would only process strings with `*` and `_` characters, ignoring links, images, code, and all line-level attributes (headings, blockquotes, etc.)
+```swift
+SwiftyMarkdown.lineRules = []
 
-	SwiftyMarkdown.lineRules = []
-	
-	SwiftyMarkdown.characterRules = [
-		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
-		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
-	]
+SwiftyMarkdown.characterRules = [
+	CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
+	CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+]
+```
 
 #### Custom Rules
 
@@ -318,12 +324,13 @@ The output is an array of tokens would be equivalent to:
 
 ### C) SpriteKit Support
 
-Did you know that `SKLabelNode` supports attributed text? 
+Did you know that `SKLabelNode` supports attributed text? I didn't.
 
-	let smd = SwiftyMarkdown(string: "My Character's **Dialogue**")
+```swift
+let smd = SwiftyMarkdown(string: "My Character's **Dialogue**")
 
-	let label = SKLabelNode()
-	label.preferredMaxLayoutWidth = 500
-	label.numberOfLines = 0
-	label.attributedText = smd.attributedString()
-
+let label = SKLabelNode()
+label.preferredMaxLayoutWidth = 500
+label.numberOfLines = 0
+label.attributedText = smd.attributedString()
+```
