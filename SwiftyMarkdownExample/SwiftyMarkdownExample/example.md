@@ -1,22 +1,31 @@
 # Swifty Markdown
 
-SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files or strings into **NSAttributedStrings**. It uses sensible defaults and supports dynamic type, even if you use custom fonts.
+SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files or strings into **NSAttributedStrings**. It uses sensible defaults and supports dynamic type, even with custom fonts.
 
-## Features
+Show Images From Your App Bundle!
+---
+![Image](bubble)
 
-Customise fonts and colours easily in a Swift-like way: 
+Customise fonts and colors easily in a Swift-like way: 
 
-`md.code.fontName = "CourierNewPSMT"`
+    md.code.fontName = "CourierNewPSMT"
 
-`md.h2.fontName = "AvenirNextCondensed-Medium"`
-`md.h2.color = UIColor.redColor()`
+    md.h2.fontName = "AvenirNextCondensed-Medium"
+    md.h2.color = UIColor.redColor()
+    md.h2.alignment = .center
 
-*An italic line*
+It supports the standard Markdown syntax, like *italics*, _underline italics_, **bold**, `backticks for code` and headings.
 
-It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_ and has error handling for mismatched tags (\*\*bold\* == **bold*). It also supports inline Markdown [Links](http://voyagetravelapps.com/)
+It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_ and \`backticks\`. It also supports inline Markdown [Links](http://voyagetravelapps.com/).
 
-Supports Alternative Headings
-===
+> It also now supports blockquotes
+> and it supports whole-line italic and bold styles.
+
+- And
+- Unordered
+- Lists
+
+
 
 
 

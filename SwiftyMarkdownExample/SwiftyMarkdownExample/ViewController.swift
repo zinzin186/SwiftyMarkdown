@@ -38,8 +38,14 @@ class ViewController: UIViewController {
 		if let url = Bundle.main.url(forResource: "example", withExtension: "md"), let md = SwiftyMarkdown(url: url) {
 			md.h2.fontName = "AvenirNextCondensed-Bold"
 			md.h2.color = UIColor.red
+			md.h2.alignment = .center
+			
 			md.code.fontName = "CourierNewPSMT"
-
+			
+			md.blockquotes.fontStyle = .italic
+		
+			md.underlineLinks = true
+			
 			self.textView.attributedText = md.attributedString()
 
 		} else {
