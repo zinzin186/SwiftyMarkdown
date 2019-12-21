@@ -9,10 +9,10 @@
 
 
 //! Project version number for SwiftyMarkdown.
-FOUNDATION_EXPORT double SwiftyMarkdownVersionNumber;
+//FOUNDATION_EXPORT double SwiftyMarkdownVersionNumber;
 
 //! Project version string for SwiftyMarkdown.
-FOUNDATION_EXPORT const unsigned char SwiftyMarkdownVersionString[];
+//FOUNDATION_EXPORT const unsigned char SwiftyMarkdownVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <SwiftyMarkdown/PublicHeader.h>
 
