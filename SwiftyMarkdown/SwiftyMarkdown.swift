@@ -389,6 +389,7 @@ extension SwiftyMarkdown {
 		
 		for token in finalTokens {
 			attributes[.font] = self.font(for: line)
+			attributes[.link] = nil
 			attributes[.foregroundColor] = self.color(for: line)
 			guard let styles = token.characterStyles as? [CharacterStyle] else {
 				continue
