@@ -13,12 +13,10 @@ import XCTest
 class SwiftyMarkdownCharacterTests: XCTestCase {
 	
 	func testIsolatedCase() {
-		let challenge = TokenTest(input: "A string with a **bold*italic*bold** word", output: "A string with a bolditalicbold word",  tokens: [
-			Token(type: .string, inputString: "A string with a ", characterStyles: []),
-			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: "italic", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
-			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: " word", characterStyles: [])
+		let challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) test, testing another link [Link2](http://voyagetravelapps.com/)", output: "Link1 test, testing another link Link2",  tokens: [
+			Token(type: .string, inputString: "Link1", characterStyles: [CharacterStyle.link]),
+			Token(type: .string, inputString: " test, testing another link ", characterStyles: []),
+			Token(type: .string, inputString: "Link2", characterStyles: [CharacterStyle.link])
 		])
 		let results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
