@@ -139,4 +139,10 @@ class SwiftyMarkdownTests: XCTestCase {
 		XCTAssertEqual(output, expected)
 	}
 	
+	func testThatYAMLMetadataIsRemoved() {
+//		let yaml = StringTest(input: "---\nlayout: page\ntitle: \"Trail Wallet FAQ\"\ndate: 2015-04-22 10:59\ncomments: true\nsharing: true\nliking: false\nfooter: true\nsidebar: false\n---\n# Finally some Markdown!", expectedOutput: "Finally some Markdown!")
+//		let md = SwiftyMarkdown(string: yaml.input)
+//		XCTAssertEqual(md.attributedString().string, yaml.expectedOutput)
+	}
+	
 }

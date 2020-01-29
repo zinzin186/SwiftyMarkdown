@@ -38,6 +38,7 @@ public enum Remove {
 public enum ChangeApplication {
     case current
     case previous
+	case untilClose
 }
 
 public struct LineRule {
@@ -58,6 +59,7 @@ public struct LineRule {
 
 public class SwiftyLineProcessor {
     
+	var closeToken : String? = nil
     let defaultType : LineStyling
     public var processEmptyStrings : LineStyling?
     let lineRules : [LineRule]
@@ -87,24 +89,22 @@ public class SwiftyLineProcessor {
         return output
     }
     
-    func processLineLevelAttributes( _ text : String ) -> SwiftyLine {
+    func processLineLevelAttributes( _ text : String ) -> SwiftyLine? {
         if text.isEmpty, let style = processEmptyStrings {
             return SwiftyLine(line: "", lineStyle: style)
         }
         let previousLines = lineRules.filter({ $0.changeAppliesTo == .previous })
-        for element in previousLines {
-            let output = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
-            let charSet = CharacterSet(charactersIn: element.token )
-            if output.unicodeScalars.allSatisfy({ charSet.contains($0) }) {
-                return SwiftyLine(line: "", lineStyle: element.type)
-            }
-        }
+
         for element in lineRules {
             guard element.token.count > 0 else {
                 continue
             }
             var output : String = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
             let unprocessed = output
+			
+			if let hasToken = self.closeToken, unprocessed != hasToken {
+				return nil
+			}
             
             switch element.removeFrom {
             case .leading:
@@ -114,6 +114,9 @@ public class SwiftyLineProcessor {
             case .both:
                 output = findLeadingLineElement(element, in: output)
                 output = findTrailingLineElement(element, in: output)
+			case .entireLine:
+				let maybeOutput = output.replacingOccurrences(of: element.token, with: "")
+				output = ( maybeOutput.isEmpty ) ? maybeOutput : output
             default:
                 break
             }
@@ -121,11 +124,26 @@ public class SwiftyLineProcessor {
             guard unprocessed != output else {
                 continue
             }
+			if element.changeAppliesTo == .untilClose {
+				self.closeToken = (self.closeToken == nil) ? element.token : nil
+				return nil
+			}
+
+			
+			
             output = (element.shouldTrim) ? output.trimmingCharacters(in: .whitespaces) : output
             return SwiftyLine(line: output, lineStyle: element.type)
             
         }
         
+		for element in previousLines {
+			let output = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
+			let charSet = CharacterSet(charactersIn: element.token )
+			if output.unicodeScalars.allSatisfy({ charSet.contains($0) }) {
+				return SwiftyLine(line: "", lineStyle: element.type)
+			}
+		}
+		
         return SwiftyLine(line: text.trimmingCharacters(in: .whitespaces), lineStyle: defaultType)
     }
     
@@ -137,9 +155,10 @@ public class SwiftyLineProcessor {
                 continue
             }
             
-            let input : SwiftyLine
-            input = processLineLevelAttributes(String(heading))
-            
+			guard let input = processLineLevelAttributes(String(heading)) else {
+				continue
+			}
+			
             if let existentPrevious = input.lineStyle.styleIfFoundStyleAffectsPreviousLine(), foundAttributes.count > 0 {
                 if let idx = foundAttributes.firstIndex(of: foundAttributes.last!) {
                     let updatedPrevious = foundAttributes.last!
