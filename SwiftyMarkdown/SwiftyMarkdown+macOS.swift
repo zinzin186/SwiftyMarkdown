@@ -135,6 +135,8 @@ extension SwiftyMarkdown {
 			return blockquotes.color
 		case .unorderedList:
 			return body.color
+		case .yaml:
+			return body.color
 		}
 	}
 	

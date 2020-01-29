@@ -38,7 +38,7 @@ enum MarkdownLineStyle : LineStyling {
         }
         
     }
-    
+    case yaml
     case h1
     case h2
     case h3
@@ -125,6 +125,7 @@ If that is not set, then the system default will be used.
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
 	static public var lineRules = [
+		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
@@ -186,7 +187,7 @@ If that is not set, then the system default will be used.
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
 	open var code = BasicStyles()
 	
-
+	public var bullet : String = "・"
 	
 	public var underlineLinks : Bool = false
 	
@@ -371,10 +372,20 @@ extension SwiftyMarkdown {
 			lineProperties = self.blockquotes
 			let paragraphStyle = NSMutableParagraphStyle()
 			paragraphStyle.firstLineHeadIndent = 20.0
+			paragraphStyle.headIndent = 20.0
 			attributes[.paragraphStyle] = paragraphStyle
 		case .unorderedList:
 			lineProperties = body
-			finalTokens.insert(Token(type: .string, inputString: "・ "), at: 0)
+			
+			  let paragraphStyle = NSMutableParagraphStyle()
+			  let nonOptions = [NSTextTab.OptionKey: Any]()
+			  paragraphStyle.tabStops = [
+				  NSTextTab(textAlignment: .left, location: 20, options: nonOptions)]
+			  paragraphStyle.defaultTabInterval = 20
+			  paragraphStyle.headIndent = 20
+			 
+			 attributes[.paragraphStyle] = paragraphStyle
+			finalTokens.insert(Token(type: .string, inputString: "\(self.bullet)\t"), at: 0)
 		default:
 			lineProperties = body
 			break
