@@ -593,8 +593,12 @@ public class SwiftyTokeniser {
 			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				lastChar = ( scanner.currentIndex > string.startIndex ) ? String(string[string.index(before: scanner.currentIndex)..<scanner.currentIndex]) : nil
 			} else {
-				let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation)
-				lastChar = ( scanLocation > string.startIndex ) ? String(string[string.index(before: scanLocation)..<scanLocation]) : nil
+				if let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation, limitedBy: string.endIndex) {
+					lastChar = ( scanLocation > string.startIndex ) ? String(string[string.index(before: scanLocation)..<scanLocation]) : nil
+				} else {
+					lastChar = nil
+				}
+				
 			}
 			let maybeFoundChars : String?
 			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
@@ -609,8 +613,12 @@ public class SwiftyTokeniser {
 			if #available(iOS 13.0, OSX 10.15,  watchOS 6.0,tvOS 13.0, *) {
 				 nextChar = (scanner.currentIndex != string.endIndex) ? String(string[scanner.currentIndex]) : nil
 			} else {
-				let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation)
-				nextChar = (scanLocation != string.endIndex) ? String(string[scanLocation]) : nil
+				if let scanLocation = string.index(string.startIndex, offsetBy: scanner.scanLocation, limitedBy: string.endIndex) {
+					nextChar = (scanLocation != string.endIndex) ? String(string[scanLocation]) : nil
+				} else {
+					nextChar = nil
+				}
+				
 			}
 			
 			guard let foundChars = maybeFoundChars else {
