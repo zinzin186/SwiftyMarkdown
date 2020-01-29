@@ -115,7 +115,8 @@ public class SwiftyLineProcessor {
                 output = findLeadingLineElement(element, in: output)
                 output = findTrailingLineElement(element, in: output)
 			case .entireLine:
-				output = findLeadingLineElement(element, in: output)
+				let maybeOutput = output.replacingOccurrences(of: element.token, with: "")
+				output = ( maybeOutput.isEmpty ) ? maybeOutput : output
             default:
                 break
             }
@@ -135,13 +136,13 @@ public class SwiftyLineProcessor {
             
         }
         
-				for element in previousLines {
-					let output = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
-					let charSet = CharacterSet(charactersIn: element.token )
-					if output.unicodeScalars.allSatisfy({ charSet.contains($0) }) {
-		                return SwiftyLine(line: "", lineStyle: element.type)
-					}
-				}
+		for element in previousLines {
+			let output = (element.shouldTrim) ? text.trimmingCharacters(in: .whitespaces) : text
+			let charSet = CharacterSet(charactersIn: element.token )
+			if output.unicodeScalars.allSatisfy({ charSet.contains($0) }) {
+				return SwiftyLine(line: "", lineStyle: element.type)
+			}
+		}
 		
         return SwiftyLine(line: text.trimmingCharacters(in: .whitespaces), lineStyle: defaultType)
     }

@@ -4,7 +4,7 @@ SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files
 
 Show Images From Your App Bundle!
 ---
-![Image](bubble) There may be a problem with [Links](https://www.neverendingvoyage.com/).
+![Image](bubble)
 
 Customise fonts and colors easily in a Swift-like way: 
 
@@ -19,11 +19,15 @@ It supports the standard Markdown syntax, like *italics*, _underline italics_, *
 It ignores random * and correctly handles escaped \*asterisks\* and \_underlines\_ and \`backticks\`. It also supports inline Markdown [Links](http://voyagetravelapps.com/).
 
 > It also now supports blockquotes
-> and it supports whole-line italic and bold styles.
+> and it supports whole-line italic and bold styles so you can go completely wild with styling! Wow! Such styles! Much fun!
+
+**List**
 
 - And
 - Unordered
 - Lists
+- Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
 
 
 
