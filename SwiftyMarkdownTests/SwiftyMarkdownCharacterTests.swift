@@ -13,9 +13,11 @@ import XCTest
 class SwiftyMarkdownCharacterTests: XCTestCase {
 	
 	func testIsolatedCase() {
-		let challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) test, testing another link [Link2](http://voyagetravelapps.com/)", output: "Link1 test, testing another link Link2",  tokens: [
+		let challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) **bold** [Link2](http://voyagetravelapps.com/)", output: "Link1 bold Link2",  tokens: [
 			Token(type: .string, inputString: "Link1", characterStyles: [CharacterStyle.link]),
-			Token(type: .string, inputString: " test, testing another link ", characterStyles: []),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: " ", characterStyles: []),
 			Token(type: .string, inputString: "Link2", characterStyles: [CharacterStyle.link])
 		])
 		let results = self.attempt(challenge)
@@ -23,7 +25,7 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
-			
+
 	}
 	
 	
@@ -483,6 +485,19 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 			Token(type: .string, inputString: "A ", characterStyles: []),
 			Token(type: .string, inputString: "[Link](", characterStyles: []),
 			Token(type: .string, inputString: "http://voyagetravelapps.com/", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) **bold** [Link2](http://voyagetravelapps.com/)", output: "Link1 bold Link2",  tokens: [
+			Token(type: .string, inputString: "Link1", characterStyles: [CharacterStyle.link]),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "Link2", characterStyles: [CharacterStyle.link])
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)

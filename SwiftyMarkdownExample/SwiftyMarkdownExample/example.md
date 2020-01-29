@@ -4,7 +4,7 @@ SwiftyMarkdown is a Swift-based *Markdown* parser that converts *Markdown* files
 
 Show Images From Your App Bundle!
 ---
-![Image](bubble)
+![Image](bubble) There may be a problem with [Links](https://www.neverendingvoyage.com/).
 
 Customise fonts and colors easily in a Swift-like way: 
 

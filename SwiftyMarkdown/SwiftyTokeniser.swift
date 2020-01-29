@@ -193,6 +193,7 @@ public class SwiftyTokeniser {
 					continue
 				}
 				if let hasReplacement = self.replacements[token.inputString] {
+					os_log("Found replacement for %@", log: .tokenising, type: .info, token.inputString)
 					for var repToken in hasReplacement {
 						guard repToken.type == .string else {
 							finalTokens.append(repToken)
@@ -248,10 +249,13 @@ public class SwiftyTokeniser {
 		var outputTokens : [Token] = []
 		let scanner = Scanner(string: stringToken.outputString)
 		scanner.charactersToBeSkipped = nil
-		var repTokens = replacements
+		
+		// Remove any replacements that don't appear in the incoming string
+		var repTokens = replacements.filter({ stringToken.outputString.contains($0.inputString) })
+		
+		var testString = "\n"
 		while !scanner.isAtEnd {
 			var outputString : String = ""
-			var testString = "\n"
 			if repTokens.count > 0 {
 				testString = repTokens.removeFirst().inputString
 			}

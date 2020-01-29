@@ -140,6 +140,8 @@ extension SwiftyMarkdown {
 	func color( for line : SwiftyLine ) -> UIColor {
 		// What type are we and is there a font name set?
 		switch line.lineStyle as! MarkdownLineStyle {
+		case .yaml:
+			return body.color
 		case .h1, .previousH1:
 			return h1.color
 		case .h2, .previousH2:

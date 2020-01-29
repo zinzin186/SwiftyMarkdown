@@ -56,6 +56,7 @@
 		F4CE98E61C8AF01300D735C1 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		F4CE98E71C8AF01300D735C1 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F4CE98E81C8AF01300D735C1 /* SwiftyMarkdown.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SwiftyMarkdown.podspec; sourceTree = "<group>"; };
+		F4FEF07423E13365007219EF /* metadataTest.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = metadataTest.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				F4A48ABA23A8518900713437 /* test.md */,
+				F4FEF07423E13365007219EF /* metadataTest.md */,
 				F4CE98901C8A921300D735C1 /* SwiftyMarkdownLineTests.swift */,
 				F40D3A7E23A807F60085CF6E /* SwiftyMarkdownCharacterTests.swift */,
 				F4CE98921C8A921300D735C1 /* Info.plist */,
