@@ -40,6 +40,7 @@ public struct CharacterRule : CustomStringConvertible {
 	public let closingTag : String?
 	public let escapeCharacter : Character?
 	public let styles : [Int : [CharacterStyling]]
+	public var minTags : Int = 1
 	public var maxTags : Int = 1
 	public var spacesAllowed : SpaceAllowed = .oneSide
 	public var cancels : Cancel = .none
@@ -48,12 +49,13 @@ public struct CharacterRule : CustomStringConvertible {
 		return "Character Rule with Open tag: \(self.openTag) and current styles : \(self.styles) "
 	}
 	
-	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], maxTags : Int = 1, cancels : Cancel = .none) {
+	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], minTags : Int = 1, maxTags : Int = 1, cancels : Cancel = .none) {
 		self.openTag = openTag
 		self.intermediateTag = intermediateTag
 		self.closingTag = closingTag
 		self.escapeCharacter = escapeCharacter
 		self.styles = styles
+		self.minTags = minTags
 		self.maxTags = maxTags
 		self.cancels = cancels
 	}
@@ -627,6 +629,11 @@ public class SwiftyTokeniser {
 				continue
 			}
 			
+			if foundChars == rule.openTag && foundChars.count < rule.minTags {
+				openingString.append(foundChars)
+				continue
+			}
+			
 			if !validateSpacing(nextCharacter: nextChar, previousCharacter: lastChar, with: rule) {
 				let escapeString = String("\(rule.escapeCharacter ?? Character(""))")
 				var escaped = foundChars.replacingOccurrences(of: "\(escapeString)\(rule.openTag)", with: rule.openTag)
@@ -663,6 +670,10 @@ public class SwiftyTokeniser {
 				guard !inputString.isEmpty else {
 					return
 				}
+				guard inputString.count >= rule.minTags else {
+					return
+				}
+				
 				if !openingString.isEmpty {
 					tokens.append(Token(type: .string, inputString: "\(openingString)"))
 					openingString = ""

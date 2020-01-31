@@ -124,7 +124,19 @@ class SwiftyMarkdownTests: XCTestCase {
 		md = SwiftyMarkdown(string: starBullets.input)
 		md.bullet = "-"
 		XCTAssertEqual(md.attributedString().string, starBullets.expectedOutput)
+		
 	}
+	
+	func testThatOrderedListsAreHandled() {
+		let dashBullets = StringTest(input: "An Ordered List\n1. Item 1\n\t1. Indented\n1. Item 2", expectedOutput: "An Ordered List\n1.\tItem 1\n\t1.\tIndented\n2.\tItem 2")
+		let md = SwiftyMarkdown(string: dashBullets.input)
+		md.bullet = "-"
+		XCTAssertEqual(md.attributedString().string, dashBullets.expectedOutput)
+	
+		
+	}
+	
+	
 	
 	
     /*

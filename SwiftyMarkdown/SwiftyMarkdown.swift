@@ -52,8 +52,12 @@ enum MarkdownLineStyle : LineStyling {
     case blockquote
     case codeblock
     case unorderedList
-	case indentedUnorderedListFirstOrder
-	case indentedUnorderedListSecondOrder
+	case unorderedListIndentFirstOrder
+	case unorderedListIndentSecondOrder
+    case orderedList
+	case orderedListIndentFirstOrder
+	case orderedListIndentSecondOrder
+
 	
     func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
         switch self {
@@ -132,11 +136,11 @@ If that is not set, then the system default will be used.
 		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
-		LineRule(token: "\t\t- ", type: MarkdownLineStyle.indentedUnorderedListSecondOrder, removeFrom: .leading, shouldTrim: false),
-		LineRule(token: "\t- ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t- ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "- ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
-		LineRule(token: "\t\t* ", type: MarkdownLineStyle.indentedUnorderedListSecondOrder, removeFrom: .leading, shouldTrim: false),
-		LineRule(token: "\t* ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t* ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t* ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
@@ -153,7 +157,7 @@ If that is not set, then the system default will be used.
 		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1),
 		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
-		CharacterRule(openTag: "~~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.strikethrough]], maxTags: 1, cancels: .allRemaining),
+		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
 		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
 		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
 	]
@@ -221,6 +225,10 @@ If that is not set, then the system default will be used.
 	let tagList = "!\\_*`[]()"
 	let validMarkdownTags = CharacterSet(charactersIn: "!\\_*`[]()")
 
+	var orderedListCount = 0
+	var orderedListIndentFirstOrderCount = 0
+	var orderedListIndentSecondOrderCount = 0
+	
 	
 	/**
 	
@@ -371,6 +379,22 @@ extension SwiftyMarkdown {
 		let finalAttributedString = NSMutableAttributedString()
 		var attributes : [NSAttributedString.Key : AnyObject] = [:]
 	
+		var listItem = self.bullet
+		switch line.lineStyle as! MarkdownLineStyle {
+		case .orderedList:
+			self.orderedListCount += 1
+			listItem = "\(self.orderedListCount)"
+		case .orderedListIndentFirstOrder:
+			self.orderedListIndentFirstOrderCount += 1
+			listItem = "\(self.orderedListIndentFirstOrderCount)"
+		case .orderedListIndentSecondOrder:
+			self.orderedListIndentSecondOrderCount += 1
+			listItem = "\(self.orderedListIndentSecondOrderCount)"
+		default:
+			self.orderedListCount = 0
+			self.orderedListIndentFirstOrderCount = 0
+			self.orderedListIndentSecondOrderCount = 0
+		}
 
 		let lineProperties : LineProperties
 		switch line.lineStyle as! MarkdownLineStyle {
@@ -386,7 +410,6 @@ extension SwiftyMarkdown {
 			lineProperties = self.h5
 		case .h6:
 			lineProperties = self.h6
-			
 		case .codeblock:
 			lineProperties = body
 			let paragraphStyle = NSMutableParagraphStyle()
@@ -398,15 +421,19 @@ extension SwiftyMarkdown {
 			paragraphStyle.firstLineHeadIndent = 20.0
 			paragraphStyle.headIndent = 20.0
 			attributes[.paragraphStyle] = paragraphStyle
-		case .unorderedList, .indentedUnorderedListFirstOrder, .indentedUnorderedListSecondOrder:
+		case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
+			
+
+			
+			
 			
 			var addition : CGFloat = 20
 			var indent = ""
 			switch line.lineStyle as! MarkdownLineStyle {
-			case .indentedUnorderedListFirstOrder:
+			case .unorderedListIndentFirstOrder, .orderedListIndentFirstOrder:
 				addition = 40
 				indent = "\t"
-			case .indentedUnorderedListSecondOrder:
+			case .unorderedListIndentSecondOrder, .orderedListIndentSecondOrder:
 				addition = 60
 				indent = "\t\t"
 			default:
@@ -421,7 +448,7 @@ extension SwiftyMarkdown {
 			paragraphStyle.headIndent = addition
 
 			attributes[.paragraphStyle] = paragraphStyle
-			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(self.bullet)\t"), at: 0)
+			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(listItem)\t"), at: 0)
 			
 		case .yaml:
 			lineProperties = body

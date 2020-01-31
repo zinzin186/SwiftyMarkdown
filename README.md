@@ -100,6 +100,12 @@ label.attributedText = md.attributedString()
 			- Up to three levels
 	- Neat!
 	
+	1. Ordered
+	1. Lists
+		1. Including indented lists
+			- Up to three levels
+
+	
 		
 Compound rules also work, for example:
 		
