@@ -209,13 +209,7 @@ If that is not set, then the system default will be used.
 	public init(string : String ) {
 		self.string = string
 		super.init()
-		#if os(macOS)
-		self.setFontColorForAllStyles(with: .labelColor)
-		#elseif !os(watchOS)
-		if #available(iOS 13.0, tvOS 13.0, *) {
-			self.setFontColorForAllStyles(with: .label)
-		}
-		#endif
+		self.setup()
 	}
 	
 	/**
@@ -235,6 +229,10 @@ If that is not set, then the system default will be used.
 			return nil
 		}
 		super.init()
+		self.setup()
+	}
+	
+	func setup() {
 		#if os(macOS)
 		self.setFontColorForAllStyles(with: .labelColor)
 		#elseif !os(watchOS)
@@ -377,14 +375,14 @@ extension SwiftyMarkdown {
 		case .unorderedList:
 			lineProperties = body
 			
-			  let paragraphStyle = NSMutableParagraphStyle()
-			  let nonOptions = [NSTextTab.OptionKey: Any]()
-			  paragraphStyle.tabStops = [
-				  NSTextTab(textAlignment: .left, location: 20, options: nonOptions)]
-			  paragraphStyle.defaultTabInterval = 20
-			  paragraphStyle.headIndent = 20
-			 
-			 attributes[.paragraphStyle] = paragraphStyle
+			let paragraphStyle = NSMutableParagraphStyle()
+			let nonOptions = [NSTextTab.OptionKey: Any]()
+			paragraphStyle.tabStops = [
+			  NSTextTab(textAlignment: .left, location: 20, options: nonOptions)]
+			paragraphStyle.defaultTabInterval = 20
+			paragraphStyle.headIndent = 20
+
+			attributes[.paragraphStyle] = paragraphStyle
 			finalTokens.insert(Token(type: .string, inputString: "\(self.bullet)\t"), at: 0)
 		default:
 			lineProperties = body
@@ -442,7 +440,7 @@ extension SwiftyMarkdown {
 			#endif
 			
 			if styles.contains(.code) {
-				attributes[.foregroundColor] = self.code.color
+				attributes[.foregroundColor] = self.color(for: self.code)
 				attributes[.font] = self.font(for: line, characterOverride: .code)
 			} else {
 				// Switch back to previous font
