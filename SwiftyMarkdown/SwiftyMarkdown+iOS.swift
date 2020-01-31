@@ -99,6 +99,9 @@ extension SwiftyMarkdown {
 				fontName = italic.fontName ?? fontName
 				fontSize = italic.fontSize
 				globalItalic = true
+			case .strikethrough:
+				fontName = strikethrough.fontName ?? fontName
+				fontSize = strikethrough.fontSize
 			default:
 				break
 			}
@@ -162,6 +165,7 @@ extension SwiftyMarkdown {
 			return blockquotes.color
 		case .unorderedList, .indentedUnorderedListFirstOrder, .indentedUnorderedListSecondOrder:
 			return body.color
+
 		}
 	}
 	

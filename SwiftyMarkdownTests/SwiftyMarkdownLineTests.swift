@@ -114,6 +114,17 @@ class SwiftyMarkdownTests: XCTestCase {
 		XCTAssertEqual(md.attributedString().string, h2StringWithCode.expectedOutput)
 	}
 	
+	func testThatUnorderedListsAreHandledCorrectly() {
+		let dashBullets = StringTest(input: "An Unordered List\n- Item 1\n\t- Indented\n- Item 2", expectedOutput: "An Unordered List\n-\tItem 1\n\t-\tIndented\n-\tItem 2")
+		var md = SwiftyMarkdown(string: dashBullets.input)
+		md.bullet = "-"
+		XCTAssertEqual(md.attributedString().string, dashBullets.expectedOutput)
+		
+		let starBullets = StringTest(input: "An Unordered List\n* Item 1\n\t* Indented\n* Item 2", expectedOutput: "An Unordered List\n-\tItem 1\n\t-\tIndented\n-\tItem 2")
+		md = SwiftyMarkdown(string: starBullets.input)
+		md.bullet = "-"
+		XCTAssertEqual(md.attributedString().string, starBullets.expectedOutput)
+	}
 	
 	
     /*
@@ -140,9 +151,10 @@ class SwiftyMarkdownTests: XCTestCase {
 	}
 	
 	func testThatYAMLMetadataIsRemoved() {
-//		let yaml = StringTest(input: "---\nlayout: page\ntitle: \"Trail Wallet FAQ\"\ndate: 2015-04-22 10:59\ncomments: true\nsharing: true\nliking: false\nfooter: true\nsidebar: false\n---\n# Finally some Markdown!", expectedOutput: "Finally some Markdown!")
-//		let md = SwiftyMarkdown(string: yaml.input)
-//		XCTAssertEqual(md.attributedString().string, yaml.expectedOutput)
+		let yaml = StringTest(input: "---\nlayout: page\ntitle: \"Trail Wallet FAQ\"\ndate: 2015-04-22 10:59\ncomments: true\nsharing: true\nliking: false\nfooter: true\nsidebar: false\n---\n# Finally some Markdown!\n\nWith A Heading\n---", expectedOutput: "Finally some Markdown!\n\nWith A Heading")
+		let md = SwiftyMarkdown(string: yaml.input)
+		XCTAssertEqual(md.attributedString().string, yaml.expectedOutput)
+		XCTAssertEqual(md.frontMatterAttributes.count, 8)
 	}
 	
 }

@@ -19,6 +19,7 @@ enum CharacterStyle : CharacterStyling {
 	case code
 	case link
 	case image
+	case strikethrough
 	
 	func isEqualTo(_ other: CharacterStyling) -> Bool {
 		guard let other = other as? CharacterStyle else {
@@ -131,12 +132,15 @@ If that is not set, then the system default will be used.
 		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
-		LineRule(token: "\t- ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t\t- ", type: MarkdownLineStyle.indentedUnorderedListSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t- ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "- ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
+		LineRule(token: "\t\t* ", type: MarkdownLineStyle.indentedUnorderedListSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t* ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "* ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: ">",type : MarkdownLineStyle.blockquote, removeFrom: .leading),
-		LineRule(token: "- ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
 		LineRule(token: "###### ",type : MarkdownLineStyle.h6, removeFrom: .both),
 		LineRule(token: "##### ",type : MarkdownLineStyle.h5, removeFrom: .both),
 		LineRule(token: "#### ",type : MarkdownLineStyle.h4, removeFrom: .both),
@@ -149,11 +153,16 @@ If that is not set, then the system default will be used.
 		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1),
 		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
+		CharacterRule(openTag: "~~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.strikethrough]], maxTags: 1, cancels: .allRemaining),
 		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
 		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
 	]
 	
-	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body)
+	static public var frontMatterRules = [
+		FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
+	]
+	
+	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
 	let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
 	
 	/// The styles to apply to any H1 headers found in the Markdown
@@ -192,9 +201,17 @@ If that is not set, then the system default will be used.
 	/// The styles to apply to any code blocks or inline code text found in the Markdown
 	open var code = BasicStyles()
 	
+	open var strikethrough = BasicStyles()
+	
 	public var bullet : String = "・"
 	
 	public var underlineLinks : Bool = false
+	
+	public var frontMatterAttributes : [String : String] {
+		get {
+			return self.lineProcessor.frontMatterAttributes
+		}
+	}
 	
 	var currentType : MarkdownLineStyle = .body
 	
@@ -265,6 +282,7 @@ If that is not set, then the system default will be used.
 		code.fontSize = size
 		link.fontSize = size
 		link.fontSize = size
+		strikethrough.fontSize = size
 	}
 	
 	#if os(macOS)
@@ -281,6 +299,7 @@ If that is not set, then the system default will be used.
 		code.color = color
 		link.color = color
 		blockquotes.color = color
+		strikethrough.color = color
 	}
 	#else
 	open func setFontColorForAllStyles(with color: UIColor) {
@@ -296,6 +315,7 @@ If that is not set, then the system default will be used.
 		code.color = color
 		link.color = color
 		blockquotes.color = color
+		strikethrough.color = color
 	}
 	#endif
 	
@@ -312,6 +332,7 @@ If that is not set, then the system default will be used.
 		code.fontName = name
 		link.fontName = name
 		blockquotes.fontName = name
+		strikethrough.fontName = name
 	}
 	
 	
@@ -422,6 +443,7 @@ extension SwiftyMarkdown {
 		for token in finalTokens {
 			attributes[.font] = self.font(for: line)
 			attributes[.link] = nil
+			attributes[.strikethroughStyle] = nil
 			attributes[.foregroundColor] = self.color(for: line)
 			guard let styles = token.characterStyles as? [CharacterStyle] else {
 				continue
@@ -443,6 +465,12 @@ extension SwiftyMarkdown {
 				if underlineLinks {
 					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
 				}
+			}
+			
+			if styles.contains(.strikethrough) {
+				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
+				attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
+				attributes[.foregroundColor] = self.strikethrough.color
 			}
 			
 			#if !os(watchOS)

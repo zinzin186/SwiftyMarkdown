@@ -27,8 +27,7 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 
 	}
-	
-	
+
 	func testThatRegularTraitsAreParsedCorrectly() {
 		
 		var challenge = TokenTest(input: "**A bold string**", output: "A bold string",  tokens: [
@@ -526,7 +525,6 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
 		}
 		
-		
 		challenge = TokenTest(input: "A Bold [**Link**](http://voyagetravelapps.com/)", output: "A Bold Link", tokens: [
 			Token(type: .string, inputString: "A Bold ", characterStyles: []),
 			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.bold, CharacterStyle.link])
@@ -553,5 +551,29 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		let links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.image) ?? false) })
 		XCTAssertEqual(links.count, 1)
 		XCTAssertEqual(links[0].metadataString, "imageName")
+	}
+	
+	func testForStrikethrough() {
+		var challenge = TokenTest(input: "~~An~~A crossed-out string", output: "AnA crossed-out string", tokens: [
+			Token(type: .string, inputString: "An", characterStyles: [CharacterStyle.strikethrough]),
+			Token(type: .string, inputString: "A crossed-out string", characterStyles: [])
+		])
+		var results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+
+		challenge = TokenTest(input: "A **Bold** string and a ~~removed~~crossed-out string", output: "A Bold string and a removedcrossed-out string", tokens: [
+			Token(type: .string, inputString: "A ", characterStyles: []),
+			Token(type: .string, inputString: "Bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: " string and a ", characterStyles: []),
+			Token(type: .string, inputString: "removed", characterStyles: [CharacterStyle.strikethrough]),
+			Token(type: .string, inputString: "crossed-out string", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		
 	}
 }
