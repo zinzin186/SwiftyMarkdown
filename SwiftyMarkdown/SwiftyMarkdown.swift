@@ -51,6 +51,9 @@ enum MarkdownLineStyle : LineStyling {
     case blockquote
     case codeblock
     case unorderedList
+	case indentedUnorderedListFirstOrder
+	case indentedUnorderedListSecondOrder
+	
     func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
         switch self {
         case .previousH1:
@@ -128,6 +131,8 @@ If that is not set, then the system default will be used.
 		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
+		LineRule(token: "\t- ", type: MarkdownLineStyle.indentedUnorderedListFirstOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t- ", type: MarkdownLineStyle.indentedUnorderedListSecondOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "    ", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t", type: MarkdownLineStyle.codeblock, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: ">",type : MarkdownLineStyle.blockquote, removeFrom: .leading),
@@ -372,21 +377,39 @@ extension SwiftyMarkdown {
 			paragraphStyle.firstLineHeadIndent = 20.0
 			paragraphStyle.headIndent = 20.0
 			attributes[.paragraphStyle] = paragraphStyle
-		case .unorderedList:
+		case .unorderedList, .indentedUnorderedListFirstOrder, .indentedUnorderedListSecondOrder:
+			
+			var addition : CGFloat = 20
+			var indent = ""
+			switch line.lineStyle as! MarkdownLineStyle {
+			case .indentedUnorderedListFirstOrder:
+				addition = 40
+				indent = "\t"
+			case .indentedUnorderedListSecondOrder:
+				addition = 60
+				indent = "\t\t"
+			default:
+				break
+			}
+			
 			lineProperties = body
 			
 			let paragraphStyle = NSMutableParagraphStyle()
-			let nonOptions = [NSTextTab.OptionKey: Any]()
-			paragraphStyle.tabStops = [
-			  NSTextTab(textAlignment: .left, location: 20, options: nonOptions)]
+			paragraphStyle.tabStops = [NSTextTab(textAlignment: .left, location: 20, options: [:]), NSTextTab(textAlignment: .left, location: 20, options: [:])]
 			paragraphStyle.defaultTabInterval = 20
-			paragraphStyle.headIndent = 20
+			paragraphStyle.headIndent = addition
 
 			attributes[.paragraphStyle] = paragraphStyle
-			finalTokens.insert(Token(type: .string, inputString: "\(self.bullet)\t"), at: 0)
-		default:
+			finalTokens.insert(Token(type: .string, inputString: "\(indent)\(self.bullet)\t"), at: 0)
+			
+		case .yaml:
 			lineProperties = body
-			break
+		case .previousH1:
+			lineProperties = body
+		case .previousH2:
+			lineProperties = body
+		case .body:
+			lineProperties = body
 		}
 		
 		if lineProperties.alignment != .left {
@@ -440,7 +463,7 @@ extension SwiftyMarkdown {
 			#endif
 			
 			if styles.contains(.code) {
-				attributes[.foregroundColor] = self.color(for: self.code)
+				attributes[.foregroundColor] = self.code.color
 				attributes[.font] = self.font(for: line, characterOverride: .code)
 			} else {
 				// Switch back to previous font

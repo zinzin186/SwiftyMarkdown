@@ -160,7 +160,7 @@ extension SwiftyMarkdown {
 			return code.color
 		case .blockquote:
 			return blockquotes.color
-		case .unorderedList:
+		case .unorderedList, .indentedUnorderedListFirstOrder, .indentedUnorderedListSecondOrder:
 			return body.color
 		}
 	}
