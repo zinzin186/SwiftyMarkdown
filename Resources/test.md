@@ -20,5 +20,45 @@ It also uses the system color `.label` as the default font color on iOS 13 and a
 
 In Xcode, `File -> Swift Packages -> Add Package Dependency` and add the GitHub URL. 
 
-1. A List
-1. A second item in the list
+*italics* or _italics_
+**bold** or __bold__
+~~Linethrough~~Strikethroughs. 
+`code`
+
+# Header 1
+
+or
+
+Header 1
+====
+
+## Header 2
+
+or
+
+Header 2
+---
+
+### Header 3
+#### Header 4
+##### Header 5 #####
+###### Header 6 ######
+
+	Indented code blocks (spaces or tabs)
+
+[Links](http://voyagetravelapps.com/)
+![Images](<Name of asset in bundle>)
+
+> Blockquotes
+
+- Bulleted
+- Lists
+	- Including indented lists
+		- Up to three levels
+- Neat!
+
+1. Ordered
+1. Lists
+	1. Including indented lists
+		- Up to three levels
+1. Neat! 

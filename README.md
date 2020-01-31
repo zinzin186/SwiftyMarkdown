@@ -140,7 +140,7 @@ On iOS, Specified font sizes will be adjusted relative to the the user's dynamic
 
 ![Screenshot](https://cl.ly/779e6964257a/swiftymarkdown-2020.png)
 
-There's an example project included in the repository. Open the `.xcworkspace` file to get started.
+There's an example project included in the repository. Open the `Example/SwiftyMarkdown.xcodeproj` file to get started.
 
 ## Front Matter
 
