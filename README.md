@@ -229,9 +229,12 @@ underlineLinks : Bool
 bullet : String
 ```
 
-`FontStyle` is an enum with these cases: `normal`, `bold`, `italic`, and `bolditalic` to give you more precise control over how lines and character styles should look. 
+`FontStyle` is an enum with these cases: `normal`, `bold`, `italic`, and `bolditalic` to give you more precise control over how lines and character styles should look. For example, perhaps you want blockquotes to default to having the italic style:
 
-If you like a bit of chaos:
+```swift
+md.blockquotes.fontStyle = .italic
+```
+Or, if you like a bit of chaos:
 
 ```swift
 md.bold.fontStyle = .italic
