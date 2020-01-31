@@ -14,7 +14,7 @@ s.osx.deployment_target = "10.12"
 s.watchos.deployment_target = "4.0"
 s.requires_arc = true
 
-s.source_files = 'Sources/SwfityMarkdown/'
+s.source_files = 'Sources/SwiftyMarkdown/**/*'
 
 s.swift_version = "5.0"
 
