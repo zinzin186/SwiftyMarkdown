@@ -6,6 +6,7 @@ SwiftyMarkdown converts Markdown files and strings into `NSAttributedString`s us
 - [Installation](#installation)
 - [How to Use](#how-to-use-swiftymarkdown)
 - [Screenshot](#screenshot)
+- [Front Matter](#front-matter)
 - [Appendix](#appendix)
 
 ## Fully Rebuilt For 2020!
@@ -64,27 +65,27 @@ label.attributedText = md.attributedString()
 
     *italics* or _italics_
     **bold** or __bold__
+    ~~Linethrough~~Strikethroughs. 
+    `code`
 
     # Header 1
 
 	or
 
-	Header 1
-	====
+    Header 1
+    ====
 
     ## Header 2
 
 	or
 
-	Header 2
-	---
+    Header 2
+    ---
 
     ### Header 3
     #### Header 4
     ##### Header 5 #####
     ###### Header 6 ######
-    
-    `code`
 
 		Indented code blocks (spaces or tabs)
 
@@ -95,6 +96,16 @@ label.attributedText = md.attributedString()
 	
 	- Bulleted
 	- Lists
+		- Including indented lists
+			- Up to three levels
+	- Neat!
+	
+	1. Ordered
+	1. Lists
+		1. Including indented lists
+			- Up to three levels
+
+	
 		
 Compound rules also work, for example:
 		
@@ -102,7 +113,7 @@ Compound rules also work, for example:
 	
 	Or [**Bold Links**](http://voyagetravelapps.com/)
 
-Images will be inserted into the returned `NSAttributedString` as an `NSTextAttachment` (sadly, this will not work on watchOS as `NSTextAttachment` is not available).
+Images will be inserted into the returned `NSAttributedString` as an `NSTextAttachment` (sadly, this will not work on watchOS as `NSTextAttachment` is not available). 
 
 ## Customisation 
 
@@ -119,6 +130,8 @@ md.h1.alignmnent = .center
 md.italic.color = UIColor.blueColor()
 
 md.underlineLinks = true
+
+md.bullet = "🍏"
 ```
 
 On iOS, Specified font sizes will be adjusted relative to the the user's dynamic type settings.
@@ -128,6 +141,10 @@ On iOS, Specified font sizes will be adjusted relative to the the user's dynamic
 ![Screenshot](https://cl.ly/779e6964257a/swiftymarkdown-2020.png)
 
 There's an example project included in the repository. Open the `.xcworkspace` file to get started.
+
+## Front Matter
+
+SwiftyMarkdown recognises YAML front matter and will populate the `frontMatterAttributes` property with the key-value pairs that it fines. 
 
 ## Appendix 
 
@@ -202,7 +219,14 @@ code.fontSize : CGFloat
 code.color : UI/NSColor
 code.fontStyle : FontStyle
 
+strikethrough.fontName : String
+strikethrough.fontSize : CGFloat
+strikethrough.color : UI/NSColor
+strikethrough.fontStyle : FontStyle
+
 underlineLinks : Bool
+
+bullet : String
 ```
 
 `FontStyle` is an enum with these cases: `normal`, `bold`, `italic`, and `bolditalic` to give you more precise control over how lines and character styles should look. 

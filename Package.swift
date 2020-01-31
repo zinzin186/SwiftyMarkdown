@@ -1,4 +1,4 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.1
 import PackageDescription
 
 let package = Package(
@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "SwiftyMarkdown", targets: ["SwiftyMarkdown"]),
     ],
     targets: [
-        .target(name: "SwiftyMarkdown", path: "SwiftyMarkdown"),
+        .target(name: "SwiftyMarkdown"),
+		.testTarget(name: "SwiftyMarkdownTests", dependencies: ["SwiftyMarkdown"])
     ]
 )
