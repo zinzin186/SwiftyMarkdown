@@ -9,16 +9,31 @@
 @testable import SwiftyMarkdown
 import XCTest
 
-class SwiftyMarkdownCharacterTests: XCTestCase {
+class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 	
 	func testIsolatedCase() {
-		let challenge = TokenTest(input: "\\~\\~removed\\~\\~crossed-out string. ~This should be ignored~", output: "~~removed~~crossed-out string. ~This should be ignored~", tokens: [
-			Token(type: .string, inputString: "~~removed~~crossed-out string. ~This should be ignored~", characterStyles: [])
+		let challenge = TokenTest(input: "An *\\*italic\\** [referenced link][link]", output: "An *italic* referenced link", tokens: [
+			Token(type: .string, inputString: "An ", characterStyles: []),
+			Token(type: .string, inputString: "*italic*", characterStyles: [CharacterStyle.italic]),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "referenced link", characterStyles: [CharacterStyle.link])
 		])
-		let results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		let rules : [CharacterRule] = [
+			CharacterRule(openTag: "*", escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [.bold], 3 : [.italic, .bold]], minTags: 1, maxTags: 3),
+			CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], minTags: 1, maxTags: 1),
+			CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], minTags: 1, maxTags: 1)
+		]
+		let results = self.attempt(challenge, rules: rules)
+		XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		var links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
+		
+		if links.count == 1 {
+			XCTAssertEqual(links[0].metadataString, "https://www.neverendingvoyage.com/")
+		} else {
+			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
+		}
 		
 	}
 	
@@ -407,6 +422,7 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		let underscoreWithItalic = "An _italic_ word followed by an underscore _ "
 		
 		var md = SwiftyMarkdown(string: backtickSpace)
+		SwiftyMarkdown.characterRules = self.defaultRules
 		XCTAssertEqual(md.attributedString().string, backtickSpace)
 		
 		md = SwiftyMarkdown(string: underscoreSpace)
@@ -441,6 +457,16 @@ class SwiftyMarkdownCharacterTests: XCTestCase {
 		
 	}
 	
-	
+	func testReportedCrashingStrings() {
+		let challenge = TokenTest(input: "[**\\!bang**](https://duckduckgo.com/bang)", output: "\\!bang", tokens: [
+			Token(type: .string, inputString: "\\!bang", characterStyles: [CharacterStyle.bold, CharacterStyle.link])
+		])
+		let results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+	}
 	
 }

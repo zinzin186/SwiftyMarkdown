@@ -9,6 +9,15 @@
 import XCTest
 @testable import SwiftyMarkdown
 
+class SwiftyMarkdownCharacterTests : XCTestCase {
+	let defaultRules = SwiftyMarkdown.characterRules
+	
+	func testDummy() {
+		
+	}
+}
+
+
 extension XCTestCase {
 	
 	func resourceURL(for filename : String ) -> URL {
@@ -17,7 +26,17 @@ extension XCTestCase {
 		return thisDirectory.appendingPathComponent("Resources", isDirectory: true).appendingPathComponent(filename)
 	}
 	
-	func attempt( _ challenge : TokenTest ) -> (tokens : [Token], stringTokens: [Token], attributedString : NSAttributedString, foundStyles : [[CharacterStyle]], expectedStyles : [[CharacterStyle]] ) {
+
+}
+
+extension SwiftyMarkdownCharacterTests {
+	func attempt( _ challenge : TokenTest, rules : [CharacterRule]? = nil ) -> (tokens : [Token], stringTokens: [Token], attributedString : NSAttributedString, foundStyles : [[CharacterStyle]], expectedStyles : [[CharacterStyle]] ) {
+		if let validRules = rules {
+			SwiftyMarkdown.characterRules = validRules
+		} else {
+			SwiftyMarkdown.characterRules = self.defaultRules
+		}
+		
 		let md = SwiftyMarkdown(string: challenge.input)
 		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
 		let tokens = tokeniser.process(challenge.input)

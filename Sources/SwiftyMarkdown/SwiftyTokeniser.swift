@@ -538,11 +538,15 @@ public class SwiftyTokeniser {
 				os_log("Found escape: %@", log: .tokenising, type: .info, token.inputString )
 			}
 			case .repeatingTag:
+				let theToken = mutableTokens[idx]
 				self.handleClosingTagFromRepeatingTag(withIndex: idx, in: &mutableTokens, following: rule)
+				if enableLog {
+					os_log("Found repeating tag with tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.inputString, rule.openTag )
+				}
 			case .openTag:
 				let theToken = mutableTokens[idx]
 				if enableLog {
-					os_log("Found repeating tag with tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.inputString, rule.openTag )
+					os_log("Found open tag with tags: %@, current rule open tag: %@", log: .tokenising, type: .info, theToken.inputString, rule.openTag )
 				}
 								
 				guard rule.closingTag != nil else {
@@ -590,6 +594,11 @@ public class SwiftyTokeniser {
 		return mutableTokens
 	}
 	
+	enum TagState {
+		case open
+		case intermediate
+		case closed
+	}
 	
 	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
 		let scanner = Scanner(string: string)
@@ -600,7 +609,8 @@ public class SwiftyTokeniser {
 			set.insert(charactersIn: String(existentEscape))
 		}
 		
-		var openTagFound = false
+		
+		var openTagFound : TagState = .open
 		var openingString = ""
 		while !scanner.isAtEnd {
 			
@@ -674,9 +684,13 @@ public class SwiftyTokeniser {
 				continue
 			}
 
+			// Here's where we have to do the actual tag management.
+			
 			var cumulativeString = ""
 			var openString = ""
+			var containedText = ""
 			var intermediateString = ""
+			var metadataText = ""
 			var closedString = ""
 			var maybeEscapeNext = false
 			
@@ -751,27 +765,32 @@ public class SwiftyTokeniser {
 				}
 				
 				
-				if cumulativeString == rule.openTag {
+				if cumulativeString == rule.openTag, openTagFound == .open {
 					openString.append(char)
 					cumulativeString = ""
-					openTagFound = true
-				} else if cumulativeString == rule.intermediateTag, openTagFound {
+					openTagFound = ( rule.closingTag == nil ) ? .open : .closed
+					openTagFound = ( rule.intermediateTag == nil ) ? openTagFound : .intermediate
+				} else if cumulativeString == rule.intermediateTag, openTagFound == .intermediate {
 					intermediateString.append(cumulativeString)
 					cumulativeString = ""
-				} else if cumulativeString == rule.closingTag, openTagFound {
+					openTagFound = ( rule.closingTag == nil ) ? .open : .closed
+				} else if cumulativeString == rule.closingTag, openTagFound == .closed {
 					closedString.append(char)
 					cumulativeString = ""
-					openTagFound = false
+					openTagFound = .open
 				}
 			}
-			// If we're here, it means that an escape character was found but without a corresponding
-			// tag, which means it might belong to a different rule.
-			// It should be added to the next group of regular characters
+
 			
 			addToken(for: .openTag)
 			addToken(for: .intermediateTag)
 			addToken(for: .closeTag)
 			openingString.append( cumulativeString )
+			
+			// If we're here, it means that an escape character was found but without a corresponding
+			// tag, which means it might belong to a different rule.
+			// It should be added to the next group of regular characters
+
 		}
 		
 		if !openingString.isEmpty {

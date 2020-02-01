@@ -189,12 +189,7 @@ A break
         
     }
 	
-	func testReportedCrashingStrings() {
-		let text = "[**\\!bang**](https://duckduckgo.com/bang) "
-		let expected = "\\!bang"
-		let output = SwiftyMarkdown(string: text).attributedString().string
-		XCTAssertEqual(output, expected)
-	}
+
 	
 	func testThatYAMLMetadataIsRemoved() {
 		let yaml = StringTest(input: "---\nlayout: page\ntitle: \"Trail Wallet FAQ\"\ndate: 2015-04-22 10:59\ncomments: true\nsharing: true\nliking: false\nfooter: true\nsidebar: false\n---\n# Finally some Markdown!\n\nWith A Heading\n---", expectedOutput: "Finally some Markdown!\n\nWith A Heading")

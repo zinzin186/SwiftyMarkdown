@@ -57,7 +57,7 @@ enum MarkdownLineStyle : LineStyling {
     case orderedList
 	case orderedListIndentFirstOrder
 	case orderedListIndentSecondOrder
-
+	case referencedLink
 	
     func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
         switch self {
@@ -132,8 +132,12 @@ If that is not set, then the system default will be used.
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
+	
+	static public var frontMatterRules = [
+		FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
+	]
+	
 	static public var lineRules = [
-		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
@@ -163,10 +167,6 @@ If that is not set, then the system default will be used.
 		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
 		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
 		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
-	]
-	
-	static public var frontMatterRules = [
-		FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
@@ -347,7 +347,6 @@ If that is not set, then the system default will be used.
 	}
 	
 	
-	
 	/**
 	Generates an NSAttributedString from the string or URL passed at initialisation. Custom fonts or styles are applied to the appropriate elements when this method is called.
 	
@@ -470,6 +469,8 @@ extension SwiftyMarkdown {
 		case .previousH2:
 			lineProperties = body
 		case .body:
+			lineProperties = body
+		case .referencedLink:
 			lineProperties = body
 		}
 		
