@@ -74,6 +74,7 @@ public struct Token {
 	public let inputString : String
 	public var metadataString : String? = nil
 	public var characterStyles : [CharacterStyling] = []
+	public var group : Int = 0
 	public var count : Int = 0
 	public var shouldSkip : Bool = false
 	public var outputString : String {

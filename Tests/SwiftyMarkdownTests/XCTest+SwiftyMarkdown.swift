@@ -9,11 +9,41 @@
 import XCTest
 @testable import SwiftyMarkdown
 
+
+struct ChallengeReturn {
+	let tokens : [Token]
+	let stringTokens : [Token]
+	let links : [Token]
+	let attributedString : NSAttributedString
+	let foundStyles : [[CharacterStyle]]
+	let expectedStyles : [[CharacterStyle]]
+}
+
 class SwiftyMarkdownCharacterTests : XCTestCase {
 	let defaultRules = SwiftyMarkdown.characterRules
 	
-	func testDummy() {
+	var challenge : TokenTest!
+	var results : ChallengeReturn!
+	var rules : [CharacterRule]? = nil
+	
+	func attempt( _ challenge : TokenTest, rules : [CharacterRule]? = nil ) -> ChallengeReturn {
+		if let validRules = rules {
+			SwiftyMarkdown.characterRules = validRules
+		} else {
+			SwiftyMarkdown.characterRules = self.defaultRules
+		}
 		
+		let md = SwiftyMarkdown(string: challenge.input)
+		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
+		let tokens = tokeniser.process(challenge.input)
+		let stringTokens = tokens.filter({ $0.type == .string && !$0.isMetadata })
+		
+		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
+		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
+		
+		let linkTokens = tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
+		
+		return ChallengeReturn(tokens: tokens, stringTokens: stringTokens, links : linkTokens, attributedString:  md.attributedString(), foundStyles: existentTokenStyles, expectedStyles : expectedStyles)
 	}
 }
 
@@ -29,22 +59,4 @@ extension XCTestCase {
 
 }
 
-extension SwiftyMarkdownCharacterTests {
-	func attempt( _ challenge : TokenTest, rules : [CharacterRule]? = nil ) -> (tokens : [Token], stringTokens: [Token], attributedString : NSAttributedString, foundStyles : [[CharacterStyle]], expectedStyles : [[CharacterStyle]] ) {
-		if let validRules = rules {
-			SwiftyMarkdown.characterRules = validRules
-		} else {
-			SwiftyMarkdown.characterRules = self.defaultRules
-		}
-		
-		let md = SwiftyMarkdown(string: challenge.input)
-		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
-		let tokens = tokeniser.process(challenge.input)
-		let stringTokens = tokens.filter({ $0.type == .string && !$0.isMetadata })
-		
-		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
-		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
-		
-		return (tokens, stringTokens, md.attributedString(), existentTokenStyles, expectedStyles)
-	}
-}
+

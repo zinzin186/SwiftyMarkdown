@@ -13,10 +13,10 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 	
 	func testForLinks() {
 		
-		var challenge = TokenTest(input: "[Link at start](http://voyagetravelapps.com/)", output: "Link at start", tokens: [
+		challenge = TokenTest(input: "[Link at start](http://voyagetravelapps.com/)", output: "Link at start", tokens: [
 			Token(type: .string, inputString: "Link at start", characterStyles: [CharacterStyle.link])
 		])
-		var results = self.attempt(challenge)
+		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
@@ -82,25 +82,10 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		}
 
 	
-		challenge = TokenTest(input: "[Link with missing square(http://voyagetravelapps.com/)", output: "[Link with missing square(http://voyagetravelapps.com/)", tokens: [
-			Token(type: .string, inputString: "Link with missing square(http://voyagetravelapps.com/)", characterStyles: [])
-		])
-		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
-		XCTAssertEqual(results.foundStyles, results.expectedStyles)
-		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
-		challenge = TokenTest(input: "A [Link(http://voyagetravelapps.com/)", output: "A [Link(http://voyagetravelapps.com/)", tokens: [
-			Token(type: .string, inputString: "A ", characterStyles: []),
-			Token(type: .string, inputString: "[Link(http://voyagetravelapps.com/)", characterStyles: [])
-		])
-		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
-		XCTAssertEqual(results.foundStyles, results.expectedStyles)
-		XCTAssertEqual(results.attributedString.string, challenge.output)
-		
+	}
+	
+	func testMalformedLinks() {
 		
 		challenge = TokenTest(input: "[Link with missing parenthesis](http://voyagetravelapps.com/", output: "[Link with missing parenthesis](http://voyagetravelapps.com/", tokens: [
 			Token(type: .string, inputString: "[Link with missing parenthesis](", characterStyles: []),
@@ -123,19 +108,61 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
-		challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) **bold** [Link2](http://voyagetravelapps.com/)", output: "Link1 bold Link2",  tokens: [
-			Token(type: .string, inputString: "Link1", characterStyles: [CharacterStyle.link]),
-			Token(type: .string, inputString: " ", characterStyles: []),
-			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: " ", characterStyles: []),
-			Token(type: .string, inputString: "Link2", characterStyles: [CharacterStyle.link])
+		challenge = TokenTest(input: "[A link](((url)", output: "A link", tokens: [
+			Token(type: .string, inputString: "A link", characterStyles: [CharacterStyle.link])
+		])
+		rules = [
+			CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]]),
+			CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]]),
+		]
+		results = self.attempt(challenge, rules: rules)
+		
+		
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		XCTAssertEqual(results.links.count, 1)
+		if results.links.count == 1 {
+			XCTAssertEqual(results.links[0].metadataString, "((url")
+		} else {
+			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
+		}
+		
+		challenge = TokenTest(input: "[Link with missing square(http://voyagetravelapps.com/)", output: "[Link with missing square(http://voyagetravelapps.com/)", tokens: [
+			Token(type: .string, inputString: "Link with missing square(http://voyagetravelapps.com/)", characterStyles: [])
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
 		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
-	
+		
+		challenge = TokenTest(input: "[Link with [second opening](http://voyagetravelapps.com/)", output: "[Link with second opening", tokens: [
+			Token(type: .string, inputString: "Link with ", characterStyles: []),
+			Token(type: .string, inputString: "second opening", characterStyles: [CharacterStyle.link])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		XCTAssertEqual(results.links.count, 1)
+		if results.links.count == 1 {
+			XCTAssertEqual(results.links[0].metadataString, "http://voyagetravelapps.com/")
+		} else {
+			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
+		}
+		
+		challenge = TokenTest(input: "A [Link(http://voyagetravelapps.com/)", output: "A [Link(http://voyagetravelapps.com/)", tokens: [
+			Token(type: .string, inputString: "A [Link(http://voyagetravelapps.com/)", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
 	}
 	
 	func testLinksWithOtherStyles() {
@@ -173,6 +200,19 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		} else {
 			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
 		}
+		
+		challenge = TokenTest(input: "[Link1](http://voyagetravelapps.com/) **bold** [Link2](http://voyagetravelapps.com/)", output: "Link1 bold Link2",  tokens: [
+			Token(type: .string, inputString: "Link1", characterStyles: [CharacterStyle.link]),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: " ", characterStyles: []),
+			Token(type: .string, inputString: "Link2", characterStyles: [CharacterStyle.link])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
 	
 	func testForImages() {
