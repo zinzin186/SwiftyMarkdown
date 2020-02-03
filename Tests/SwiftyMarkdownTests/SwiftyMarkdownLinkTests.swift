@@ -222,7 +222,7 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		}
 	}
 	
-	func offtestForReferencedLinks() {
+	func testForReferencedLinks() {
 		challenge = TokenTest(input: "A [referenced link][link]\n[link]: https://www.neverendingvoyage.com/", output: "A referenced link", tokens: [
 			Token(type: .string, inputString: "A ", characterStyles: []),
 			Token(type: .string, inputString: "referenced link", characterStyles: [CharacterStyle.link])

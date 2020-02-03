@@ -80,9 +80,8 @@ public class SwiftyLineProcessor {
     let lineRules : [LineRule]
 	let frontMatterRules : [FrontMatterRule]
 	
-	var timer : TimeInterval = 0
-	var enablePerformanceLog = (ProcessInfo.processInfo.environment["SwiftyLineProcessorPerformanceLogging"] != nil)
-    
+	let perfomanceLog = PerformanceLog(with: "SwiftyLineProcessorPerformanceLogging", identifier: "Line Processor", log: OSLog.swiftyLineProcessorPerformance)
+	    
 	public init( rules : [LineRule], defaultRule: LineStyling, frontMatterRules : [FrontMatterRule] = []) {
         self.lineRules = rules
         self.defaultType = defaultRule
@@ -213,17 +212,12 @@ public class SwiftyLineProcessor {
         var foundAttributes : [SwiftyLine] = []
 		
 		
-		if self.enablePerformanceLog {
-			self.timer = Date().timeIntervalSinceReferenceDate
-			os_log("TIMER (began)                 : 0", log: .swiftyMarkdownPerformance, type: .info)
-		}
+		self.perfomanceLog.start()
 		
 		var lines = string.components(separatedBy: CharacterSet.newlines)
 		lines = self.processFrontMatter(lines)
 		
-		if self.enablePerformanceLog {
-			os_log("TIMER (front matter completed): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
-		}
+		self.perfomanceLog.tag(with: "(Front matter completed)")
 		
 
         for  heading in lines {
@@ -245,9 +239,7 @@ public class SwiftyLineProcessor {
             }
             foundAttributes.append(input)
 			
-			if self.enablePerformanceLog {
-				os_log("TIMER (line complete)         : %f (%@)", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer, heading)
-			}
+			self.perfomanceLog.tag(with: "(line completed: \(heading)")
         }
         return foundAttributes
     }

@@ -24,6 +24,8 @@ enum CharacterStyle : CharacterStyling {
 	case code
 	case link
 	case image
+	case referencedLink
+	case referencedImage
 	case strikethrough
 	
 	func isEqualTo(_ other: CharacterStyling) -> Bool {
@@ -166,7 +168,8 @@ If that is not set, then the system default will be used.
 	]
 	
 	static public var characterRules = [
-		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1),
+		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true),
+		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false),
 		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
 		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
@@ -175,7 +178,7 @@ If that is not set, then the system default will be used.
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
-	let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
+	let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules, scanner: SwiftyScanner())
 	
 	/// The styles to apply to any H1 headers found in the Markdown
 	open var h1 = LineStyles()
@@ -236,9 +239,8 @@ If that is not set, then the system default will be used.
 	var orderedListIndentFirstOrderCount = 0
 	var orderedListIndentSecondOrderCount = 0
 	
-	var timer : TimeInterval = 0
-	var enablePerformanceLog = (ProcessInfo.processInfo.environment["SwiftyMarkdownPerformanceLogging"] != nil)
-	
+	let perfomanceLog = PerformanceLog(with: "SwiftyMarkdownPerformanceLogging", identifier: "Swifty Markdown", log: .swiftyMarkdownPerformance)
+		
 	/**
 	
 	- parameter string: A string containing [Markdown](https://daringfireball.net/projects/markdown/) syntax to be converted to an NSAttributedString
@@ -360,36 +362,99 @@ If that is not set, then the system default will be used.
 	*/
 	open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
 		
-		if enablePerformanceLog {
-			self.timer = Date().timeIntervalSinceReferenceDate
-			os_log("--- TIMER (began): 0", log: .swiftyMarkdownPerformance, type: .info)
-		}
+		self.perfomanceLog.start()
+		
 		if let existentMarkdownString = markdownString {
 			self.string = existentMarkdownString
 		}
 		let attributedString = NSMutableAttributedString(string: "")
 		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
-
-		if enablePerformanceLog {
-			os_log("----- TIMER (line processing complete       ): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
+		
+		let references : [SwiftyLine] = foundAttributes.filter({ $0.line.starts(with: "[") && $0.line.contains("]:") })
+		let referencesRemoved : [SwiftyLine] = foundAttributes.filter({ !($0.line.starts(with: "[") && $0.line.contains("]:") ) })
+		var keyValuePairs : [String : String] = [:]
+		for line in references {
+			let strings = line.line.components(separatedBy: "]:")
+			guard strings.count >= 2 else {
+				continue
+			}
+			var key : String = strings[0]
+			if !key.isEmpty {
+				let newstart = key.index(key.startIndex, offsetBy: 1)
+				let range : Range<String.Index> = newstart..<key.endIndex
+				key = String(key[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+			}
+			keyValuePairs[key] = strings[1].trimmingCharacters(in: .whitespacesAndNewlines)
 		}
 		
-		for (idx, line) in foundAttributes.enumerated() {
+		self.perfomanceLog.tag(with: "(line processing complete)")
+		
+		self.tokeniser.scanner.metadataLookup = keyValuePairs
+		
+		for (idx, line) in referencesRemoved.enumerated() {
 			if idx > 0 {
 				attributedString.append(NSAttributedString(string: "\n"))
 			}
-			let finalTokens = self.tokeniser.process(line.line)
-			if enablePerformanceLog {
-				os_log("TIMER (tokenising complete for line %i): %f", log: .swiftyMarkdownPerformance, type: .info, idx, Date().timeIntervalSinceReferenceDate - self.timer)
+			let originalTokens = self.tokeniser.process(line.line)
+			var finalTokens : [Token] = []
+			if line.line.contains("][") {
+				var tokenBag : [Token] = []
+				var addToBag = false
+				for token in originalTokens {
+					print(token)
+					if token.type == .closeTag  {
+						if token.inputString != "]" {
+							finalTokens.append(contentsOf: tokenBag)
+							tokenBag.removeAll()
+							addToBag = false
+						} else {
+							tokenBag.append(token)
+							guard let metadata = tokenBag.filter({ $0.isMetadata }).first else {
+								finalTokens.append(contentsOf: tokenBag)
+								tokenBag.removeAll()
+								addToBag = false
+								continue
+							}
+							if let hasLookup = keyValuePairs[metadata.inputString] {
+								for var token in tokenBag {
+									if token.type == .string {
+										token.metadataString = hasLookup
+									}
+									
+									finalTokens.append(token)
+								}
+							} else {
+								for token in tokenBag {
+									let stringToken = Token(type: .string, inputString: token.outputString)
+									finalTokens.append(stringToken)
+								}
+							}
+							tokenBag.removeAll()
+							addToBag = false
+							continue
+						}
+					}
+					
+					
+					if token.type == .openTag && token.inputString == "[" {
+						addToBag = true
+					}
+					if addToBag {
+						tokenBag.append(token)
+					} else {
+						finalTokens.append(token)
+					}
+				}
 			}
+			
+			self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
+			
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
 			
 		}
 		
-		if enablePerformanceLog {
-			os_log("----- TIMER (processing complete            ): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
-		}
+		self.perfomanceLog.end()
 		
 		return attributedString
 	}

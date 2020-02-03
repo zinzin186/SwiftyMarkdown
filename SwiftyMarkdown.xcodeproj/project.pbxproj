@@ -21,6 +21,11 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		F4ACB6CB23E8A5C500EA665D /* SwiftyScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ACB6CA23E8A5C500EA665D /* SwiftyScanner.swift */; };
+		F4ACB6CE23E8A88400EA665D /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ACB6CD23E8A88400EA665D /* Token.swift */; };
+		F4ACB6D023E8A8A500EA665D /* CharacterRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ACB6CF23E8A8A500EA665D /* CharacterRule.swift */; };
+		F4ACB6D223E8B08400EA665D /* PerfomanceLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ACB6D123E8B08400EA665D /* PerfomanceLog.swift */; };
+		F4ACB6D423E8B5C500EA665D /* SwiftyMarkdown+CharacterRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4ACB6D323E8B5C500EA665D /* SwiftyMarkdown+CharacterRule.swift */; };
 		OBJ_40 /* String+SwiftyMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* String+SwiftyMarkdown.swift */; };
 		OBJ_41 /* SwiftyLineProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* SwiftyLineProcessor.swift */; };
 		OBJ_42 /* SwiftyMarkdown+iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* SwiftyMarkdown+iOS.swift */; };
@@ -38,6 +43,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		F4ACB6CC23E8A5C600EA665D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = OBJ_1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = "SwiftyMarkdown::SwiftyMarkdownTests";
+			remoteInfo = SwiftyMarkdownTests;
+		};
 		F4B37A0723E507C900833479 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = OBJ_1 /* Project object */;
@@ -48,6 +60,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F4ACB6CA23E8A5C500EA665D /* SwiftyScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyScanner.swift; sourceTree = "<group>"; };
+		F4ACB6CD23E8A88400EA665D /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
+		F4ACB6CF23E8A8A500EA665D /* CharacterRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterRule.swift; sourceTree = "<group>"; };
+		F4ACB6D123E8B08400EA665D /* PerfomanceLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerfomanceLog.swift; sourceTree = "<group>"; };
+		F4ACB6D323E8B5C500EA665D /* SwiftyMarkdown+CharacterRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+CharacterRule.swift"; sourceTree = "<group>"; };
 		OBJ_10 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
 		OBJ_11 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
 		OBJ_12 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+macOS.swift"; sourceTree = "<group>"; };
@@ -124,7 +141,7 @@
 			name = Products;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		OBJ_5 /*  */ = {
+		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
@@ -141,7 +158,6 @@
 				OBJ_33 /* Gemfile.lock */,
 				OBJ_34 /* SwiftyMarkdown.podspec */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		OBJ_7 /* Sources */ = {
@@ -160,7 +176,12 @@
 				OBJ_11 /* SwiftyMarkdown+iOS.swift */,
 				OBJ_12 /* SwiftyMarkdown+macOS.swift */,
 				OBJ_13 /* SwiftyMarkdown.swift */,
+				F4ACB6D323E8B5C500EA665D /* SwiftyMarkdown+CharacterRule.swift */,
 				OBJ_14 /* SwiftyTokeniser.swift */,
+				F4ACB6CD23E8A88400EA665D /* Token.swift */,
+				F4ACB6CA23E8A5C500EA665D /* SwiftyScanner.swift */,
+				F4ACB6CF23E8A8A500EA665D /* CharacterRule.swift */,
+				F4ACB6D123E8B08400EA665D /* PerfomanceLog.swift */,
 			);
 			name = SwiftyMarkdown;
 			path = Sources/SwiftyMarkdown;
@@ -232,7 +253,7 @@
 			knownRegions = (
 				en,
 			);
-			mainGroup = OBJ_5 /*  */;
+			mainGroup = OBJ_5;
 			productRefGroup = OBJ_23 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -250,12 +271,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
+				F4ACB6D423E8B5C500EA665D /* SwiftyMarkdown+CharacterRule.swift in Sources */,
 				OBJ_40 /* String+SwiftyMarkdown.swift in Sources */,
 				OBJ_41 /* SwiftyLineProcessor.swift in Sources */,
+				F4ACB6D223E8B08400EA665D /* PerfomanceLog.swift in Sources */,
+				F4ACB6CB23E8A5C500EA665D /* SwiftyScanner.swift in Sources */,
 				OBJ_42 /* SwiftyMarkdown+iOS.swift in Sources */,
 				OBJ_43 /* SwiftyMarkdown+macOS.swift in Sources */,
 				OBJ_44 /* SwiftyMarkdown.swift in Sources */,
 				OBJ_45 /* SwiftyTokeniser.swift in Sources */,
+				F4ACB6D023E8A8A500EA665D /* CharacterRule.swift in Sources */,
+				F4ACB6CE23E8A88400EA665D /* Token.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,7 +312,7 @@
 		OBJ_57 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = "SwiftyMarkdown::SwiftyMarkdownTests" /* SwiftyMarkdownTests */;
-			targetProxy = "SwiftyMarkdown::SwiftyMarkdownTests" /* SwiftyMarkdownTests */;
+			targetProxy = F4ACB6CC23E8A5C600EA665D /* PBXContainerItemProxy */;
 		};
 		OBJ_71 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
