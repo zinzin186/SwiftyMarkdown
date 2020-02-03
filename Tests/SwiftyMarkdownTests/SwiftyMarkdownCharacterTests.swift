@@ -12,22 +12,46 @@ import XCTest
 class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 	
 	func testIsolatedCase() {
-
-		challenge = TokenTest(input: "A [referenced link][link]\n[link]: https://www.neverendingvoyage.com/", output: "A referenced link", tokens: [
-			Token(type: .string, inputString: "A ", characterStyles: []),
-			Token(type: .string, inputString: "referenced link", characterStyles: [CharacterStyle.link])
+		
+		challenge = TokenTest(input: """
+		An asterisk: *
+		Line break
+		""", output: """
+		An asterisk: *
+		Line break
+		""", tokens: [
+			Token(type: .string, inputString: "An asterisk: *", characterStyles: []),
+			Token(type: .string, inputString: "Line break", characterStyles: [])
 		])
-		results = self.attempt(challenge, rules: [.links, .images, .referencedLinks])
+		results = self.attempt(challenge)
+		XCTAssertEqual(results.stringTokens.count, challenge.tokens.count )
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		return
+			
+			challenge = TokenTest(input: "A [referenced link][link]\n[link]: https://www.neverendingvoyage.com/", output: "A referenced link", tokens: [
+				Token(type: .string, inputString: "A ", characterStyles: []),
+				Token(type: .string, inputString: "referenced link", characterStyles: [CharacterStyle.link])
+			])
+		results = self.attempt(challenge)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		if results.links.count == 1 {
-			
-			// It's the tests that are wrong!!!
 			XCTAssertEqual(results.links[0].metadataString, "https://www.neverendingvoyage.com/")
 		} else {
 			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
 		}
 		
-		return
+		
 		
 		challenge = TokenTest(input: "A [referenced link][link]\n[notLink]: https://www.neverendingvoyage.com/", output: "A [referenced link][link]", tokens: [
 			Token(type: .string, inputString: "A [referenced link][link]", characterStyles: [])
@@ -43,7 +67,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A bold string", characterStyles: [CharacterStyle.bold])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -53,7 +84,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -61,8 +99,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "**A normal string**", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -70,8 +114,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "\\**A normal \\\\ string**", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -79,8 +129,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A string with double **escaped** asterisks", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -89,8 +145,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "One escaped, one not at either end*", characterStyles: [CharacterStyle.italic]),
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -100,19 +162,31 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " asterisk, one not at either end", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
 	
 	func testThatCodeTraitsAreRecognised() {
 		challenge = TokenTest(input: "`Code (**should** not process internal tags)`", output: "Code (**should** not process internal tags)",  tokens: [
-			Token(type: .string, inputString: "Code (**should** not process internal tags) ", characterStyles: [CharacterStyle.code])
+			Token(type: .string, inputString: "Code (**should** not process internal tags)", characterStyles: [CharacterStyle.code])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -122,8 +196,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " (should not be indented)", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -135,8 +215,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "instances", characterStyles: [CharacterStyle.code])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -144,8 +230,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "`A normal string`", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -153,8 +245,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A string with `escaped` backticks", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -162,8 +260,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A lonely backtick: `", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -171,8 +275,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "Two backticks followed by a full stop ``.", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
@@ -183,8 +293,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "An italicised string", characterStyles: [CharacterStyle.italic])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -194,8 +310,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " text", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -210,8 +332,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "styles", characterStyles: [CharacterStyle.italic])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -220,8 +348,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "_A normal string_", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -229,8 +363,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A string with _escaped_ underscores", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -257,8 +397,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A crossed-out string", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		
 		challenge = TokenTest(input: "A **Bold** string and a ~~removed~~crossed-out string", output: "A Bold string and a removedcrossed-out string", tokens: [
@@ -269,16 +415,28 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "crossed-out string", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		
 		challenge = TokenTest(input: "\\~\\~removed\\~\\~crossed-out string. ~This should be ignored~", output: "~~removed~~crossed-out string. ~This should be ignored~", tokens: [
 			Token(type: .string, inputString: "~~removed~~crossed-out string. ~This should be ignored~", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		
 	}
@@ -287,7 +445,7 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		
 		challenge = TokenTest(input: "__A bold string__ with a **mix** **of** bold __styles__", output: "A bold string with a mix of bold styles", tokens : [
 			Token(type: .string, inputString: "A bold string", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: "with a ", characterStyles: []),
+			Token(type: .string, inputString: " with a ", characterStyles: []),
 			Token(type: .string, inputString: "mix", characterStyles: [CharacterStyle.bold]),
 			Token(type: .string, inputString: " ", characterStyles: []),
 			Token(type: .string, inputString: "of", characterStyles: [CharacterStyle.bold]),
@@ -295,12 +453,18 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "styles", characterStyles: [CharacterStyle.bold])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
-		challenge = TokenTest(input: "_An italic string_, **follwed by a bold one**, `with some code`, \\*\\*and some\\*\\* \\_escaped\\_ \\`characters\\`, `ending` *with* __more__ variety.", output: "An italic string, follwed by a bold one, with some code, **and some** _escaped_ `characters`, ending with more variety.", tokens : [
+		challenge = TokenTest(input: "_An italic string_, **followed by a bold one**, `with some code`, \\*\\*and some\\*\\* \\_escaped\\_ \\`characters\\`, `ending` *with* __more__ variety.", output: "An italic string, followed by a bold one, with some code, **and some** _escaped_ `characters`, ending with more variety.", tokens : [
 			Token(type: .string, inputString: "An italic string", characterStyles: [CharacterStyle.italic]),
 			Token(type: .string, inputString: ", ", characterStyles: []),
 			Token(type: .string, inputString: "followed by a bold one", characterStyles: [CharacterStyle.bold]),
@@ -315,8 +479,35 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " variety.", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+	}
+	
+	func testForExtremeEscapeCombinations() {
+		challenge = TokenTest(input: "Before *\\***\\****A bold string*\\***\\****\\ After", output: "Before ***A bold string***\\", tokens : [
+			Token(type: .string, inputString: "Before ", characterStyles: []),
+			Token(type: .string, inputString: "*", characterStyles: [CharacterStyle.italic]),
+			Token(type: .string, inputString: "**", characterStyles: [CharacterStyle.bold]),
+			Token(type: .string, inputString: "A bold string**", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
+			Token(type: .string, inputString: "\\ After", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
@@ -326,8 +517,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "A bold italic string", characterStyles: [CharacterStyle.bold, CharacterStyle.italic])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -337,8 +534,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -348,8 +551,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -360,7 +569,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -372,8 +588,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: " word", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -382,8 +604,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "code", characterStyles: [CharacterStyle.code])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -411,8 +639,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "**", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -422,8 +656,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "** asterisks", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 	}
@@ -438,7 +678,7 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		let backtickSpace = "A backtick followed by a space: `"
 		
 		let underscoreSpace = "An underscore followed by a space: _"
-
+		
 		let backtickComma = "A backtick followed by a space: `, `"
 		let underscoreComma = "An underscore followed by a space: _, _"
 		
@@ -483,8 +723,14 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "\\!bang", characterStyles: [CharacterStyle.bold, CharacterStyle.link])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		

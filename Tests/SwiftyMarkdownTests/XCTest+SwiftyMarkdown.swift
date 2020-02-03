@@ -63,12 +63,8 @@ class SwiftyMarkdownCharacterTests : XCTestCase {
 		}
 		
 		let md = SwiftyMarkdown(string: challenge.input)
-		let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules, scanner: SwiftyScanner())
-		let lines = challenge.input.components(separatedBy: .newlines)
-		var tokens : [Token] = []
-		for line in lines {
-			tokens.append(contentsOf: tokeniser.process(line))
-		}
+		let attributedString = md.attributedString()
+		let tokens : [Token] = md.previouslyFoundTokens
 		let stringTokens = tokens.filter({ $0.type == .string && !$0.isMetadata })
 		
 		let existentTokenStyles = stringTokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
@@ -76,7 +72,7 @@ class SwiftyMarkdownCharacterTests : XCTestCase {
 		
 		let linkTokens = tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
 		
-		return ChallengeReturn(tokens: tokens, stringTokens: stringTokens, links : linkTokens, attributedString:  md.attributedString(), foundStyles: existentTokenStyles, expectedStyles : expectedStyles)
+		return ChallengeReturn(tokens: tokens, stringTokens: stringTokens, links : linkTokens, attributedString:  attributedString, foundStyles: existentTokenStyles, expectedStyles : expectedStyles)
 	}
 }
 

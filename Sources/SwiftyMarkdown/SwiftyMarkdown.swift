@@ -239,6 +239,8 @@ If that is not set, then the system default will be used.
 	var orderedListIndentFirstOrderCount = 0
 	var orderedListIndentSecondOrderCount = 0
 	
+	var previouslyFoundTokens : [Token] = []
+	
 	let perfomanceLog = PerformanceLog(with: "SwiftyMarkdownPerformanceLogging", identifier: "Swifty Markdown", log: .swiftyMarkdownPerformance)
 		
 	/**
@@ -362,6 +364,7 @@ If that is not set, then the system default will be used.
 	*/
 	open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
 		
+		self.previouslyFoundTokens.removeAll()
 		self.perfomanceLog.start()
 		
 		if let existentMarkdownString = markdownString {
@@ -396,58 +399,8 @@ If that is not set, then the system default will be used.
 			if idx > 0 {
 				attributedString.append(NSAttributedString(string: "\n"))
 			}
-			let originalTokens = self.tokeniser.process(line.line)
-			var finalTokens : [Token] = []
-			if line.line.contains("][") {
-				var tokenBag : [Token] = []
-				var addToBag = false
-				for token in originalTokens {
-					print(token)
-					if token.type == .closeTag  {
-						if token.inputString != "]" {
-							finalTokens.append(contentsOf: tokenBag)
-							tokenBag.removeAll()
-							addToBag = false
-						} else {
-							tokenBag.append(token)
-							guard let metadata = tokenBag.filter({ $0.isMetadata }).first else {
-								finalTokens.append(contentsOf: tokenBag)
-								tokenBag.removeAll()
-								addToBag = false
-								continue
-							}
-							if let hasLookup = keyValuePairs[metadata.inputString] {
-								for var token in tokenBag {
-									if token.type == .string {
-										token.metadataString = hasLookup
-									}
-									
-									finalTokens.append(token)
-								}
-							} else {
-								for token in tokenBag {
-									let stringToken = Token(type: .string, inputString: token.outputString)
-									finalTokens.append(stringToken)
-								}
-							}
-							tokenBag.removeAll()
-							addToBag = false
-							continue
-						}
-					}
-					
-					
-					if token.type == .openTag && token.inputString == "[" {
-						addToBag = true
-					}
-					if addToBag {
-						tokenBag.append(token)
-					} else {
-						finalTokens.append(token)
-					}
-				}
-			}
-			
+			let finalTokens = self.tokeniser.process(line.line)
+			self.previouslyFoundTokens.append(contentsOf: finalTokens)
 			self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
 			
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))

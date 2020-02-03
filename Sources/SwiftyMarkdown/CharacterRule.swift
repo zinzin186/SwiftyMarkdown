@@ -32,6 +32,9 @@ public struct CharacterRule : CustomStringConvertible {
 	public var spacesAllowed : SpaceAllowed = .oneSide
 	public var cancels : Cancel = .none
 	public var metadataLookup : Bool = false
+	public var isRepeatingTag : Bool {
+		return self.closingTag == nil && self.intermediateTag == nil
+	}
 	
 	public var tagVarieties : [Int : String]
 	

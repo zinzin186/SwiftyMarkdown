@@ -207,7 +207,7 @@ class SwiftyScanner : SwiftyScanning {
 	}
 	
 	func append( contentsOf tokenGroup: [TokenGroup] ) {
-		if self.rule.closingTag == nil {
+		if self.rule.isRepeatingTag {
 			self.handleRepeatingTags(tokenGroup)
 		} else {
 			self.handleRegularTags(tokenGroup)
@@ -259,7 +259,7 @@ class SwiftyScanner : SwiftyScanning {
 		}
 		
 		for tag in self.openTagString {
-			if self.rule.closingTag == nil {
+			if self.rule.isRepeatingTag {
 				tokens.append(self.configureToken(ofType: .repeatingTag, with: tag))
 			} else {
 				tokens.append(self.configureToken(ofType: .openTag, with: tag))
@@ -284,7 +284,7 @@ class SwiftyScanner : SwiftyScanning {
 		}
 		var remainingTags = ( self.rule.closingTag == nil ) ? self.openTagString.joined() : ""
 		for tag in self.closedTagString {
-			if self.rule.closingTag == nil {
+			if self.rule.isRepeatingTag {
 				remainingTags = remainingTags.replacingOccurrences(of: tag, with: "")
 				tokens.append(self.configureToken(ofType: .repeatingTag, with: tag))
 			} else {
@@ -387,26 +387,122 @@ class SwiftyScanner : SwiftyScanning {
 		return groups
 	}
 	
-	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
-		
-		self.rule = rule
-		
-		let scanner = Scanner(string: string)
-		scanner.charactersToBeSkipped = nil
-		var tokens : [Token] = []
-		var set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")")
-		if let existentEscape = rule.escapeCharacter {
-			set.insert(charactersIn: String(existentEscape))
-		}
-
-		var tokenGroup = 0
-		
-		self.performanceLog.tag(with: "(start scan \(rule.openTag)")
-		
+	
+	/// Checks to ensure that any tags in the rule actually exist in the string.
+	/// If there are is not at least one of each of the rule's existing tags, there is no processing
+	/// to be done.
+	///
+	/// - Parameter string: The string to check for the existence of the rule's tags.
+	func verifyTagsExist( _ string : String ) -> Token? {
 		if !string.contains( rule.openTag ) {
-			return [Token(type: .string, inputString: string)]
+			return Token(type: .string, inputString: string)
+		}
+		guard let existentClosingTag = rule.closingTag else {
+			return nil
+		}
+		//
+		if !string.contains(existentClosingTag) {
+			return Token(type: .string, inputString: string)
+		}
+		guard let hasIntermediateString = rule.intermediateTag else {
+			return nil
+		}
+		if !string.contains(hasIntermediateString) {
+			return Token(type: .string, inputString: string)
+		}
+		return nil
+	}
+	
+	func scanForRepeatingTags( _ scanner : Scanner, with set : CharacterSet ) -> [Token] {
+		var tokens : [Token] = []
+		while !scanner.isAtEnd {
+			self.performanceLog.tag(with: "(loop start \(rule.openTag))")
+			tokenGroup += 1
+			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
+				if let start = scanner.scanUpToCharacters(from: set) {
+					self.performanceLog.tag(with: "(first chars \(rule.openTag))")
+					self.append(start)
+				}
+			} else {
+				var string : NSString?
+				scanner.scanUpToCharacters(from: set, into: &string)
+				if let existentString = string as String? {
+					self.append(existentString)
+				}
+			}
+			
+			// The end of the string
+			let spacing = self.scanSpacing(scanner, usingCharactersIn: set)
+			guard let foundTag = spacing.foundChars else {
+				continue
+			}
+			
+			if foundTag == rule.openTag && foundTag.count < rule.minTags {
+				self.append(foundTag)
+				continue
+			}
+			
+			if !validateSpacing(nextCharacter: spacing.postTag, previousCharacter: spacing.preTag, with: rule) {
+				let escapeString = String("\(rule.escapeCharacter ?? Character(""))")
+				let escaped = foundTag.replacingOccurrences(of: "\(escapeString)\(rule.openTag)", with: rule.openTag)
+				self.append(escaped)
+				continue
+			}
+			
+			self.performanceLog.tag(with: "(found tag \(rule.openTag))")
+			
+			if !foundTag.contains(rule.openTag) {
+				self.append(foundTag)
+				continue
+			}
+			
+			var tokenGroups : [TokenGroup] = []
+			var escapeCharacter : Character? = nil
+			var cumulatedString = ""
+			for char in foundTag {
+				if let existentEscapeCharacter = escapeCharacter {
+					
+					// If any of the tags feature the current character
+					let escape = String(existentEscapeCharacter)
+					let nextTagCharacter = String(char)
+					if rule.openTag.contains(nextTagCharacter) {
+						tokenGroups.append(TokenGroup(string: nextTagCharacter, isEscaped: true, type: .tag))
+						escapeCharacter = nil
+					} else if nextTagCharacter == escape {
+						// Doesn't apply to this rule
+						tokenGroups.append(TokenGroup(string: nextTagCharacter, isEscaped: false, type: .escape))
+					}
+					
+					continue
+				}
+				if let existentEscape = rule.escapeCharacter {
+					if char == existentEscape {
+						tokenGroups.append(contentsOf: getTokenGroups(for: &cumulatedString, with: rule, shouldEmpty: true))
+						escapeCharacter = char
+						continue
+					}
+				}
+				cumulatedString.append(char)
+				
+			}
+			if let remainingEscape = escapeCharacter {
+				tokenGroups.append(TokenGroup(string: String(remainingEscape), isEscaped: false, type: .escape))
+			}
+			
+			tokenGroups.append(contentsOf: getTokenGroups(for: &cumulatedString, with: rule, shouldEmpty: true))
+			self.append(contentsOf: tokenGroups)
+			
+			if self.state == .closed {
+				tokens.append(contentsOf: self.tokens(beginningGroupNumberAt : tokenGroup))
+			}
 		}
 		
+		tokens.append(contentsOf: self.tokens(beginningGroupNumberAt : tokenGroup))
+		return tokens
+	}
+	
+	func scanForTags( _ scanner : Scanner, with set : CharacterSet ) -> [Token] {
+		var tokens : [Token] = []
 		while !scanner.isAtEnd {
 			self.performanceLog.tag(with: "(loop start \(rule.openTag))")
 			tokenGroup += 1
@@ -498,6 +594,33 @@ class SwiftyScanner : SwiftyScanning {
 		}
 		
 		tokens.append(contentsOf: self.tokens(beginningGroupNumberAt : tokenGroup))
+		return tokens
+	}
+	
+	
+	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
+		
+		self.rule = rule
+		self.tokenGroup = 0
+		
+		self.performanceLog.start()
+		
+		if let token = verifyTagsExist(string) {
+			return [token]
+		}
+		
+		let scanner = Scanner(string: string)
+		scanner.charactersToBeSkipped = nil
+		
+		var tokens : [Token] = []
+		let set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")\(String(rule.escapeCharacter ?? Character.init("") ))")
+		
+		if rule.isRepeatingTag {
+			tokens = self.scanForRepeatingTags(scanner, with: set)
+		} else {
+			tokens = self.scanForTags(scanner, with: set)
+		}
+		
 		self.performanceLog.end()
 
 		return tokens
