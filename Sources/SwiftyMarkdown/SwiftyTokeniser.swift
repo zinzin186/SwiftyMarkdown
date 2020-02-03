@@ -12,6 +12,7 @@ extension OSLog {
 	private static var subsystem = "SwiftyTokeniser"
 	static let tokenising = OSLog(subsystem: subsystem, category: "Tokenising")
 	static let styling = OSLog(subsystem: subsystem, category: "Styling")
+	static let performance = OSLog(subsystem: subsystem, category: "Peformance")
 }
 
 // Tag definition
@@ -255,7 +256,6 @@ struct TagString {
 	}
 	
 	mutating func handleRegularTags( _ tokenGroup : [TokenGroup] ) {
-		print(tokenGroup)
 		for token in tokenGroup {
 			
 			switch token.state {
@@ -358,7 +358,6 @@ struct TagString {
 	}
 	
 	mutating func tokens(beginningGroupNumberAt group : Int = 0) -> [Token] {
-		print(self)
 		self.tokenGroup = group
 		var tokens : [Token] = []
 		
@@ -437,11 +436,24 @@ public class SwiftyTokeniser {
 	let rules : [CharacterRule]
 	var replacements : [String : [Token]] = [:]
 	
-	var timer : TimeInterval = 0
+	var currentRunTime : TimeInterval = 0
+	var totalTime : TimeInterval = 0
 	var enableLog = (ProcessInfo.processInfo.environment["SwiftyTokeniserLogging"] != nil)
+	var enablePerformanceLog = (ProcessInfo.processInfo.environment["SwiftyTokeniserPerformanceLogging"] != nil)
 	
 	public init( with rules : [CharacterRule] ) {
 		self.rules = rules
+		if enablePerformanceLog {
+			self.totalTime = Date.timeIntervalSinceReferenceDate
+			os_log("--- TIMER: Tokeniser initialised", log: .performance, type: .info)
+		}
+
+	}
+	
+	deinit {
+		if enablePerformanceLog {
+			os_log("--- TIMER (Tokeniser deinitialised): %f", log: .performance, type: .info, Date.timeIntervalSinceReferenceDate - self.totalTime)
+		}
 	}
 	
 	
@@ -464,8 +476,12 @@ public class SwiftyTokeniser {
 		var currentTokens : [Token] = []
 		var mutableRules = self.rules
 		
-		self.timer = Date().timeIntervalSinceReferenceDate
-		//		os_log("TIMER BEGIN: 0", log: .tokenising, type: .info)
+		self.totalTime = Date().timeIntervalSinceReferenceDate
+		
+		if enablePerformanceLog {
+			self.currentRunTime = Date().timeIntervalSinceReferenceDate
+			os_log("TIMER (total run time): %f", log: .performance, type: .info, Date().timeIntervalSinceReferenceDate - self.totalTime)
+		}
 		
 		while !mutableRules.isEmpty {
 			let nextRule = mutableRules.removeFirst()
@@ -474,6 +490,10 @@ public class SwiftyTokeniser {
 				os_log("------------------------------", log: .tokenising, type: .info)
 				os_log("RULE: %@", log: OSLog.tokenising, type:.info , nextRule.description)
 			}
+			if enablePerformanceLog {
+				os_log("TIMER (start rule %@): %f", log: .performance, type: .info, nextRule.openTag, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+			}
+
 			
 			if currentTokens.isEmpty {
 				// This means it's the first time through
@@ -531,9 +551,12 @@ public class SwiftyTokeniser {
 			}
 			currentTokens = finalTokens
 			
-			
 			// Each string could have additional tokens within it, so they have to be scanned as well with the current rule.
 			// The one string token might then be exploded into multiple more tokens
+		}
+		
+		if enablePerformanceLog {
+			os_log("TIMER (finished all rules): %f", log: .performance, type: .info, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
 		}
 		
 		if enableLog {
@@ -907,6 +930,9 @@ public class SwiftyTokeniser {
 	
 	
 	func scanSpacing( _ scanner : Scanner, usingCharactersIn set : CharacterSet ) -> (preTag : String?, foundChars : String?, postTag : String?) {
+		if enablePerformanceLog {
+			os_log("TIMER (scan space)  : %f", log: .performance, type: .info, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+		}
 		let lastChar : String?
 		if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 			lastChar = ( scanner.currentIndex > scanner.string.startIndex ) ? String(scanner.string[scanner.string.index(before: scanner.currentIndex)..<scanner.currentIndex]) : nil
@@ -937,6 +963,10 @@ public class SwiftyTokeniser {
 				nextChar = nil
 			}
 		}
+		if enablePerformanceLog {
+			os_log("TIMER (end space)   : %f", log: .performance, type: .info, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+		}
+		
 		return (lastChar, maybeFoundChars, nextChar)
 	}
 	
@@ -987,7 +1017,8 @@ public class SwiftyTokeniser {
 	}
 	
 	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
-		os_log("TIMER CHECK: %f for rule with openTag %@", log: .tokenising, type: .info, Date().timeIntervalSinceReferenceDate - self.timer as CVarArg, rule.openTag)
+		
+		
 		let scanner = Scanner(string: string)
 		scanner.charactersToBeSkipped = nil
 		var tokens : [Token] = []
@@ -995,14 +1026,28 @@ public class SwiftyTokeniser {
 		if let existentEscape = rule.escapeCharacter {
 			set.insert(charactersIn: String(existentEscape))
 		}
-		
-		
+
 		var tagString = TagString(with: rule)
 		var tokenGroup = 0
+		
+		if enablePerformanceLog {
+			os_log("TIMER (start scan %@): %f (string: %@)", log: .performance, type: .info, rule.openTag, Date().timeIntervalSinceReferenceDate - self.currentRunTime, string)
+		}
+		
+		if !string.contains( rule.openTag ) {
+			return [Token(type: .string, inputString: string)]
+		}
+		
 		while !scanner.isAtEnd {
+			if enablePerformanceLog {
+				os_log("TIMER (loop start %@): %f", log: .performance, type: .info, rule.openTag, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+			}
 			tokenGroup += 1
 			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				if let start = scanner.scanUpToCharacters(from: set) {
+					if enablePerformanceLog {
+						os_log("TIMER (first chars)  : %f", log: .performance, type: .info, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+					}
 					tagString.append(start)
 				}
 			} else {
@@ -1013,12 +1058,8 @@ public class SwiftyTokeniser {
 				}
 			}
 			
-			//				os_log("TIMER CHECK (pre-spacing): %f", log: .tokenising, type: .info, Date().timeIntervalSinceReferenceDate - self.timer as CVarArg)
-			
 			// The end of the string
 			let spacing = self.scanSpacing(scanner, usingCharactersIn: set)
-			
-			
 			guard let foundTag = spacing.foundChars else {
 				continue
 			}
@@ -1041,9 +1082,10 @@ public class SwiftyTokeniser {
 				continue
 			}
 			
-			//				os_log("TIMER CHECK (pre grouping): %f", log: .tokenising, type: .info, Date().timeIntervalSinceReferenceDate - self.timer as CVarArg)
-			//:--
-			print(foundTag)
+			
+			if enablePerformanceLog {
+				os_log("TIMER (found tag %@) : %f", log: .performance, type: .info, rule.openTag, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+			}
 			
 			if !foundTag.contains(rule.openTag) && !foundTag.contains(rule.intermediateTag ?? "") && !foundTag.contains(rule.closingTag ?? "") {
 				tagString.append(foundTag)
@@ -1094,8 +1136,10 @@ public class SwiftyTokeniser {
 		}
 		
 		tokens.append(contentsOf: tagString.tokens(beginningGroupNumberAt : tokenGroup))
-		//			os_log("TIMER TOTAL: %f for rule with openTag %@", log: .tokenising, type: .info, Date().timeIntervalSinceReferenceDate - self.timer as CVarArg, rule.openTag)
-		
+		if enablePerformanceLog {
+			os_log("TIMER (end scan %@)  : %f", log: .performance, type: .info, rule.openTag, Date().timeIntervalSinceReferenceDate - self.currentRunTime)
+		}
+
 		return tokens
 	}
 	

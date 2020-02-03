@@ -54,7 +54,22 @@
          <EnvironmentVariable
             key = "SwiftyTokeniserLogging"
             value = ""
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SwiftyLineProcessorPerformanceLogging"
+            value = ""
             isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SwiftyTokeniserPerformanceLogging"
+            value = ""
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SwiftyMarkdownPerformanceLogging"
+            value = ""
+            isEnabled = "NO">
          </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>

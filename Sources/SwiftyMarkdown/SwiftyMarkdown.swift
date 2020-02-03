@@ -5,12 +5,17 @@
 //  Created by Simon Fairbairn on 05/03/2016.
 //  Copyright © 2016 Voyage Travel Apps. All rights reserved.
 //
-
+import os.log
 #if os(macOS)
 import AppKit
 #else
 import UIKit
 #endif
+
+extension OSLog {
+	private static var subsystem = "SwiftyMarkdown"
+	static let swiftyMarkdownPerformance = OSLog(subsystem: subsystem, category: "Swifty Markdown Performance")
+}
 
 enum CharacterStyle : CharacterStyling {
 	case none
@@ -222,7 +227,6 @@ If that is not set, then the system default will be used.
 	
 	var currentType : MarkdownLineStyle = .body
 	
-	
 	var string : String
 	
 	let tagList = "!\\_*`[]()"
@@ -232,6 +236,8 @@ If that is not set, then the system default will be used.
 	var orderedListIndentFirstOrderCount = 0
 	var orderedListIndentSecondOrderCount = 0
 	
+	var timer : TimeInterval = 0
+	var enablePerformanceLog = (ProcessInfo.processInfo.environment["SwiftyMarkdownPerformanceLogging"] != nil)
 	
 	/**
 	
@@ -353,6 +359,11 @@ If that is not set, then the system default will be used.
 	- returns: An NSAttributedString with the styles applied
 	*/
 	open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
+		
+		if enablePerformanceLog {
+			self.timer = Date().timeIntervalSinceReferenceDate
+			os_log("--- TIMER (began): 0", log: .swiftyMarkdownPerformance, type: .info)
+		}
 		if let existentMarkdownString = markdownString {
 			self.string = existentMarkdownString
 		}
@@ -360,14 +371,26 @@ If that is not set, then the system default will be used.
 		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
 
+		if enablePerformanceLog {
+			os_log("----- TIMER (line processing complete       ): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
+		}
+		
 		for (idx, line) in foundAttributes.enumerated() {
 			if idx > 0 {
 				attributedString.append(NSAttributedString(string: "\n"))
 			}
 			let finalTokens = self.tokeniser.process(line.line)
+			if enablePerformanceLog {
+				os_log("TIMER (tokenising complete for line %i): %f", log: .swiftyMarkdownPerformance, type: .info, idx, Date().timeIntervalSinceReferenceDate - self.timer)
+			}
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
 			
 		}
+		
+		if enablePerformanceLog {
+			os_log("----- TIMER (processing complete            ): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
+		}
+		
 		return attributedString
 	}
 	

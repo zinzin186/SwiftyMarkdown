@@ -7,6 +7,12 @@
 //
 
 import Foundation
+import os.log
+
+extension OSLog {
+	private static var subsystem = "SwiftyLineProcessor"
+	static let swiftyLineProcessorPerformance = OSLog(subsystem: subsystem, category: "Swifty Line Processor Performance")
+}
 
 public protocol LineStyling {
     var shouldTokeniseLine : Bool { get }
@@ -73,6 +79,9 @@ public class SwiftyLineProcessor {
     
     let lineRules : [LineRule]
 	let frontMatterRules : [FrontMatterRule]
+	
+	var timer : TimeInterval = 0
+	var enablePerformanceLog = (ProcessInfo.processInfo.environment["SwiftyLineProcessorPerformanceLogging"] != nil)
     
 	public init( rules : [LineRule], defaultRule: LineStyling, frontMatterRules : [FrontMatterRule] = []) {
         self.lineRules = rules
@@ -117,6 +126,10 @@ public class SwiftyLineProcessor {
 				return nil
 			}
             
+			if !text.contains(element.token) {
+				continue
+			}
+			
             switch element.removeFrom {
             case .leading:
                 output = findLeadingLineElement(element, in: output)
@@ -199,9 +212,20 @@ public class SwiftyLineProcessor {
     public func process( _ string : String ) -> [SwiftyLine] {
         var foundAttributes : [SwiftyLine] = []
 		
+		
+		if self.enablePerformanceLog {
+			self.timer = Date().timeIntervalSinceReferenceDate
+			os_log("TIMER (began)                 : 0", log: .swiftyMarkdownPerformance, type: .info)
+		}
+		
 		var lines = string.components(separatedBy: CharacterSet.newlines)
 		lines = self.processFrontMatter(lines)
 		
+		if self.enablePerformanceLog {
+			os_log("TIMER (front matter completed): %f", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer)
+		}
+		
+
         for  heading in lines {
             
             if processEmptyStrings == nil && heading.isEmpty {
@@ -220,6 +244,10 @@ public class SwiftyLineProcessor {
                 continue
             }
             foundAttributes.append(input)
+			
+			if self.enablePerformanceLog {
+				os_log("TIMER (line complete)         : %f (%@)", log: .swiftyMarkdownPerformance, type: .info, Date().timeIntervalSinceReferenceDate - self.timer, heading)
+			}
         }
         return foundAttributes
     }
