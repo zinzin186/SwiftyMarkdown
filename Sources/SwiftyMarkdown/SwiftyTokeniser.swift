@@ -177,9 +177,9 @@ struct TagString {
 		}
 	}
 	
-	mutating func append( contentsOf tokenGroup: [TokenGroup] ) {
-		print(tokenGroup)
-		var availableCount = 0
+	mutating func handleRepeatingTags( _ tokenGroup : [TokenGroup] ) {
+		var availableCount = self.rule.maxTags
+		var sameOpenGroup = false
 		for token in tokenGroup {
 			
 			switch token.state {
@@ -193,19 +193,87 @@ struct TagString {
 				case .none:
 					self.openTagString.append(token.string)
 					self.state = .open
-					availableCount = self.rule.maxTags - 1
+					availableCount = self.rule.maxTags - token.string.count
+					sameOpenGroup = true
 				case .open:
-					if self.rule.closingTag == nil {
-						if availableCount > 0 {
+					if availableCount > 0 {
+						if sameOpenGroup {
 							self.openTagString.append(token.string)
-							availableCount -= 1
+							availableCount = self.rule.maxTags - token.string.count
 						} else {
 							self.closedTagString.append(token.string)
 							self.state = .closed
 						}
-					} else if self.rule.maxTags == 1, self.openTagString.first == rule.openTag {
+					} else {
+						self.append(token.string)
+					}
+
+				case .intermediate:
+					self.preOpenString += self.openTagString.joined() + token.string
+				case .closed:
+					self.append(token.string)
+				}
+			case .intermediate:
+				switch self.state {
+				case .none:
+					self.preOpenString += token.string
+				case .open:
+					self.intermediateTagString += token.string
+					self.state = .intermediate
+				case .intermediate:
+					self.metadataString += token.string
+				case .closed:
+					self.postClosedString += token.string
+				}
+				
+			case .closed:
+				switch self.state {
+				case .intermediate:
+					self.closedTagString.append(token.string)
+					self.state = .closed
+				case .closed:
+					self.postClosedString += token.string
+				case .open:
+					if self.rule.intermediateTag == nil {
+						self.closedTagString.append(token.string)
+						self.state = .closed
+					} else {
+						self.preOpenString += self.openTagString.joined()
+						self.preOpenString += self.intermediateString
+						self.preOpenString += token.string
+						self.intermediateString = ""
+						self.openTagString.removeAll()
+					}
+				case .none:
+					self.preOpenString += token.string
+				}
+			}
+		}
+		if !self.openTagString.isEmpty && self.rule.closingTag == nil && self.state != .closed {
+			self.state = .open
+		}
+	}
+	
+	mutating func handleRegularTags( _ tokenGroup : [TokenGroup] ) {
+		print(tokenGroup)
+		for token in tokenGroup {
+			
+			switch token.state {
+			case .none:
+				self.append(token.string)
+				if self.state == .closed {
+					self.state = .none
+				}
+			case .open:
+				switch self.state {
+				case .none:
+					self.openTagString.append(token.string)
+					self.state = .open
+				case .open:
+					if self.rule.maxTags == 1, self.openTagString.first == rule.openTag {
 						self.preOpenString = self.preOpenString + self.openTagString.joined() + self.intermediateString
 						self.intermediateString = ""
+						self.openTagString.removeAll()
 						self.openTagString.append(token.string)
 					} else {
 						self.openTagString.append(token.string)
@@ -251,8 +319,14 @@ struct TagString {
 				}
 			}
 		}
-		if !self.openTagString.isEmpty && self.rule.closingTag == nil && self.state != .closed {
-			self.state = .open
+		
+	}
+	
+	mutating func append( contentsOf tokenGroup: [TokenGroup] ) {
+		if self.rule.closingTag == nil {
+			self.handleRepeatingTags(tokenGroup)
+		} else {
+			self.handleRegularTags(tokenGroup)
 		}
 	}
 	
@@ -274,15 +348,27 @@ struct TagString {
 		self.state = .none
 	}
 	
+	mutating func consolidate(with string : String, into tokens : inout [Token]) -> [Token] {
+		self.reset()
+		guard !string.isEmpty else {
+			return tokens
+		}
+		tokens.append(self.configureToken(with: string))
+		return tokens
+	}
+	
 	mutating func tokens(beginningGroupNumberAt group : Int = 0) -> [Token] {
 		print(self)
 		self.tokenGroup = group
 		var tokens : [Token] = []
 		
 		if self.intermediateString.isEmpty && self.intermediateTagString.isEmpty && self.metadataString.isEmpty {
-			tokens.append(self.configureToken(with: self.preOpenString + self.openTagString.joined() + self.closedTagString.joined() + self.postClosedString))
-			self.reset()
-			return tokens
+			let actualString = self.preOpenString + self.openTagString.joined() + self.closedTagString.joined() + self.postClosedString
+			return self.consolidate(with: actualString, into: &tokens)
+		}
+		if self.state == .open && !self.openTagString.isEmpty {
+			let actualString = self.preOpenString + self.openTagString.joined() + self.intermediateString
+			return self.consolidate(with: actualString, into: &tokens)
 		}
 		
 		if !self.preOpenString.isEmpty {
@@ -299,7 +385,7 @@ struct TagString {
 		self.tokenGroup += 1
 		if !self.intermediateString.isEmpty {
 			var token = self.configureToken(with: self.intermediateString)
-			token.metadataString = self.metadataString
+			token.metadataString = (self.metadataString.isEmpty) ? nil : self.metadataString
 			tokens.append(token)
 		}
 		if !self.intermediateTagString.isEmpty {
@@ -311,8 +397,10 @@ struct TagString {
 		if !self.metadataString.isEmpty {
 			tokens.append(self.configureToken(with: self.metadataString))
 		}
+		var remainingTags = ( self.rule.closingTag == nil ) ? self.openTagString.joined() : ""
 		for tag in self.closedTagString {
 			if self.rule.closingTag == nil {
+				remainingTags = remainingTags.replacingOccurrences(of: tag, with: "")
 				tokens.append(self.configureToken(ofType: .repeatingTag, with: tag))
 			} else {
 				tokens.append(self.configureToken(ofType: .closeTag, with: tag))
@@ -323,6 +411,10 @@ struct TagString {
 		}
 		
 		self.reset()
+		
+		if !remainingTags.isEmpty {
+			self.state = .open
+		}
 		
 		return tokens
 	}
@@ -996,7 +1088,7 @@ public class SwiftyTokeniser {
 			tokenGroups.append(contentsOf: getTokenGroups(for: &cumulatedString, with: rule, shouldEmpty: true))
 			tagString.append(contentsOf: tokenGroups)
 			
-			if tagString.state == .none {
+			if tagString.state == .closed {
 				tokens.append(contentsOf: tagString.tokens(beginningGroupNumberAt : tokenGroup))
 			}
 		}

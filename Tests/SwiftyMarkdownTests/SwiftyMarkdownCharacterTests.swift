@@ -13,38 +13,17 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 	
 	func testIsolatedCase() {
 
-		challenge = TokenTest(input: "A string with a **bold** word", output: "A string with a bold word",  tokens: [
-			Token(type: .string, inputString: "A string with a ", characterStyles: []),
-			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
-			Token(type: .string, inputString: " word", characterStyles: [])
+		challenge = TokenTest(input: "A Bold [**Link**](http://voyagetravelapps.com/)", output: "A Bold Link", tokens: [
+			Token(type: .string, inputString: "A Bold ", characterStyles: []),
+			Token(type: .string, inputString: "Link", characterStyles: [CharacterStyle.bold, CharacterStyle.link])
 		])
-		results = self.attempt(challenge)
+		results = self.attempt(challenge, rules:[.links, .asterisks])
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
-		
-		return
-		
-		challenge = TokenTest(input: "An *\\*italic\\** [referenced link][link]", output: "An *italic* referenced link", tokens: [
-			Token(type: .string, inputString: "An ", characterStyles: []),
-			Token(type: .string, inputString: "*italic*", characterStyles: [CharacterStyle.italic]),
-			Token(type: .string, inputString: " ", characterStyles: []),
-			Token(type: .string, inputString: "referenced link", characterStyles: [CharacterStyle.link])
-		])
-		rules  = [
-			CharacterRule(openTag: "*", escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [.bold], 3 : [.italic, .bold]], minTags: 1, maxTags: 3),
-			CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], minTags: 1, maxTags: 1),
-			CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], minTags: 1, maxTags: 1)
-		]
-		results = self.attempt(challenge, rules: rules)
-		XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
-		XCTAssertEqual(results.foundStyles, results.expectedStyles)
-		
-		
+		XCTAssertEqual(results.links.count, 1)
 		if results.links.count == 1 {
-			XCTAssertEqual(results.links[0].metadataString, "https://www.neverendingvoyage.com/")
+			XCTAssertEqual(results.links[0].metadataString, "http://voyagetravelapps.com/")
 		} else {
 			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
 		}
@@ -57,7 +36,6 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -68,7 +46,6 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -260,8 +237,7 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "Line break", characterStyles: [])
 		])
 		results = self.attempt(challenge)
-		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.stringTokens.count, challenge.tokens.count )
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -377,7 +353,6 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
-		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
@@ -387,6 +362,16 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 			Token(type: .string, inputString: "italic", characterStyles: [CharacterStyle.bold, CharacterStyle.italic]),
 			Token(type: .string, inputString: "bold", characterStyles: [CharacterStyle.bold]),
 			Token(type: .string, inputString: " word", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
+		XCTAssertEqual(results.tokens.map({ $0.outputString }).joined(), challenge.output)
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with ```code`", output: "A string with ``code", tokens : [
+			Token(type: .string, inputString: "A string with ``", characterStyles: []),
+			Token(type: .string, inputString: "code", characterStyles: [CharacterStyle.code])
 		])
 		results = self.attempt(challenge)
 		XCTAssertEqual(challenge.tokens.count, results.stringTokens.count)
