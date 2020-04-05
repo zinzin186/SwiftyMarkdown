@@ -23,11 +23,11 @@ public class SwiftyTokeniser {
 	let totalPerfomanceLog = PerformanceLog(with: "SwiftyTokeniserPerformanceLogging", identifier: "Tokeniser Total Run Time", log: OSLog.performance)
 	let currentPerfomanceLog = PerformanceLog(with: "SwiftyTokeniserPerformanceLogging", identifier: "Tokeniser Current", log: OSLog.performance)
 		
-	public var scanner : SwiftyScanning
+	var scanner : SwiftyScanning!
+	public var metadataLookup : [String : String] = [:]
 	
-	public init( with rules : [CharacterRule], scanner : SwiftyScanning ) {
+	public init( with rules : [CharacterRule] ) {
 		self.rules = rules
-		self.scanner = scanner
 		
 		self.totalPerfomanceLog.start()
 	}
@@ -61,6 +61,13 @@ public class SwiftyTokeniser {
 		
 		while !mutableRules.isEmpty {
 			let nextRule = mutableRules.removeFirst()
+			
+			if nextRule.isRepeatingTag {
+				self.scanner = SwiftyScanner()
+			} else {
+				self.scanner = SwiftyScannerNonRepeating()
+			}
+			self.scanner.metadataLookup = self.metadataLookup
 			
 			if enableLog {
 				os_log("------------------------------", log: .tokenising, type: .info)

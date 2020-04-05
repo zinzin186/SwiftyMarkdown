@@ -63,6 +63,7 @@
 
 /* Begin PBXFileReference section */
 		F421DD951C8AF34F00B86D66 /* example.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = example.md; sourceTree = "<group>"; };
+		F4576C2E2437F67B0013E2B6 /* example copy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "example copy.md"; sourceTree = "<group>"; };
 		F4B4A44923E4E17400550249 /* SwiftyMarkdownExample macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SwiftyMarkdownExample macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4B4A44B23E4E17400550249 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4B4A44D23E4E17400550249 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -172,6 +173,7 @@
 				F4CE98B21C8AEF7D00D735C1 /* Assets.xcassets */,
 				F4CE98B41C8AEF7D00D735C1 /* LaunchScreen.storyboard */,
 				F4CE98B71C8AEF7D00D735C1 /* Info.plist */,
+				F4576C2E2437F67B0013E2B6 /* example copy.md */,
 				F421DD951C8AF34F00B86D66 /* example.md */,
 			);
 			path = SwiftyMarkdownExample;

@@ -1,4 +1,11 @@
 //
+//  File.swift
+//  
+//
+//  Created by Simon Fairbairn on 04/04/2020.
+//
+
+//
 //  SwiftyScanner.swift
 //  SwiftyMarkdown
 //
@@ -8,26 +15,7 @@
 import Foundation
 import os.log
 
-extension OSLog {
-	private static var subsystem = "SwiftyScanner"
-	static let swiftyScannerTokenising = OSLog(subsystem: subsystem, category: "Swifty Scanner Tokenising")
-	static let swiftyScannerPerformance = OSLog(subsystem: subsystem, category: "Swifty Scanner Peformance")
-}
-
-/// Swifty Scanning Protocol
-public protocol SwiftyScanning {
-	var metadataLookup : [String : String] { get set }
-	func scan( _ string : String, with rule : CharacterRule) -> [Token]
-}
-
-enum TagState {
-	case none
-	case open
-	case intermediate
-	case closed
-}
-
-class SwiftyScanner : SwiftyScanning {
+class SwiftyScannerNonRepeating : SwiftyScanning {
 	var state : TagState = .none
 	var preOpenString = ""
 	var openTagString : [String] = []
@@ -37,19 +25,17 @@ class SwiftyScanner : SwiftyScanning {
 	var closedTagString : [String] = []
 	var postClosedString = ""
 	
-	var rule : CharacterRule! = nil
+	
 	var tokenGroup = 0
 	
-	var metadataLookup : [String : String] = [:]
 	
-	let performanceLog = PerformanceLog(with: "SwiftyScannerPerformanceLogging", identifier: "Swifty Scanner", log: .swiftyScannerPerformance)
-		
-	init() { }
+
 	
 	func append( _ string : String? ) {
 		guard let existentString = string else {
 			return
 		}
+		self.stringList.append(existentString)
 		switch self.state {
 		case .none:
 			self.preOpenString += existentString
@@ -59,83 +45,6 @@ class SwiftyScanner : SwiftyScanning {
 			self.metadataString += existentString
 		case .closed:
 			self.postClosedString += existentString
-		}
-	}
-	
-	func handleRepeatingTags( _ tokenGroup : [TokenGroup] ) {
-		var availableCount = self.rule.maxTags
-		var sameOpenGroup = false
-		for token in tokenGroup {
-			
-			switch token.state {
-			case .none:
-				self.append(token.string)
-				if self.state == .closed {
-					self.state = .none
-				}
-			case .open:
-				switch self.state {
-				case .none:
-					self.openTagString.append(token.string)
-					self.state = .open
-					availableCount = self.rule.maxTags - token.string.count
-					sameOpenGroup = true
-				case .open:
-					if availableCount > 0 {
-						if sameOpenGroup {
-							self.openTagString.append(token.string)
-							availableCount = self.rule.maxTags - token.string.count
-						} else {
-							self.closedTagString.append(token.string)
-							self.state = .closed
-						}
-					} else {
-						self.append(token.string)
-					}
-
-				case .intermediate:
-					self.preOpenString += self.openTagString.joined() + token.string
-				case .closed:
-					self.append(token.string)
-				}
-			case .intermediate:
-				switch self.state {
-				case .none:
-					self.preOpenString += token.string
-				case .open:
-					self.intermediateTagString += token.string
-					self.state = .intermediate
-				case .intermediate:
-					self.metadataString += token.string
-				case .closed:
-					self.postClosedString += token.string
-				}
-				
-			case .closed:
-				switch self.state {
-				case .intermediate:
-					self.closedTagString.append(token.string)
-					self.state = .closed
-				case .closed:
-					self.postClosedString += token.string
-				case .open:
-					if self.rule.intermediateTag == nil {
-						self.closedTagString.append(token.string)
-						self.state = .closed
-					} else {
-						self.preOpenString += self.openTagString.joined()
-						self.preOpenString += self.intermediateString
-						self.preOpenString += token.string
-						self.intermediateString = ""
-						self.openTagString.removeAll()
-					}
-				case .none:
-					self.preOpenString += token.string
-				}
-			}
-		}
-		if !self.openTagString.isEmpty && self.rule.closingTag == nil && self.state != .closed {
-			self.state = .open
 		}
 	}
 	
@@ -207,11 +116,7 @@ class SwiftyScanner : SwiftyScanning {
 	}
 	
 	func append( contentsOf tokenGroup: [TokenGroup] ) {
-		if self.rule.isRepeatingTag {
-			self.handleRepeatingTags(tokenGroup)
-		} else {
-			self.handleRegularTags(tokenGroup)
-		}
+		self.handleRegularTags(tokenGroup)
 	}
 	
 	func configureToken(ofType type : TokenType = .string, with string : String ) -> Token {
@@ -304,42 +209,7 @@ class SwiftyScanner : SwiftyScanning {
 		return tokens
 	}
 	
-	func scanSpacing( _ scanner : Scanner, usingCharactersIn set : CharacterSet ) -> (preTag : String?, foundChars : String?, postTag : String?) {
-		self.performanceLog.tag(with: "(scan space)")
-		let lastChar : String?
-		if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
-			lastChar = ( scanner.currentIndex > scanner.string.startIndex ) ? String(scanner.string[scanner.string.index(before: scanner.currentIndex)..<scanner.currentIndex]) : nil
-		} else {
-			if let scanLocation = scanner.string.index(scanner.string.startIndex, offsetBy: scanner.scanLocation, limitedBy: scanner.string.endIndex) {
-				lastChar = ( scanLocation > scanner.string.startIndex ) ? String(scanner.string[scanner.string.index(before: scanLocation)..<scanLocation]) : nil
-			} else {
-				lastChar = nil
-			}
-			
-		}
-		let maybeFoundChars : String?
-		if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
-			maybeFoundChars = scanner.scanCharacters(from: set )
-		} else {
-			var string : NSString?
-			scanner.scanCharacters(from: set, into: &string)
-			maybeFoundChars = string as String?
-		}
-		
-		let nextChar : String?
-		if #available(iOS 13.0, OSX 10.15,  watchOS 6.0,tvOS 13.0, *) {
-			nextChar = (scanner.currentIndex != scanner.string.endIndex) ? String(scanner.string[scanner.currentIndex]) : nil
-		} else {
-			if let scanLocation = scanner.string.index(scanner.string.startIndex, offsetBy: scanner.scanLocation, limitedBy: scanner.string.endIndex) {
-				nextChar = (scanLocation != scanner.string.endIndex) ? String(scanner.string[scanLocation]) : nil
-			} else {
-				nextChar = nil
-			}
-		}
-		self.performanceLog.tag(with: "(end space)")
-		
-		return (lastChar, maybeFoundChars, nextChar)
-	}
+	
 	
 	func groups( inString string : inout String, forTag tag : String, state : TagState ) -> [TokenGroup] {
 		var groups : [TokenGroup] = []
@@ -412,124 +282,31 @@ class SwiftyScanner : SwiftyScanning {
 	}
 	
 	
-	/// Checks to ensure that any tags in the rule actually exist in the string.
-	/// If there are is not at least one of each of the rule's existing tags, there is no processing
-	/// to be done.
-	///
-	/// - Parameter string: The string to check for the existence of the rule's tags.
-	func verifyTagsExist( _ string : String ) -> Token? {
-		if !string.contains( rule.openTag ) {
-			return Token(type: .string, inputString: string)
-		}
-		guard let existentClosingTag = rule.closingTag else {
-			return nil
-		}
-		//
-		if !string.contains(existentClosingTag) {
-			return Token(type: .string, inputString: string)
-		}
-		guard let hasIntermediateString = rule.intermediateTag else {
-			return nil
-		}
-		if !string.contains(hasIntermediateString) {
-			return Token(type: .string, inputString: string)
-		}
-		return nil
-	}
 	
-	func scanForRepeatingTags( _ scanner : Scanner, with set : CharacterSet ) -> [Token] {
-		var tokens : [Token] = []
-		while !scanner.isAtEnd {
-			self.performanceLog.tag(with: "(loop start \(rule.openTag))")
-			tokenGroup += 1
-			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
-				if let start = scanner.scanUpToCharacters(from: set) {
-					self.performanceLog.tag(with: "(first chars \(rule.openTag))")
-					self.append(start)
-				}
-			} else {
-				var string : NSString?
-				scanner.scanUpToCharacters(from: set, into: &string)
-				if let existentString = string as String? {
-					self.append(existentString)
-				}
-			}
-			
-			// The end of the string
-			let spacing = self.scanSpacing(scanner, usingCharactersIn: set)
-			guard let foundTag = spacing.foundChars else {
-				continue
-			}
-			
-			if foundTag == rule.openTag && foundTag.count < rule.minTags {
-				self.append(foundTag)
-				continue
-			}
-			
-			if !validateSpacing(nextCharacter: spacing.postTag, previousCharacter: spacing.preTag, with: rule) {
-				let escapeString = String("\(rule.escapeCharacter ?? Character(""))")
-				let escaped = foundTag.replacingOccurrences(of: "\(escapeString)\(rule.openTag)", with: rule.openTag)
-				self.append(escaped)
-				continue
-			}
-			
-			self.performanceLog.tag(with: "(found tag \(rule.openTag))")
-			
-			if !foundTag.contains(rule.openTag) {
-				self.append(foundTag)
-				continue
-			}
-			
-			var tokenGroups : [TokenGroup] = []
-			var escapeCharacter : Character? = nil
-			var cumulatedString = ""
-			for char in foundTag {
-				if let existentEscapeCharacter = escapeCharacter {
-					
-					// If any of the tags feature the current character
-					let escape = String(existentEscapeCharacter)
-					let nextTagCharacter = String(char)
-					if rule.openTag.contains(nextTagCharacter) {
-						tokenGroups.append(TokenGroup(string: nextTagCharacter, isEscaped: true, type: .tag))
-						escapeCharacter = nil
-					} else if nextTagCharacter == escape {
-						// Doesn't apply to this rule
-						tokenGroups.append(TokenGroup(string: nextTagCharacter, isEscaped: false, type: .escape))
-					}
-					
-					continue
-				}
-				if let existentEscape = rule.escapeCharacter {
-					if char == existentEscape {
-						tokenGroups.append(contentsOf: getTokenGroups(for: &cumulatedString, with: rule, shouldEmpty: true))
-						escapeCharacter = char
-						continue
-					}
-				}
-				cumulatedString.append(char)
-				
-			}
-			if let remainingEscape = escapeCharacter {
-				tokenGroups.append(TokenGroup(string: String(remainingEscape), isEscaped: false, type: .escape))
-			}
-			
-			tokenGroups.append(contentsOf: getTokenGroups(for: &cumulatedString, with: rule, shouldEmpty: true))
-			self.append(contentsOf: tokenGroups)
-			
-			if self.state == .closed {
-				tokens.append(contentsOf: self.tokens(beginningGroupNumberAt : tokenGroup))
-			}
-		}
+	
+	var rule : CharacterRule! = nil
+	var metadataLookup : [String : String] = [:]
+	
+	let performanceLog = PerformanceLog(with: "SwiftyScannerPerformanceLogging", identifier: "Swifty Scanner Non Repeating", log: .swiftyScannerPerformance)
 		
-		tokens.append(contentsOf: self.tokens(beginningGroupNumberAt : tokenGroup))
-		return tokens
-	}
 	
-	func scanForTags( _ scanner : Scanner, with set : CharacterSet ) -> [Token] {
+	var openIndex : Int = -1
+	var intermediateIndex : Int = -1
+	var closedIndex : Int = -1
+	
+	var stringList : [String] = []
+	
+	init() { }
+	
+	func scanForTags(in string : String) -> [Token] {
+		let scanner = Scanner(string: string)
+		scanner.charactersToBeSkipped = nil
+		let set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")\(String(rule.escapeCharacter ?? Character.init("") ))")
+
 		var tokens : [Token] = []
 		while !scanner.isAtEnd {
 			self.performanceLog.tag(with: "(loop start \(rule.openTag))")
-			tokenGroup += 1
+			
 			if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
 				if let start = scanner.scanUpToCharacters(from: set) {
 					self.performanceLog.tag(with: "(first chars \(rule.openTag))")
@@ -574,7 +351,6 @@ class SwiftyScanner : SwiftyScanning {
 				self.append(foundTag)
 				continue
 			}
-			
 			
 			var tokenGroups : [TokenGroup] = []
 			var escapeCharacter : Character? = nil
@@ -624,30 +400,83 @@ class SwiftyScanner : SwiftyScanning {
 	
 	func scan( _ string : String, with rule : CharacterRule) -> [Token] {
 		
+		self.performanceLog.start()
+		
 		self.rule = rule
 		self.tokenGroup = 0
-		
-		self.performanceLog.start()
 		
 		if let token = verifyTagsExist(string) {
 			return [token]
 		}
-		
-		let scanner = Scanner(string: string)
-		scanner.charactersToBeSkipped = nil
-		
+
 		var tokens : [Token] = []
-		let set = CharacterSet(charactersIn: "\(rule.openTag)\(rule.intermediateTag ?? "")\(rule.closingTag ?? "")\(String(rule.escapeCharacter ?? Character.init("") ))")
-		
-		if rule.isRepeatingTag {
-			tokens = self.scanForRepeatingTags(scanner, with: set)
-		} else {
-			tokens = self.scanForTags(scanner, with: set)
-		}
+		tokens = self.scanForTags(in: string)
 		
 		self.performanceLog.end()
 
 		return tokens
+	}
+	
+	/// Checks to ensure that any tags in the rule actually exist in the string.
+	/// If there are is not at least one of each of the rule's existing tags, there is no processing
+	/// to be done.
+	///
+	/// - Parameter string: The string to check for the existence of the rule's tags.
+	func verifyTagsExist( _ string : String ) -> Token? {
+		if !string.contains( rule.openTag ) {
+			return Token(type: .string, inputString: string)
+		}
+		guard let existentClosingTag = rule.closingTag else {
+			return nil
+		}
+		//
+		if !string.contains(existentClosingTag) {
+			return Token(type: .string, inputString: string)
+		}
+		guard let hasIntermediateString = rule.intermediateTag else {
+			return nil
+		}
+		if !string.contains(hasIntermediateString) {
+			return Token(type: .string, inputString: string)
+		}
+		return nil
+	}
+	
+	func scanSpacing( _ scanner : Scanner, usingCharactersIn set : CharacterSet ) -> (preTag : String?, foundChars : String?, postTag : String?) {
+		self.performanceLog.tag(with: "(scan space)")
+		let lastChar : String?
+		if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
+			lastChar = ( scanner.currentIndex > scanner.string.startIndex ) ? String(scanner.string[scanner.string.index(before: scanner.currentIndex)..<scanner.currentIndex]) : nil
+		} else {
+			if let scanLocation = scanner.string.index(scanner.string.startIndex, offsetBy: scanner.scanLocation, limitedBy: scanner.string.endIndex) {
+				lastChar = ( scanLocation > scanner.string.startIndex ) ? String(scanner.string[scanner.string.index(before: scanLocation)..<scanLocation]) : nil
+			} else {
+				lastChar = nil
+			}
+			
+		}
+		let maybeFoundChars : String?
+		if #available(iOS 13.0, OSX 10.15, watchOS 6.0, tvOS 13.0, *) {
+			maybeFoundChars = scanner.scanCharacters(from: set )
+		} else {
+			var string : NSString?
+			scanner.scanCharacters(from: set, into: &string)
+			maybeFoundChars = string as String?
+		}
+		
+		let nextChar : String?
+		if #available(iOS 13.0, OSX 10.15,  watchOS 6.0,tvOS 13.0, *) {
+			nextChar = (scanner.currentIndex != scanner.string.endIndex) ? String(scanner.string[scanner.currentIndex]) : nil
+		} else {
+			if let scanLocation = scanner.string.index(scanner.string.startIndex, offsetBy: scanner.scanLocation, limitedBy: scanner.string.endIndex) {
+				nextChar = (scanLocation != scanner.string.endIndex) ? String(scanner.string[scanLocation]) : nil
+			} else {
+				nextChar = nil
+			}
+		}
+		self.performanceLog.tag(with: "(end space)")
+		
+		return (lastChar, maybeFoundChars, nextChar)
 	}
 	
 	func validateSpacing( nextCharacter : String?, previousCharacter : String?, with rule : CharacterRule ) -> Bool {
@@ -686,17 +515,4 @@ class SwiftyScanner : SwiftyScanning {
 		}
 		return true
 	}
-}
-
-struct TokenGroup {
-	enum TokenGroupType {
-		case string
-		case tag
-		case escape
-	}
-	
-	let string : String
-	let isEscaped : Bool
-	let type : TokenGroupType
-	var state : TagState = .none
 }

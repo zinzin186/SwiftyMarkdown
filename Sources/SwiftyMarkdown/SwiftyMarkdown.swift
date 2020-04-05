@@ -168,9 +168,9 @@ If that is not set, then the system default will be used.
 	]
 	
 	static public var characterRules = [
-		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true),
-		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false),
-		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
+		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides),
+		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides),
+		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]],  maxTags: 1, spacesAllowed: .bothSides),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
 		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
 		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
@@ -178,7 +178,7 @@ If that is not set, then the system default will be used.
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
-	let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules, scanner: SwiftyScanner())
+	let tokeniser = SwiftyTokeniser(with: SwiftyMarkdown.characterRules)
 	
 	/// The styles to apply to any H1 headers found in the Markdown
 	open var h1 = LineStyles()
@@ -393,7 +393,7 @@ If that is not set, then the system default will be used.
 		
 		self.perfomanceLog.tag(with: "(line processing complete)")
 		
-		self.tokeniser.scanner.metadataLookup = keyValuePairs
+		self.tokeniser.metadataLookup = keyValuePairs
 		
 		for (idx, line) in referencesRemoved.enumerated() {
 			if idx > 0 {
