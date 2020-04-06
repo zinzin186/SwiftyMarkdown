@@ -168,9 +168,9 @@ If that is not set, then the system default will be used.
 	]
 	
 	static public var characterRules = [
-		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides),
-		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides),
-		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]],  maxTags: 1, spacesAllowed: .bothSides),
+		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, metadataOpen: "[", metadataClose: "]"),
+		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, metadataOpen: "(", metadataClose: ")"),
+		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]],  maxTags: 1, spacesAllowed: .bothSides, metadataOpen: "(", metadataClose: ")"),
 		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
 		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
 		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
@@ -231,9 +231,6 @@ If that is not set, then the system default will be used.
 	var currentType : MarkdownLineStyle = .body
 	
 	var string : String
-	
-	let tagList = "!\\_*`[]()"
-	let validMarkdownTags = CharacterSet(charactersIn: "!\\_*`[]()")
 
 	var orderedListCount = 0
 	var orderedListIndentFirstOrderCount = 0

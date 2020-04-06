@@ -21,13 +21,29 @@ public enum Cancel {
 	case currentSet
 }
 
-
+public struct v2_CharacterRule {
+	public let openTag : String
+	public let closeTag : String?
+	public let escapeCharacter : Character?
+	public let styles : [Int : [CharacterStyling]]
+	public let minTags : Int
+	public let maxTags : Int
+	public let metadataOpen : Character?
+	public let metadataClose : Character?
+}
 
 public struct CharacterRule : CustomStringConvertible {
 	public let openTag : String
+	public var closeTag : String? {
+		get {
+			return self.closingTag
+		}
+	}
 	public let intermediateTag : String?
 	public let closingTag : String?
 	public let escapeCharacter : Character?
+	public let metadataOpen : Character?
+	public let metadataClose : Character?
 	public let styles : [Int : [CharacterStyling]]
 	public var minTags : Int = 1
 	public var maxTags : Int = 1
@@ -37,14 +53,14 @@ public struct CharacterRule : CustomStringConvertible {
 	public var isRepeatingTag : Bool {
 		return self.closingTag == nil && self.intermediateTag == nil
 	}
-	
 	public var tagVarieties : [Int : String]
+	public var isSelfContained = false
 	
 	public var description: String {
 		return "Character Rule with Open tag: \(self.openTag) and current styles : \(self.styles) "
 	}
 	
-	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], minTags : Int = 1, maxTags : Int = 1, cancels : Cancel = .none, metadataLookup : Bool = false, spacesAllowed: SpaceAllowed = .oneSide) {
+	public init(openTag: String, intermediateTag: String? = nil, closingTag: String? = nil, escapeCharacter: Character? = nil, styles: [Int : [CharacterStyling]] = [:], minTags : Int = 1, maxTags : Int = 1, cancels : Cancel = .none, metadataLookup : Bool = false, spacesAllowed: SpaceAllowed = .oneSide, metadataOpen : Character? = nil, metadataClose : Character? = nil) {
 		self.openTag = openTag
 		self.intermediateTag = intermediateTag
 		self.closingTag = closingTag
@@ -56,6 +72,8 @@ public struct CharacterRule : CustomStringConvertible {
 		self.metadataLookup = metadataLookup
 		self.spacesAllowed = spacesAllowed
 		self.tagVarieties = [:]
+		self.metadataOpen = metadataOpen
+		self.metadataClose = metadataClose
 		for i in minTags...maxTags {
 			self.tagVarieties[i] = openTag.repeating(i)
 		}

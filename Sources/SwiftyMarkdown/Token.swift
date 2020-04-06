@@ -35,7 +35,7 @@ public struct Token {
 	public internal(set) var tokenIndex : Int = -1
 	public internal(set) var isProcessed : Bool = false
 	public internal(set) var isMetadata : Bool = false
-	
+	public var children : [Token] = []
 	
 	public var outputString : String {
 		get {
