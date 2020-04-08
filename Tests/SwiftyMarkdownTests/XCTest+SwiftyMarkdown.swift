@@ -31,19 +31,31 @@ enum Rule {
 	func asCharacterRule() -> CharacterRule {
 		switch self {
 		case .images:
-			return CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
+					CharacterRuleTag(tag: "]", type: .close),
+					CharacterRuleTag(tag: "(", type: .metadataOpen),
+					CharacterRuleTag(tag: ")", type: .metadataClose)
+			], styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, isSelfContained: true)
 		case .links:
-			return CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+					CharacterRuleTag(tag: "]", type: .close),
+					CharacterRuleTag(tag: "(", type: .metadataOpen),
+					CharacterRuleTag(tag: ")", type: .metadataClose)
+			], styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true)
 		case .backticks:
-			return CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : [CharacterStyle.code]], cancels: .allRemaining)
 		case .strikethroughs:
-			return CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2)
+			return CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating, min: 2, max: 2), otherTags : [], styles: [2 : [CharacterStyle.strikethrough]])
 		case .asterisks:
-			return CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
 		case .underscores:
-			return CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
 		case .referencedLinks:
-			return CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1)
+			return CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+					CharacterRuleTag(tag: "]", type: .close),
+					CharacterRuleTag(tag: "[", type: .metadataOpen),
+					CharacterRuleTag(tag: "]", type: .metadataClose)
+			], styles: [1 : [CharacterStyle.referencedLink]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true)
 				
 		}
 	}
@@ -63,6 +75,7 @@ class SwiftyMarkdownCharacterTests : XCTestCase {
 		}
 		
 		let md = SwiftyMarkdown(string: challenge.input)
+		md.applyAttachments = false
 		let attributedString = md.attributedString()
 		let tokens : [Token] = md.previouslyFoundTokens
 		let stringTokens = tokens.filter({ $0.type == .string && !$0.isMetadata })

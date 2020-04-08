@@ -168,13 +168,25 @@ If that is not set, then the system default will be used.
 	]
 	
 	static public var characterRules = [
-		CharacterRule(openTag: "[", intermediateTag: "][", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, metadataOpen: "[", metadataClose: "]"),
-		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, metadataOpen: "(", metadataClose: ")"),
-		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: "]", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]],  maxTags: 1, spacesAllowed: .bothSides, metadataOpen: "(", metadataClose: ")"),
-		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
-		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
-		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
-		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "(", type: .metadataOpen),
+				CharacterRuleTag(tag: ")", type: .metadataClose)
+		], styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, isSelfContained: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "[", type: .metadataOpen),
+				CharacterRuleTag(tag: "]", type: .metadataClose)
+		], styles: [1 : [CharacterStyle.referencedLink]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "(", type: .metadataOpen),
+				CharacterRuleTag(tag: ")", type: .metadataClose)
+		], styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : [CharacterStyle.code]], cancels: .allRemaining),
+		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating, min: 2, max: 2), otherTags : [], styles: [2 : [CharacterStyle.strikethrough]]),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]]),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
@@ -237,6 +249,8 @@ If that is not set, then the system default will be used.
 	var orderedListIndentSecondOrderCount = 0
 	
 	var previouslyFoundTokens : [Token] = []
+	
+	var applyAttachments = true
 	
 	let perfomanceLog = PerformanceLog(with: "SwiftyMarkdownPerformanceLogging", identifier: "Swifty Markdown", log: .swiftyMarkdownPerformance)
 		
@@ -554,6 +568,9 @@ extension SwiftyMarkdown {
 			
 			#if !os(watchOS)
 			if styles.contains(.image), let imageName = token.metadataString {
+				if !self.applyAttachments {
+					continue
+				}
 				#if !os(macOS)
 				let image1Attachment = NSTextAttachment()
 				image1Attachment.image = UIImage(named: imageName)

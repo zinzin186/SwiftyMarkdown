@@ -24,99 +24,108 @@ enum v2_TokenType {
 
 struct v2_Token {
 	var type : v2_TokenType
-	let group : Int
 	let string : String
 	var metadata : String = ""
+//	let startIndex : String.Index
 }
 
 class SwiftyScannerNonRepeating : SwiftyScanning {
-	var metadataLookup: [String : String] = [:]
+	var metadataLookup: [String : String]
 	
-	var str : String = "" {
-		didSet {
-			self.currentIndex = str.startIndex
-		}
-	}
-	var currentIndex : String.Index = "".startIndex
-	var accumulatedStr : String = ""
+	var str : String
+	var currentIndex : String.Index
+	
+	var rule : CharacterRule
+	var tokens : [Token]
+
 	var openIndices : [Int] = []
+	var accumulatedStr : String = ""
 	var stringList : [v2_Token] = []
-	var rule : CharacterRule! = nil
+
 	
-	init() { }
+	init( tokens : [Token], rule : CharacterRule, metadataLookup : [String : String] = [:] ) {
+		self.tokens = tokens
+		self.rule = rule
+		self.str = tokens.map({ $0.inputString }).joined()
+		self.currentIndex = self.str.startIndex
+		self.metadataLookup = metadataLookup
+	}
 	
-	func movePointer( _ idx : inout String.Index, addCharacter char : Character? = nil ) {
-		idx = str.index(idx, offsetBy: 1, limitedBy: str.endIndex) ?? str.endIndex
-		if let character = char {
-			accumulatedStr.append(character)
+	func scan() -> [Token] {
+		
+		if !self.str.contains(rule.primaryTag.tag) {
+			return self.tokens
+		}
+		self.process()
+		return self.convertTokens()
+	}
+	
+	func emptyAccumulatedString() {
+		if !accumulatedStr.isEmpty {
+			stringList.append(v2_Token(type: .string, string: accumulatedStr))
+			accumulatedStr.removeAll()
 		}
 	}
-
-	func addLink(with metadataStr : String? = nil) {
-		let openIndex = openIndices.removeLast()
-		stringList.remove(at: openIndex)
-		let subarray = stringList[openIndex..<stringList.count]
-		stringList.removeSubrange(openIndex..<stringList.count)
-		stringList.append(v2_Token(type: .link, group: 0, string: subarray.map({ $0.string }).joined(), metadata: metadataStr ?? ""))
-
-	}
 	
-	func scan( _ tokens : [Token], with rule : CharacterRule ) -> [Token] {
-		
-	}
-	
-	
-	func scan(_ string: String, with rule: CharacterRule) -> [Token] {
+	func process() {
 		var tokens : [Token] = []
-		self.str = string
-		
-		self.rule = rule
-		var isEscape = false
-		let openTagStart = rule.openTag[rule.openTag.startIndex]
-		let closeTagStart = ( rule.closeTag != nil ) ? rule.closeTag![rule.closeTag!.startIndex] : nil
 
+		let openTagStart = rule.primaryTag.tag[rule.primaryTag.tag.startIndex]
+		let closeTagStart = ( rule.tag(for: .close)?.tag != nil ) ? rule.tag(for: .close)?.tag[rule.tag(for: .close)!.tag.startIndex] : nil
+		
+
+
+		
+		
 		while currentIndex != str.endIndex {
 			let char = str[currentIndex]
-
-			if char == rule.escapeCharacter {
-				isEscape = true
-				movePointer(&currentIndex)
-				continue
-			}
-			if isEscape {
-				isEscape = false
-				movePointer(&currentIndex, addCharacter: char)
-				continue
-			}
 			
 			if str[currentIndex] != openTagStart && str[currentIndex] != closeTagStart {
 				movePointer(&currentIndex, addCharacter: char)
 				continue
 			}
-			if !accumulatedStr.isEmpty {
-				stringList.append(v2_Token(type: .string, group: 0, string: accumulatedStr))
-				accumulatedStr.removeAll()
-			}
+
 			
 			// We have the first character of a possible open tag
 			if char == openTagStart {
-				guard let nextIdx = str.index(currentIndex, offsetBy: rule.openTag.count, limitedBy: str.endIndex) else {
+				// Checks to see if there is an escape character before this one
+				if let prevIndex = str.index(currentIndex, offsetBy: -1, limitedBy: str.startIndex) {
+					if let escapeChar = self.rule.primaryTag.escapeCharacter(for: str[prevIndex]) {
+						switch escapeChar.rule {
+						case .remove:
+							if !accumulatedStr.isEmpty {
+								accumulatedStr.removeLast()
+							}
+						case .keep:
+							break
+						}
+						movePointer(&currentIndex, addCharacter: char)
+						continue
+					}
+				}
+				
+				emptyAccumulatedString()
+				
+				guard let nextIdx = str.index(currentIndex, offsetBy: rule.primaryTag.tag.count, limitedBy: str.endIndex) else {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
 				let tag = String(str[currentIndex..<nextIdx])
-				if tag != rule.openTag {
+				if tag != rule.primaryTag.tag {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
 				
 				openIndices.append(stringList.count)
-				stringList.append(v2_Token(type: .tag, group: 0, string: tag))
-				currentIndex = str.index(currentIndex, offsetBy: rule.openTag.count, limitedBy: str.endIndex) ?? str.endIndex
+				stringList.append(v2_Token(type: .tag, string: tag))
+				currentIndex = str.index(currentIndex, offsetBy: rule.primaryTag.tag.count, limitedBy: str.endIndex) ?? str.endIndex
 				continue
 			}
 			if char == closeTagStart {
-				guard let closeTag = rule.closeTag else {
+				
+				emptyAccumulatedString()
+				
+				guard let closeTag = rule.tag(for: .close)?.tag else {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
@@ -131,14 +140,14 @@ class SwiftyScannerNonRepeating : SwiftyScanning {
 					continue
 				}
 				if openIndices.isEmpty {
-					stringList.append(v2_Token(type: .string, group: 0, string: String(char)))
+					stringList.append(v2_Token(type: .string, string: String(char)))
 					movePointer(&currentIndex)
 					continue
 				}
 
 				// At this point we have gathered a valid close tag and we have a valid open tag
 				
-				guard let metadataOpen = rule.metadataOpen, let close = rule.metadataClose else {
+				guard let metadataOpen = rule.tag(for: .metadataOpen), let metadataClose = rule.tag(for: .metadataClose) else {
 					currentIndex = nextIdx
 					addLink()
 					continue
@@ -147,18 +156,25 @@ class SwiftyScannerNonRepeating : SwiftyScanning {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
-				guard str[nextIdx] == rule.metadataOpen else {
+				guard str[nextIdx] == metadataOpen.tag.first else {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
 				
 				let substr = str[nextIdx..<str.endIndex]
-				guard let closeIdx = substr.firstIndex(of: close) else {
+				guard let closeIdx = substr.firstIndex(of: metadataClose.tag.first!) else {
 					movePointer(&currentIndex, addCharacter: char)
 					continue
 				}
 				let open = substr.index(nextIdx, offsetBy: 1, limitedBy: substr.endIndex) ?? substr.endIndex
 				let metadataStr = String(substr[open..<closeIdx])
+				
+				guard !metadataStr.contains(rule.primaryTag.tag) else {
+					movePointer(&currentIndex, addCharacter: char)
+					continue
+
+				}
+				
 				currentIndex = str.index(closeIdx, offsetBy: 1, limitedBy: str.endIndex) ?? closeIdx
 
 				addLink(with: metadataStr)
@@ -166,32 +182,68 @@ class SwiftyScannerNonRepeating : SwiftyScanning {
 		}
 
 		if !accumulatedStr.isEmpty {
-			stringList.append(v2_Token(type: .string, group: 0, string: accumulatedStr))
+			stringList.append(v2_Token(type: .string, string: accumulatedStr))
 		}
-		
-		if !self.stringList.contains(where: { $0.type == .link }) {
-			return [Token(type: .string, inputString: self.stringList.map({ $0.string}).joined())]
+	}
+	
+	func movePointer( _ idx : inout String.Index, addCharacter char : Character? = nil ) {
+		idx = str.index(idx, offsetBy: 1, limitedBy: str.endIndex) ?? str.endIndex
+		if let character = char {
+			accumulatedStr.append(character)
 		}
-		
-		
-		for tok in self.stringList {
-			if tok.type == .string {
-				tokens.append(Token(type: .string, inputString: tok.string))
-			}
+	}
+	
+	func addLink(with metadataStr : String? = nil) {
+		let openIndex = openIndices.removeLast()
+		stringList.remove(at: openIndex)
+		let subarray = stringList[openIndex..<stringList.count]
+		stringList.removeSubrange(openIndex..<stringList.count)
+		stringList.append(v2_Token(type: .link, string: subarray.map({ $0.string }).joined(), metadata: metadataStr ?? ""))
+	}
+	
+	func convertTokens() -> [Token] {
+		if !stringList.contains(where: { $0.type == .link }) {
+			return [Token(type: .string, inputString: stringList.map({ $0.string}).joined())]
+		}
+		var tokens : [Token] = []
+		var allStrings : [v2_Token] = []
+		for tok in stringList {
 			if tok.type == .link {
-				tokens.append(Token(type: .openTag, inputString: self.rule.openTag))
-				var token = Token(type: .string, inputString: tok.string, characterStyles: self.rule.styles[1] ?? [])
-				token.metadataString = tok.metadata
-				token.isProcessed = true
-				tokens.append(token)
-				if let close = self.rule.closeTag {
-					tokens.append(Token(type: .closeTag, inputString: close))
+				if !allStrings.isEmpty {
+					tokens.append(Token(type: .string, inputString: allStrings.map({ $0.string }).joined()))
+					allStrings.removeAll()
 				}
+				let ruleStyles = self.rule.styles[1] ?? []
+				let charStyles = ( rule.isSelfContained ) ? [] : ruleStyles
+				var token = Token(type: .string, inputString: tok.string, characterStyles: charStyles)
+				token.metadataString = tok.metadata
+				
+				if rule.isSelfContained {
+					var parentToken = Token(type: .string, inputString: token.id, characterStyles: ruleStyles)
+					parentToken.children = [token]
+					tokens.append(parentToken)
+				} else {
+					tokens.append(token)
+				}
+			} else {
+				allStrings.append(tok)
 			}
+		}
+		if !allStrings.isEmpty {
+			tokens.append(Token(type: .string, inputString: allStrings.map({ $0.string }).joined()))
 		}
 		
 		return tokens
 	}
 	
+	// Old
 	
+	func scan( _ tokens : [Token], with rule : CharacterRule ) -> [Token] {
+		self.tokens = tokens
+		return self.scan(tokens.map({ $0.inputString }).joined(), with: rule)
+	}
+	
+	func scan(_ string: String, with rule: CharacterRule) -> [Token] {
+		return []
+	}
 }
