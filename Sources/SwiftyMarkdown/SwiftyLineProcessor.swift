@@ -7,6 +7,12 @@
 //
 
 import Foundation
+import os.log
+
+extension OSLog {
+	private static var subsystem = "SwiftyLineProcessor"
+	static let swiftyLineProcessorPerformance = OSLog(subsystem: subsystem, category: "Swifty Line Processor Performance")
+}
 
 public protocol LineStyling {
     var shouldTokeniseLine : Bool { get }
@@ -73,7 +79,9 @@ public class SwiftyLineProcessor {
     
     let lineRules : [LineRule]
 	let frontMatterRules : [FrontMatterRule]
-    
+	
+	let perfomanceLog = PerformanceLog(with: "SwiftyLineProcessorPerformanceLogging", identifier: "Line Processor", log: OSLog.swiftyLineProcessorPerformance)
+	    
 	public init( rules : [LineRule], defaultRule: LineStyling, frontMatterRules : [FrontMatterRule] = []) {
         self.lineRules = rules
         self.defaultType = defaultRule
@@ -117,6 +125,10 @@ public class SwiftyLineProcessor {
 				return nil
 			}
             
+			if !text.contains(element.token) {
+				continue
+			}
+			
             switch element.removeFrom {
             case .leading:
                 output = findLeadingLineElement(element, in: output)
@@ -199,9 +211,15 @@ public class SwiftyLineProcessor {
     public func process( _ string : String ) -> [SwiftyLine] {
         var foundAttributes : [SwiftyLine] = []
 		
+		
+		self.perfomanceLog.start()
+		
 		var lines = string.components(separatedBy: CharacterSet.newlines)
 		lines = self.processFrontMatter(lines)
 		
+		self.perfomanceLog.tag(with: "(Front matter completed)")
+		
+
         for  heading in lines {
             
             if processEmptyStrings == nil && heading.isEmpty {
@@ -220,6 +238,8 @@ public class SwiftyLineProcessor {
                 continue
             }
             foundAttributes.append(input)
+			
+			self.perfomanceLog.tag(with: "(line completed: \(heading)")
         }
         return foundAttributes
     }

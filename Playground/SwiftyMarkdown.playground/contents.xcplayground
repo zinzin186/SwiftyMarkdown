@@ -5,5 +5,7 @@
         <page name='Line Processing'/>
         <page name='Tokenising'/>
         <page name='Attributed String'/>
+        <page name='SKLabelNode'/>
+        <page name='Groups'/>
     </pages>
 </playground>

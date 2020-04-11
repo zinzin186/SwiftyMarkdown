@@ -5,23 +5,30 @@
 //  Created by Simon Fairbairn on 05/03/2016.
 //  Copyright © 2016 Voyage Travel Apps. All rights reserved.
 //
-
+import os.log
 #if os(macOS)
 import AppKit
 #else
 import UIKit
 #endif
 
-enum CharacterStyle : CharacterStyling {
+extension OSLog {
+	private static var subsystem = "SwiftyMarkdown"
+	static let swiftyMarkdownPerformance = OSLog(subsystem: subsystem, category: "Swifty Markdown Performance")
+}
+
+public enum CharacterStyle : CharacterStyling {
 	case none
 	case bold
 	case italic
 	case code
 	case link
 	case image
+	case referencedLink
+	case referencedImage
 	case strikethrough
 	
-	func isEqualTo(_ other: CharacterStyling) -> Bool {
+	public func isEqualTo(_ other: CharacterStyling) -> Bool {
 		guard let other = other as? CharacterStyle else {
 			return false
 		}
@@ -57,7 +64,7 @@ enum MarkdownLineStyle : LineStyling {
     case orderedList
 	case orderedListIndentFirstOrder
 	case orderedListIndentSecondOrder
-
+	case referencedLink
 	
     func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
         switch self {
@@ -132,8 +139,12 @@ If that is not set, then the system default will be used.
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
+	
+	static public var frontMatterRules = [
+		FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
+	]
+	
 	static public var lineRules = [
-		
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
@@ -157,16 +168,30 @@ If that is not set, then the system default will be used.
 	]
 	
 	static public var characterRules = [
-		CharacterRule(openTag: "![", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.image]], maxTags: 1),
-		CharacterRule(openTag: "[", intermediateTag: "](", closingTag: ")", escapeCharacter: "\\", styles: [1 : [CharacterStyle.link]], maxTags: 1),
-		CharacterRule(openTag: "`", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.code]], maxTags: 1, cancels: .allRemaining),
-		CharacterRule(openTag: "~", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [2 : [CharacterStyle.strikethrough]], minTags: 2, maxTags: 2),
-		CharacterRule(openTag: "*", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3),
-		CharacterRule(openTag: "_", intermediateTag: nil, closingTag: nil, escapeCharacter: "\\", styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]], maxTags: 3)
-	]
-	
-	static public var frontMatterRules = [
-		FrontMatterRule(openTag: "---", closeTag: "---", keyValueSeparator: ":")
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "[", type: .metadataOpen),
+				CharacterRuleTag(tag: "]", type: .metadataClose)
+		], styles: [1 : CharacterStyle.image], metadataLookup: true, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "(", type: .metadataOpen),
+				CharacterRuleTag(tag: ")", type: .metadataClose)
+		], styles: [1 : CharacterStyle.image], metadataLookup: false, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "[", type: .metadataOpen),
+				CharacterRuleTag(tag: "]", type: .metadataClose)
+		], styles: [1 : CharacterStyle.link], metadataLookup: true, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "(", type: .metadataOpen),
+				CharacterRuleTag(tag: ")", type: .metadataClose)
+		], styles: [1 : CharacterStyle.link], metadataLookup: false, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingRules: true, balancedTags: true),
+		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating), otherTags : [], styles: [2 : CharacterStyle.strikethrough], minTags:2 , maxTags:2),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2)
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
@@ -222,17 +247,18 @@ If that is not set, then the system default will be used.
 	
 	var currentType : MarkdownLineStyle = .body
 	
-	
 	var string : String
-	
-	let tagList = "!\\_*`[]()"
-	let validMarkdownTags = CharacterSet(charactersIn: "!\\_*`[]()")
 
 	var orderedListCount = 0
 	var orderedListIndentFirstOrderCount = 0
 	var orderedListIndentSecondOrderCount = 0
 	
+	var previouslyFoundTokens : [Token] = []
 	
+	var applyAttachments = true
+	
+	let perfomanceLog = PerformanceLog(with: "SwiftyMarkdownPerformanceLogging", identifier: "Swifty Markdown", log: .swiftyMarkdownPerformance)
+		
 	/**
 	
 	- parameter string: A string containing [Markdown](https://daringfireball.net/projects/markdown/) syntax to be converted to an NSAttributedString
@@ -347,28 +373,58 @@ If that is not set, then the system default will be used.
 	}
 	
 	
-	
 	/**
 	Generates an NSAttributedString from the string or URL passed at initialisation. Custom fonts or styles are applied to the appropriate elements when this method is called.
 	
 	- returns: An NSAttributedString with the styles applied
 	*/
 	open func attributedString(from markdownString : String? = nil) -> NSAttributedString {
+		
+		self.previouslyFoundTokens.removeAll()
+		self.perfomanceLog.start()
+		
 		if let existentMarkdownString = markdownString {
 			self.string = existentMarkdownString
 		}
 		let attributedString = NSMutableAttributedString(string: "")
 		self.lineProcessor.processEmptyStrings = MarkdownLineStyle.body
 		let foundAttributes : [SwiftyLine] = lineProcessor.process(self.string)
-
-		for (idx, line) in foundAttributes.enumerated() {
+		
+		let references : [SwiftyLine] = foundAttributes.filter({ $0.line.starts(with: "[") && $0.line.contains("]:") })
+		let referencesRemoved : [SwiftyLine] = foundAttributes.filter({ !($0.line.starts(with: "[") && $0.line.contains("]:") ) })
+		var keyValuePairs : [String : String] = [:]
+		for line in references {
+			let strings = line.line.components(separatedBy: "]:")
+			guard strings.count >= 2 else {
+				continue
+			}
+			var key : String = strings[0]
+			if !key.isEmpty {
+				let newstart = key.index(key.startIndex, offsetBy: 1)
+				let range : Range<String.Index> = newstart..<key.endIndex
+				key = String(key[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+			}
+			keyValuePairs[key] = strings[1].trimmingCharacters(in: .whitespacesAndNewlines)
+		}
+		
+		self.perfomanceLog.tag(with: "(line processing complete)")
+		
+		self.tokeniser.metadataLookup = keyValuePairs
+		
+		for (idx, line) in referencesRemoved.enumerated() {
 			if idx > 0 {
 				attributedString.append(NSAttributedString(string: "\n"))
 			}
 			let finalTokens = self.tokeniser.process(line.line)
+			self.previouslyFoundTokens.append(contentsOf: finalTokens)
+			self.perfomanceLog.tag(with: "(tokenising complete for line \(idx)")
+			
 			attributedString.append(attributedStringFor(tokens: finalTokens, in: line))
 			
 		}
+		
+		self.perfomanceLog.end()
+		
 		return attributedString
 	}
 	
@@ -471,6 +527,8 @@ extension SwiftyMarkdown {
 			lineProperties = body
 		case .body:
 			lineProperties = body
+		case .referencedLink:
+			lineProperties = body
 		}
 		
 		if lineProperties.alignment != .left {
@@ -497,16 +555,16 @@ extension SwiftyMarkdown {
 				attributes[.foregroundColor] = self.bold.color
 			}
 			
-			if styles.contains(.link), let url = token.metadataString {
+			if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
 				attributes[.foregroundColor] = self.link.color
 				attributes[.font] = self.font(for: line, characterOverride: .link)
-				attributes[.link] = url as AnyObject
+				attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
 				
 				if underlineLinks {
 					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
 				}
 			}
-			
+						
 			if styles.contains(.strikethrough) {
 				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
 				attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
@@ -514,15 +572,18 @@ extension SwiftyMarkdown {
 			}
 			
 			#if !os(watchOS)
-			if styles.contains(.image), let imageName = token.metadataString {
+			if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
+				if !self.applyAttachments {
+					continue
+				}
 				#if !os(macOS)
 				let image1Attachment = NSTextAttachment()
-				image1Attachment.image = UIImage(named: imageName)
+				image1Attachment.image = UIImage(named: token.metadataStrings[imgIdx])
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
 				#elseif !os(watchOS)
 				let image1Attachment = NSTextAttachment()
-				image1Attachment.image = NSImage(named: imageName)
+				image1Attachment.image = NSImage(named: token.metadataStrings[imgIdx])
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
 				#endif
