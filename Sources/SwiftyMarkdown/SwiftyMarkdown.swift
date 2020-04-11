@@ -170,6 +170,11 @@ If that is not set, then the system default will be used.
 	static public var characterRules = [
 		CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
 				CharacterRuleTag(tag: "]", type: .close),
+				CharacterRuleTag(tag: "[", type: .metadataOpen),
+				CharacterRuleTag(tag: "]", type: .metadataClose)
+		], styles: [1 : CharacterStyle.image], metadataLookup: true, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
+				CharacterRuleTag(tag: "]", type: .close),
 				CharacterRuleTag(tag: "(", type: .metadataOpen),
 				CharacterRuleTag(tag: ")", type: .metadataClose)
 		], styles: [1 : CharacterStyle.image], metadataLookup: false, definesBoundary: true),

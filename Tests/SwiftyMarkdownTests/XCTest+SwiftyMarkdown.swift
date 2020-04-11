@@ -14,6 +14,7 @@ struct ChallengeReturn {
 	let tokens : [Token]
 	let stringTokens : [Token]
 	let links : [Token]
+	let images : [Token]
 	let attributedString : NSAttributedString
 	let foundStyles : [[CharacterStyle]]
 	let expectedStyles : [[CharacterStyle]]
@@ -26,7 +27,8 @@ enum Rule {
 	case images
 	case links
 	case referencedLinks
-	case strikethroughs
+	case referencedImages
+	case tildes
 	
 	func asCharacterRule() -> CharacterRule {
 		switch self {
@@ -36,14 +38,16 @@ enum Rule {
 			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "[" && !$0.metadataLookup  }).first!
 		case .backticks:
 			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "`" }).first!
-		case .strikethroughs:
+		case .tildes:
 			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "~" }).first!
 		case .asterisks:
 			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "*" }).first!
 		case .underscores:
 			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "_" }).first!
 		case .referencedLinks:
-			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "[" && $0.metadataLookup  }).first!		
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "[" && $0.metadataLookup  }).first!
+		case .referencedImages:
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "![" && $0.metadataLookup  }).first!
 		}
 	}
 }
@@ -71,8 +75,9 @@ class SwiftyMarkdownCharacterTests : XCTestCase {
 		let expectedStyles = challenge.tokens.compactMap({ $0.characterStyles as? [CharacterStyle] })
 		
 		let linkTokens = tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
+		let imageTokens = tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.image) ?? false) })
 		
-		return ChallengeReturn(tokens: tokens, stringTokens: stringTokens, links : linkTokens, attributedString:  attributedString, foundStyles: existentTokenStyles, expectedStyles : expectedStyles)
+		return ChallengeReturn(tokens: tokens, stringTokens: stringTokens, links : linkTokens, images: imageTokens, attributedString:  attributedString, foundStyles: existentTokenStyles, expectedStyles : expectedStyles)
 	}
 }
 

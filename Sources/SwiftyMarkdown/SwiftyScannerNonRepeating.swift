@@ -42,15 +42,19 @@ class SwiftyScannerNonRepeating {
 	let metadata : [String : String]
 	var pointer : Int = 0
 	
+	var spaceAndNewLine = CharacterSet.whitespacesAndNewlines
 	var tagGroups : [TagGroup] = []
 	
 	var isMetadataOpen = false
+	
 	
 	var enableLog = (ProcessInfo.processInfo.environment["SwiftyScannerScanner"] != nil)
 	
 	let currentPerfomanceLog = PerformanceLog(with: "SwiftyScannerScannerPerformanceLogging", identifier: "Scanner", log: OSLog.swiftyScannerPerformance)
 	let log = PerformanceLog(with: "SwiftyScannerScanner", identifier: "Scanner", log: OSLog.swiftyScannerScanner)
 		
+	
+	
 	enum Position {
 		case forward(Int)
 		case backward(Int)
@@ -278,7 +282,7 @@ class SwiftyScannerNonRepeating {
 				if self.rule.definesBoundary {
 					self.elements[idx].boundaryCount += 1
 				}
-				if self.rule.shouldCancelRemainingTags {
+				if self.rule.shouldCancelRemainingRules {
 					self.elements[idx].boundaryCount = 1000
 				}
 			}
@@ -303,6 +307,7 @@ class SwiftyScannerNonRepeating {
 		if shouldRemove {
 			self.tagGroups.removeAll(where: { $0.groupID == id })
 		}
+		self.isMetadataOpen = false
 	}
 	
 	func emptyRanges( _ ranges : inout [ClosedRange<Int>] ) {
@@ -423,11 +428,6 @@ class SwiftyScannerNonRepeating {
 		}
 	}
 	
-	var spaceAndNewLine = CharacterSet.whitespacesAndNewlines
-	
-	
-	
-	
 	func scanRepeatingTags() {
 				
 		var groupID = ""
@@ -485,9 +485,6 @@ class SwiftyScannerNonRepeating {
 					}
 				}
 				
-
-				
-				
 				if !validTagGroup {
 					if self.enableLog {
 						os_log("Tag has whitespace on both sides", log: .swiftyScannerScanner, type: .info)
@@ -497,7 +494,6 @@ class SwiftyScannerNonRepeating {
 				}
 				
 				if let idx = tagGroups.firstIndex(where: { $0.groupID == groupID }) {
-					
 					if tagType == .either {
 						if tagGroups[idx].count == count {
 							self.tagGroups[idx].tagRanges.append(openRange)
@@ -518,9 +514,6 @@ class SwiftyScannerNonRepeating {
 						}
 						continue
 					}
-					
-
-	
 				}
 				var tagGroup = TagGroup(tagRanges: [openRange])
 				groupID = tagGroup.groupID
@@ -528,7 +521,7 @@ class SwiftyScannerNonRepeating {
 				tagGroup.count = count
 				
 				if self.enableLog {
-					os_log("New open tag found. Starting new Group with ID %@", log: OSLog.swiftyScannerScanner, type:.info , groupID)
+					os_log("New open tag found with characters %@. Starting new Group with ID %@", log: OSLog.swiftyScannerScanner,  type:.info, self.elements[openRange].map( { String($0.character) }).joined(), groupID)
 				}
 				
 				self.tagGroups.append(tagGroup)

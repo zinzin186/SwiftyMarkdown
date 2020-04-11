@@ -53,27 +53,25 @@ public struct CharacterRule : CustomStringConvertible {
 		return self.primaryTag.type == .repeating
 	}
 	public var definesBoundary = false
-	public var shouldCancelRemainingTags = false
+	public var shouldCancelRemainingRules = false
 	public var balancedTags = false
 	
 	public var description: String {
 		return "Character Rule with Open tag: \(self.primaryTag.tag) and current styles : \(self.styles) "
 	}
 	
-	
-	
 	public func tag( for type : CharacterRuleTagType ) -> CharacterRuleTag? {
 		return self.tags.filter({ $0.type == type }).first ?? nil
 	}
 	
-	public init(primaryTag: CharacterRuleTag, otherTags: [CharacterRuleTag], escapeCharacters : [Character] = ["\\"], styles: [Int : CharacterStyling] = [:], minTags : Int = 1, maxTags : Int = 1, metadataLookup : Bool = false, definesBoundary : Bool = false, shouldCancelRemainingTags : Bool = false, balancedTags : Bool = false) {
+	public init(primaryTag: CharacterRuleTag, otherTags: [CharacterRuleTag], escapeCharacters : [Character] = ["\\"], styles: [Int : CharacterStyling] = [:], minTags : Int = 1, maxTags : Int = 1, metadataLookup : Bool = false, definesBoundary : Bool = false, shouldCancelRemainingRules : Bool = false, balancedTags : Bool = false) {
 		self.primaryTag = primaryTag
 		self.tags = otherTags
 		self.escapeCharacters = escapeCharacters
 		self.styles = styles
 		self.metadataLookup = metadataLookup
 		self.definesBoundary = definesBoundary
-		self.shouldCancelRemainingTags = shouldCancelRemainingTags
+		self.shouldCancelRemainingRules = shouldCancelRemainingRules
 		self.minTags = maxTags < minTags ? maxTags : minTags
 		self.maxTags = minTags > maxTags ? minTags : maxTags
 		self.balancedTags = balancedTags

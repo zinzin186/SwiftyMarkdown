@@ -585,11 +585,10 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		}
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
-		var links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.image) ?? false) })
-		if links.count == 1 {
-			XCTAssertEqual(links[0].metadataStrings.first, "imageName")
+		if results.images.count == 1 {
+			XCTAssertEqual(results.images[0].metadataStrings.first, "imageName")
 		} else {
-			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
+			XCTFail("Incorrect link count. Expecting 1, found \(results.images.count)")
 		}
 		
 		challenge = TokenTest(input: "An [![Image](imageName)](https://www.neverendingvoyage.com/)", output: "An ", tokens: [
@@ -607,17 +606,37 @@ class SwiftyMarkdownLinkTests: SwiftyMarkdownCharacterTests {
 		}
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
-		links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.image) ?? false) })
-		if links.count == 1 {
-			XCTAssertEqual(links[0].metadataStrings.first, "imageName")
+		if results.images.count == 1 {
+			XCTAssertEqual(results.images[0].metadataStrings.first, "imageName")
 		} else {
-			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
+			XCTFail("Incorrect link count. Expecting 1, found \(results.images.count)")
 		}
-		links = results.tokens.filter({ $0.type == .string && (($0.characterStyles as? [CharacterStyle])?.contains(.link) ?? false) })
-		if links.count == 1 {
-			XCTAssertEqual(links[0].metadataStrings.last, "https://www.neverendingvoyage.com/")
+		if results.links.count == 1 {
+			XCTAssertEqual(results.links[0].metadataStrings.last, "https://www.neverendingvoyage.com/")
 		} else {
-			XCTFail("Incorrect link count. Expecting 1, found \(links.count)")
+			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
+		}
+	}
+	
+	func testForReferencedImages() {
+		challenge = TokenTest(input: "A ![referenced image][image]\n[image]: imageName", output: "A ", tokens: [
+			Token(type: .string, inputString: "A ", characterStyles: []),
+			Token(type: .string, inputString: "referenced image", characterStyles: [CharacterStyle.image])
+		])
+		results = self.attempt(challenge)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		if results.images.count == 1 {
+			XCTAssertEqual(results.images[0].metadataStrings.first, "imageName")
+		} else {
+			XCTFail("Incorrect link count. Expecting 1, found \(results.links.count)")
 		}
 	}
 	

@@ -59,7 +59,7 @@
          <EnvironmentVariable
             key = "SwiftyScannerScanner"
             value = ""
-            isEnabled = "YES">
+            isEnabled = "NO">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "SwiftyScannerScannerPerformanceLogging"
