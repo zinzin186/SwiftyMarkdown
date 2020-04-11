@@ -188,7 +188,7 @@ If that is not set, then the system default will be used.
 				CharacterRuleTag(tag: "(", type: .metadataOpen),
 				CharacterRuleTag(tag: ")", type: .metadataClose)
 		], styles: [1 : CharacterStyle.link], metadataLookup: false, definesBoundary: true),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingTags: true, balancedTags: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingRules: true, balancedTags: true),
 		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating), otherTags : [], styles: [2 : CharacterStyle.strikethrough], minTags:2 , maxTags:2),
 		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2),
 		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2)
