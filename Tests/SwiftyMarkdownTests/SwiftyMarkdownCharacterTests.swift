@@ -13,10 +13,10 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 	
 	func testIsolatedCase() {
 
-		challenge = TokenTest(input: "```code`", output: "```code`", tokens : [
-			Token(type: .string, inputString: "```code`", characterStyles: [])
+		challenge = TokenTest(input: "a ```b`", output: "a ```b`", tokens : [
+			Token(type: .string, inputString: "a ```b`", characterStyles: [])
 		])
-		results = self.attempt(challenge)
+		results = self.attempt(challenge, rules: [.backticks])
 		if results.stringTokens.count == challenge.tokens.count {
 			for (idx, token) in results.stringTokens.enumerated() {
 				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
@@ -27,7 +27,6 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		}
 		XCTAssertEqual(results.foundStyles, results.expectedStyles)
 		XCTAssertEqual(results.attributedString.string, challenge.output)
-		
 		return
 		
 		challenge = TokenTest(input: """
@@ -617,7 +616,22 @@ class SwiftyMarkdownStylingTests: SwiftyMarkdownCharacterTests {
 		XCTAssertEqual(results.attributedString.string, challenge.output)
 		
 		challenge = TokenTest(input: "A string with ```code`", output: "A string with ```code`", tokens : [
-			Token(type: .string, inputString: "A string with ```code`", characterStyles: []),
+			Token(type: .string, inputString: "A string with ```code`", characterStyles: [])
+		])
+		results = self.attempt(challenge)
+		if results.stringTokens.count == challenge.tokens.count {
+			for (idx, token) in results.stringTokens.enumerated() {
+				XCTAssertEqual(token.inputString, challenge.tokens[idx].inputString)
+				XCTAssertEqual(token.characterStyles as? [CharacterStyle], challenge.tokens[idx].characterStyles as?  [CharacterStyle])
+			}
+		} else {
+			XCTAssertEqual(results.stringTokens.count, challenge.tokens.count)
+		}
+		XCTAssertEqual(results.foundStyles, results.expectedStyles)
+		XCTAssertEqual(results.attributedString.string, challenge.output)
+		
+		challenge = TokenTest(input: "A string with ```code```", output: "A string with code", tokens : [
+			Token(type: .string, inputString: "A string with ", characterStyles: []),
 			Token(type: .string, inputString: "code", characterStyles: [CharacterStyle.code])
 		])
 		results = self.attempt(challenge)

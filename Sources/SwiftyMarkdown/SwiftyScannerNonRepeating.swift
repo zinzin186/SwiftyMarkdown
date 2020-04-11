@@ -206,14 +206,15 @@ class SwiftyScannerNonRepeating {
 	}
 	
 	func closeTag( _ tag : String, withGroupID id : String ) {
-		guard var tagGroup = self.tagGroups.first(where: { $0.groupID == id }) else {
+
+		guard let tagIdx = self.tagGroups.firstIndex(where: { $0.groupID == id }) else {
 			return
 		}
-		
+
 		var metadataString = ""
 		if self.isMetadataOpen {
-			let metadataCloseRange = tagGroup.tagRanges.removeLast()
-			let metadataOpenRange = tagGroup.tagRanges.removeLast()
+			let metadataCloseRange = self.tagGroups[tagIdx].tagRanges.removeLast()
+			let metadataOpenRange = self.tagGroups[tagIdx].tagRanges.removeLast()
 			
 			if metadataOpenRange.upperBound + 1 == (metadataCloseRange.lowerBound) {
 				if self.enableLog {
@@ -237,14 +238,15 @@ class SwiftyScannerNonRepeating {
 			}
 		}
 		
-		let closeRange = tagGroup.tagRanges.removeLast()
-		let openRange = tagGroup.tagRanges.removeLast()
+		let closeRange = self.tagGroups[tagIdx].tagRanges.removeLast()
+		let openRange = self.tagGroups[tagIdx].tagRanges.removeLast()
 
 		if self.rule.balancedTags && closeRange.count != openRange.count {
+			self.tagGroups[tagIdx].tagRanges.append(openRange)
+			self.tagGroups[tagIdx].tagRanges.append(closeRange)
 			return
 		}
-		
-		
+
 		var shouldRemove = true
 		var styles : [CharacterStyling] = []
 		if openRange.upperBound + 1 == (closeRange.lowerBound) {
@@ -285,11 +287,11 @@ class SwiftyScannerNonRepeating {
 				let difference = ( openRange.upperBound - openRange.lowerBound ) - (closeRange.upperBound - closeRange.lowerBound)
 				switch difference {
 				case 1...:
-					for idx in openRange.upperBound - (difference - 1)...openRange.upperBound {
-						self.elements[idx].type = .string
-					}
+					shouldRemove = false
+					self.tagGroups[tagIdx].count = difference
+					self.tagGroups[tagIdx].tagRanges.append( openRange.upperBound - (abs(difference) - 1)...openRange.upperBound )
 				case ...(-1):
-					for idx in closeRange.upperBound - (abs(difference) - 1)...closeRange.upperBound{
+					for idx in closeRange.upperBound - (abs(difference) - 1)...closeRange.upperBound {
 						self.elements[idx].type = .string
 					}
 				default:
@@ -300,7 +302,6 @@ class SwiftyScannerNonRepeating {
 		}
 		if shouldRemove {
 			self.tagGroups.removeAll(where: { $0.groupID == id })
-			self.isMetadataOpen = false
 		}
 	}
 	
