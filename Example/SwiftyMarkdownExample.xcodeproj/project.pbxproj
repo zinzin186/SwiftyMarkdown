@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F421DD991C8AF4E900B86D66 /* example.md in Resources */ = {isa = PBXBuildFile; fileRef = F421DD951C8AF34F00B86D66 /* example.md */; };
 		F4B4A44C23E4E17400550249 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B4A44B23E4E17400550249 /* AppDelegate.swift */; };
 		F4B4A44E23E4E17400550249 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B4A44D23E4E17400550249 /* ViewController.swift */; };
 		F4B4A45023E4E17400550249 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4B4A44F23E4E17400550249 /* Assets.xcassets */; };
@@ -20,6 +19,7 @@
 		F4CE98B61C8AEF7D00D735C1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4CE98B41C8AEF7D00D735C1 /* LaunchScreen.storyboard */; };
 		F4CE98C11C8AEF7D00D735C1 /* SwiftyMarkdownExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98C01C8AEF7D00D735C1 /* SwiftyMarkdownExampleTests.swift */; };
 		F4CE98CC1C8AEF7D00D735C1 /* SwiftyMarkdownExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CE98CB1C8AEF7D00D735C1 /* SwiftyMarkdownExampleUITests.swift */; };
+		F4EAB653244179FE00206782 /* example.md in Resources */ = {isa = PBXBuildFile; fileRef = F4576C2E2437F67B0013E2B6 /* example.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,8 +62,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F421DD951C8AF34F00B86D66 /* example.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = example.md; sourceTree = "<group>"; };
-		F4576C2E2437F67B0013E2B6 /* example copy.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "example copy.md"; sourceTree = "<group>"; };
+		F4576C2E2437F67B0013E2B6 /* example.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = example.md; sourceTree = "<group>"; };
 		F4B4A44923E4E17400550249 /* SwiftyMarkdownExample macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SwiftyMarkdownExample macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4B4A44B23E4E17400550249 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4B4A44D23E4E17400550249 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -173,8 +172,7 @@
 				F4CE98B21C8AEF7D00D735C1 /* Assets.xcassets */,
 				F4CE98B41C8AEF7D00D735C1 /* LaunchScreen.storyboard */,
 				F4CE98B71C8AEF7D00D735C1 /* Info.plist */,
-				F4576C2E2437F67B0013E2B6 /* example copy.md */,
-				F421DD951C8AF34F00B86D66 /* example.md */,
+				F4576C2E2437F67B0013E2B6 /* example.md */,
 			);
 			path = SwiftyMarkdownExample;
 			sourceTree = "<group>";
@@ -345,8 +343,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4CE98B61C8AEF7D00D735C1 /* LaunchScreen.storyboard in Resources */,
+				F4EAB653244179FE00206782 /* example.md in Resources */,
 				F4CE98B31C8AEF7D00D735C1 /* Assets.xcassets in Resources */,
-				F421DD991C8AF4E900B86D66 /* example.md in Resources */,
 				F4CE98B11C8AEF7D00D735C1 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
