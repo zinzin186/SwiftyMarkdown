@@ -27,7 +27,7 @@ public struct Token {
 	public let id = UUID().uuidString
 	public let type : TokenType
 	public let inputString : String
-	public var metadataString : String? = nil
+	public var metadataStrings : [String] = []
 	public internal(set) var group : Int = 0
 	public internal(set) var characterStyles : [CharacterStyling] = []
 	public internal(set) var count : Int = 0
@@ -67,7 +67,7 @@ public struct Token {
 	
 	func newToken( fromSubstring string: String,  isReplacement : Bool) -> Token {
 		var newToken = Token(type: (isReplacement) ? .replacement : .string , inputString: string, characterStyles: self.characterStyles)
-		newToken.metadataString = self.metadataString
+		newToken.metadataStrings = self.metadataStrings
 		newToken.isMetadata = self.isMetadata
 		newToken.isProcessed = self.isProcessed
 		return newToken

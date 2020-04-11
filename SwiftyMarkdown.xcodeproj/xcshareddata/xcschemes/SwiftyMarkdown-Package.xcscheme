@@ -57,6 +57,16 @@
             isEnabled = "NO">
          </EnvironmentVariable>
          <EnvironmentVariable
+            key = "SwiftyScannerScanner"
+            value = ""
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "SwiftyScannerScannerPerformanceLogging"
+            value = ""
+            isEnabled = "NO">
+         </EnvironmentVariable>
+         <EnvironmentVariable
             key = "SwiftyLineProcessorPerformanceLogging"
             value = ""
             isEnabled = "NO">

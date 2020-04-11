@@ -26,6 +26,10 @@ public class SwiftyTokeniser {
 	var scanner : SwiftyScanning!
 	public var metadataLookup : [String : String] = [:]
 	
+	let newlines = CharacterSet.newlines
+	let spaces = CharacterSet.whitespaces
+
+	
 	public init( with rules : [CharacterRule] ) {
 		self.rules = rules
 		
@@ -60,6 +64,22 @@ public class SwiftyTokeniser {
 		}
 		
 		self.currentPerfomanceLog.start()
+	
+		var elementArray : [Element] = []
+		for char in inputString {
+			if newlines.containsUnicodeScalars(of: char) {
+				let element = Element(character: char, type: .newline)
+				elementArray.append(element)
+				continue
+			}
+			if spaces.containsUnicodeScalars(of: char) {
+				let element = Element(character: char, type: .space)
+				elementArray.append(element)
+				continue
+			}
+			let element = Element(character: char, type: .string)
+			elementArray.append(element)
+		}
 		
 		while !mutableRules.isEmpty {
 			let nextRule = mutableRules.removeFirst()
@@ -68,32 +88,50 @@ public class SwiftyTokeniser {
 				self.scanner = SwiftyScanner()
 				self.scanner.metadataLookup = self.metadataLookup
 			}
-			
-			
+
 			if enableLog {
 				os_log("------------------------------", log: .tokenising, type: .info)
 				os_log("RULE: %@", log: OSLog.tokenising, type:.info , nextRule.description)
 			}
 			self.currentPerfomanceLog.tag(with: "(start rule %@)")
 			
-			for (idx,token) in currentTokens.enumerated() {
-				if !token.children.isEmpty {
-					if nextRule.isRepeatingTag {
-						currentTokens[idx].children = self.scanner.scan(token.children, with: nextRule)
-					} else {
-						let scanner = SwiftyScannerNonRepeating(tokens: token.children, rule: nextRule, metadataLookup: self.metadataLookup)
-						currentTokens[idx].children = scanner.scan()
-					}
-					
-				}
-			}
-			if nextRule.isRepeatingTag {
-				currentTokens = self.scanner.scan(currentTokens, with: nextRule)
-			} else {
-				let scanner = SwiftyScannerNonRepeating(tokens: currentTokens, rule: nextRule, metadataLookup: self.metadataLookup)
-				currentTokens = scanner.scan()
-			}
+			let scanner = SwiftyScannerNonRepeating(withElements: elementArray, rule: nextRule, metadata: self.metadataLookup)
+			elementArray = scanner.scan()
 		}
+		
+		var output : [Token] = []
+		
+		
+		func empty( _ string : inout String, into tokens : inout [Token] )  {
+			guard !string.isEmpty else {
+				return
+			}
+			var token = Token(type: .string, inputString: string)
+			token.metadataStrings.append(contentsOf: lastElement.metadata) 
+			token.characterStyles = lastElement.styles
+			string.removeAll()
+			tokens.append(token)
+		}
+		
+		
+		var lastElement = elementArray.first!
+		var accumulatedString = ""
+		for element in elementArray {
+			guard element.type != .escape else {
+				continue
+			}
+			
+			guard element.type == .string || element.type == .space || element.type == .newline else {
+				empty(&accumulatedString, into: &output)
+				continue
+			}
+			if lastElement.styles as? [CharacterStyle] != element.styles as? [CharacterStyle] {
+				empty(&accumulatedString, into: &output)
+			}
+			accumulatedString.append(element.character)
+			lastElement = element
+		}
+		empty(&accumulatedString, into: &output)
 		
 		self.currentPerfomanceLog.tag(with: "(finished all rules)")
 		
@@ -101,22 +139,9 @@ public class SwiftyTokeniser {
 			os_log("=====RULE PROCESSING COMPLETE=====", log: .tokenising, type: .info)
 			os_log("==================================", log: .tokenising, type: .info)
 		}
-		var output = self.flatten(currentTokens)
 		return output
 	}
 	
-	func flatten( _ tokens : [Token], with styles : [CharacterStyling] = []) -> [Token] {
-		var output : [Token] = []
-		for var token in tokens {
-			if !token.children.isEmpty {
-				output.append(contentsOf: self.flatten(token.children, with: token.characterStyles))
-			} else {
-				token.characterStyles.append(contentsOf: styles)
-				output.append(token)
-			}
-		}
-		return output
-	}
 	
 //
 //

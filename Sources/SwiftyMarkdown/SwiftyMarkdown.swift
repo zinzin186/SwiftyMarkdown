@@ -17,7 +17,7 @@ extension OSLog {
 	static let swiftyMarkdownPerformance = OSLog(subsystem: subsystem, category: "Swifty Markdown Performance")
 }
 
-enum CharacterStyle : CharacterStyling {
+public enum CharacterStyle : CharacterStyling {
 	case none
 	case bold
 	case italic
@@ -28,7 +28,7 @@ enum CharacterStyle : CharacterStyling {
 	case referencedImage
 	case strikethrough
 	
-	func isEqualTo(_ other: CharacterStyling) -> Bool {
+	public func isEqualTo(_ other: CharacterStyling) -> Bool {
 		guard let other = other as? CharacterStyle else {
 			return false
 		}
@@ -172,21 +172,21 @@ If that is not set, then the system default will be used.
 				CharacterRuleTag(tag: "]", type: .close),
 				CharacterRuleTag(tag: "(", type: .metadataOpen),
 				CharacterRuleTag(tag: ")", type: .metadataClose)
-		], styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, isSelfContained: true),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+		], styles: [1 : CharacterStyle.image], metadataLookup: false, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open), otherTags: [
 				CharacterRuleTag(tag: "]", type: .close),
 				CharacterRuleTag(tag: "[", type: .metadataOpen),
 				CharacterRuleTag(tag: "]", type: .metadataClose)
-		], styles: [1 : [CharacterStyle.referencedLink]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
+		], styles: [1 : CharacterStyle.link], metadataLookup: true, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open), otherTags: [
 				CharacterRuleTag(tag: "]", type: .close),
 				CharacterRuleTag(tag: "(", type: .metadataOpen),
 				CharacterRuleTag(tag: ")", type: .metadataClose)
-		], styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : [CharacterStyle.code]], cancels: .allRemaining),
-		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating, min: 2, max: 2), otherTags : [], styles: [2 : [CharacterStyle.strikethrough]]),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]]),
-		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
+		], styles: [1 : CharacterStyle.link], metadataLookup: false, definesBoundary: true),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.code], shouldCancelRemainingTags: true, balancedTags: true),
+		CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating), otherTags : [], styles: [2 : CharacterStyle.strikethrough], minTags:2 , maxTags:2),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2),
+		CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating), otherTags: [], styles: [1 : CharacterStyle.italic, 2 : CharacterStyle.bold], minTags:1 , maxTags:2)
 	]
 	
 	let lineProcessor = SwiftyLineProcessor(rules: SwiftyMarkdown.lineRules, defaultRule: MarkdownLineStyle.body, frontMatterRules: SwiftyMarkdown.frontMatterRules)
@@ -550,16 +550,16 @@ extension SwiftyMarkdown {
 				attributes[.foregroundColor] = self.bold.color
 			}
 			
-			if styles.contains(.link), let url = token.metadataString {
+			if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
 				attributes[.foregroundColor] = self.link.color
 				attributes[.font] = self.font(for: line, characterOverride: .link)
-				attributes[.link] = url as AnyObject
+				attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
 				
 				if underlineLinks {
 					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
 				}
 			}
-			
+						
 			if styles.contains(.strikethrough) {
 				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
 				attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue as AnyObject
@@ -567,18 +567,18 @@ extension SwiftyMarkdown {
 			}
 			
 			#if !os(watchOS)
-			if styles.contains(.image), let imageName = token.metadataString {
+			if let imgIdx = styles.firstIndex(of: .image), imgIdx < token.metadataStrings.count {
 				if !self.applyAttachments {
 					continue
 				}
 				#if !os(macOS)
 				let image1Attachment = NSTextAttachment()
-				image1Attachment.image = UIImage(named: imageName)
+				image1Attachment.image = UIImage(named: token.metadataStrings[imgIdx])
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
 				#elseif !os(watchOS)
 				let image1Attachment = NSTextAttachment()
-				image1Attachment.image = NSImage(named: imageName)
+				image1Attachment.image = NSImage(named: token.metadataStrings[imgIdx])
 				let str = NSAttributedString(attachment: image1Attachment)
 				finalAttributedString.append(str)
 				#endif

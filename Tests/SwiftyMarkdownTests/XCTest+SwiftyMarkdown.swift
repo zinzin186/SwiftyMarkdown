@@ -31,32 +31,19 @@ enum Rule {
 	func asCharacterRule() -> CharacterRule {
 		switch self {
 		case .images:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "![", type: .open), otherTags: [
-					CharacterRuleTag(tag: "]", type: .close),
-					CharacterRuleTag(tag: "(", type: .metadataOpen),
-					CharacterRuleTag(tag: ")", type: .metadataClose)
-			], styles: [1 : [CharacterStyle.image]], metadataLookup: false, spacesAllowed: .bothSides, isSelfContained: true)
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "![" && !$0.metadataLookup  }).first!
 		case .links:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
-					CharacterRuleTag(tag: "]", type: .close),
-					CharacterRuleTag(tag: "(", type: .metadataOpen),
-					CharacterRuleTag(tag: ")", type: .metadataClose)
-			], styles: [1 : [CharacterStyle.link]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true)
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "[" && !$0.metadataLookup  }).first!
 		case .backticks:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "`", type: .repeating), otherTags: [], styles: [1 : [CharacterStyle.code]], cancels: .allRemaining)
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "`" }).first!
 		case .strikethroughs:
-			return CharacterRule(primaryTag:CharacterRuleTag(tag: "~", type: .repeating, min: 2, max: 2), otherTags : [], styles: [2 : [CharacterStyle.strikethrough]])
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "~" }).first!
 		case .asterisks:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "*", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "*" }).first!
 		case .underscores:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "_", type: .repeating, min: 1, max: 3), otherTags: [], styles: [1 : [CharacterStyle.italic], 2 : [CharacterStyle.bold], 3 : [CharacterStyle.bold, CharacterStyle.italic]])
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "_" }).first!
 		case .referencedLinks:
-			return CharacterRule(primaryTag: CharacterRuleTag(tag: "[", type: .open, escapeCharacters: [EscapeCharacter(character: "\\", rule: .remove),EscapeCharacter(character: "!", rule: .keep)]), otherTags: [
-					CharacterRuleTag(tag: "]", type: .close),
-					CharacterRuleTag(tag: "[", type: .metadataOpen),
-					CharacterRuleTag(tag: "]", type: .metadataClose)
-			], styles: [1 : [CharacterStyle.referencedLink]], metadataLookup: true, spacesAllowed: .bothSides, isSelfContained: true)
-				
+			return SwiftyMarkdown.characterRules.filter({ $0.primaryTag.tag == "[" && $0.metadataLookup  }).first!		
 		}
 	}
 }
