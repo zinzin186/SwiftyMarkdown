@@ -93,7 +93,7 @@ public class SwiftyTokeniser {
 		}
 		
 		var output : [Token] = []
-		
+		var lastElement = elementArray.first!
 		
 		func empty( _ string : inout String, into tokens : inout [Token] )  {
 			guard !string.isEmpty else {
@@ -106,7 +106,6 @@ public class SwiftyTokeniser {
 			tokens.append(token)
 		}
 		
-		var lastElement = elementArray.first!
 		var accumulatedString = ""
 		for element in elementArray {
 			guard element.type != .escape else {
