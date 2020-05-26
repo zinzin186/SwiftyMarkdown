@@ -136,7 +136,8 @@ If that is not set, then the system default will be used.
 }
 
 @objc open class LinkStyles : BasicStyles {
-    open var underlineStyle: NSUnderlineStyle = .single
+    public var underlineStyle: NSUnderlineStyle = .single
+    public lazy var underlineColor: UIColor = self.color
 }
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
@@ -557,15 +558,16 @@ extension SwiftyMarkdown {
 				attributes[.foregroundColor] = self.bold.color
 			}
 			
-			if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
-				attributes[.foregroundColor] = self.link.color
-				attributes[.font] = self.font(for: line, characterOverride: .link)
-				attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
-				
-				if underlineLinks {
+            if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
+                attributes[.foregroundColor] = self.link.color
+                attributes[.font] = self.font(for: line, characterOverride: .link)
+                attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
+                
+                if underlineLinks {
                     attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
-				}
-			}
+                    attributes[.underlineColor] = self.link.underlineColor
+                }
+            }
 						
 			if styles.contains(.strikethrough) {
 				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
