@@ -135,7 +135,9 @@ If that is not set, then the system default will be used.
 	public var alignment: NSTextAlignment = .left
 }
 
-
+@objc open class LinkStyles : BasicStyles {
+    open var underlineStyle: NSUnderlineStyle = .single
+}
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
@@ -222,7 +224,7 @@ If that is not set, then the system default will be used.
 	open var blockquotes = LineStyles()
 	
 	/// The styles to apply to any links found in the Markdown
-	open var link = BasicStyles()
+	open var link = LinkStyles()
 	
 	/// The styles to apply to any bold text found in the Markdown
 	open var bold = BasicStyles()
@@ -561,7 +563,7 @@ extension SwiftyMarkdown {
 				attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
 				
 				if underlineLinks {
-					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
+                    attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
 				}
 			}
 						
