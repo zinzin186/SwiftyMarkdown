@@ -104,6 +104,8 @@ enum MarkdownLineStyle : LineStyling {
 
 @objc public protocol LineProperties {
 	var alignment : NSTextAlignment { get set }
+    var lineSpacing: CGFloat { get set }
+    var paragraphSpacing: CGFloat { get set }
 }
 
 
@@ -133,9 +135,18 @@ If that is not set, then the system default will be used.
 	public var fontSize : CGFloat = 0.0
 	public var fontStyle : FontStyle = .normal
 	public var alignment: NSTextAlignment = .left
+    public var lineSpacing : CGFloat = 0.0
+    public var paragraphSpacing : CGFloat = 0.0
 }
 
-
+@objc open class LinkStyles : BasicStyles {
+    public var underlineStyle: NSUnderlineStyle = .single
+	#if os(macOS)
+	public lazy var underlineColor = self.color
+	#else
+	public lazy var underlineColor = self.color
+	#endif
+}
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
 @objc open class SwiftyMarkdown: NSObject {
@@ -222,7 +233,7 @@ If that is not set, then the system default will be used.
 	open var blockquotes = LineStyles()
 	
 	/// The styles to apply to any links found in the Markdown
-	open var link = BasicStyles()
+	open var link = LinkStyles()
 	
 	/// The styles to apply to any bold text found in the Markdown
 	open var bold = BasicStyles()
@@ -531,11 +542,13 @@ extension SwiftyMarkdown {
 			lineProperties = body
 		}
 		
+        let paragraphStyle = attributes[.paragraphStyle] as? NSMutableParagraphStyle ?? NSMutableParagraphStyle()
 		if lineProperties.alignment != .left {
-			let paragraphStyle = NSMutableParagraphStyle()
 			paragraphStyle.alignment = lineProperties.alignment
-			attributes[.paragraphStyle] = paragraphStyle
 		}
+        paragraphStyle.lineSpacing = lineProperties.lineSpacing
+        paragraphStyle.paragraphSpacing = lineProperties.paragraphSpacing
+        attributes[.paragraphStyle] = paragraphStyle
 		
 		
 		for token in finalTokens {
@@ -543,6 +556,7 @@ extension SwiftyMarkdown {
 			attributes[.link] = nil
 			attributes[.strikethroughStyle] = nil
 			attributes[.foregroundColor] = self.color(for: line)
+            attributes[.underlineStyle] = nil
 			guard let styles = token.characterStyles as? [CharacterStyle] else {
 				continue
 			}
@@ -555,15 +569,16 @@ extension SwiftyMarkdown {
 				attributes[.foregroundColor] = self.bold.color
 			}
 			
-			if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
-				attributes[.foregroundColor] = self.link.color
-				attributes[.font] = self.font(for: line, characterOverride: .link)
-				attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
-				
-				if underlineLinks {
-					attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue as AnyObject
-				}
-			}
+            if let linkIdx = styles.firstIndex(of: .link), linkIdx < token.metadataStrings.count {
+                attributes[.foregroundColor] = self.link.color
+                attributes[.font] = self.font(for: line, characterOverride: .link)
+                attributes[.link] = token.metadataStrings[linkIdx] as AnyObject
+                
+                if underlineLinks {
+                    attributes[.underlineStyle] = self.link.underlineStyle.rawValue as AnyObject
+                    attributes[.underlineColor] = self.link.underlineColor
+                }
+            }
 						
 			if styles.contains(.strikethrough) {
 				attributes[.font] = self.font(for: line, characterOverride: .strikethrough)
