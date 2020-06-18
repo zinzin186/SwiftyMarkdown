@@ -141,7 +141,11 @@ If that is not set, then the system default will be used.
 
 @objc open class LinkStyles : BasicStyles {
     public var underlineStyle: NSUnderlineStyle = .single
-    public lazy var underlineColor: UIColor = self.color
+	#if os(macOS)
+	public var color = self.color
+	#else
+	public var color = self.color
+	#endif
 }
 
 /// A class that takes a [Markdown](https://daringfireball.net/projects/markdown/) string or file and returns an NSAttributedString with the applied styles. Supports Dynamic Type.
