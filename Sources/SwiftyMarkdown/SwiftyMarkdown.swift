@@ -142,9 +142,9 @@ If that is not set, then the system default will be used.
 @objc open class LinkStyles : BasicStyles {
     public var underlineStyle: NSUnderlineStyle = .single
 	#if os(macOS)
-	public var color = self.color
+	public lazy var underlineColor = self.color
 	#else
-	public var color = self.color
+	public lazy var underlineColor = self.color
 	#endif
 }
 
