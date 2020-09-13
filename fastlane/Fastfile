@@ -20,4 +20,4 @@ $scheme = "SwiftyMarkdown"
 $spec = "SwiftyMarkdown.podspec"
 $project = './SwiftyMarkdown.xcodeproj'
 
-import "../../Fastlane/FastfilePods"
+import "/Users/simon/Developer/Fastlane/FastfilePods"
