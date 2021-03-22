@@ -130,10 +130,10 @@ extension SwiftyMarkdown {
 		}
 		
 		if globalItalic, let italicDescriptor = font.fontDescriptor.withSymbolicTraits(.traitItalic) {
-			font = UIFont(descriptor: italicDescriptor, size: 0)
+			font = UIFont(descriptor: italicDescriptor, size: fontSize ?? 0)
 		}
 		if globalBold, let boldDescriptor = font.fontDescriptor.withSymbolicTraits(.traitBold) {
-			font = UIFont(descriptor: boldDescriptor, size: 0)
+			font = UIFont(descriptor: boldDescriptor, size: fontSize ?? 0)
 		}
 		
 		return font
